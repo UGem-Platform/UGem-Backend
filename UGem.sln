@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UGem.Api", "UGem.Api\UGem.Api.csproj", "{4143869B-F2C0-4CE7-85C4-66D4FDB16384}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UGem.Services", "UGem.Services\UGem.Services.csproj", "{F5B89153-3258-4C22-BDC3-E4602B80DA02}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UGem.Repositories", "UGem.Repositories\UGem.Repositories.csproj", "{5D798243-B1AD-41CD-9CC5-3F2E41EBE4A8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4143869B-F2C0-4CE7-85C4-66D4FDB16384}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4143869B-F2C0-4CE7-85C4-66D4FDB16384}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4143869B-F2C0-4CE7-85C4-66D4FDB16384}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4143869B-F2C0-4CE7-85C4-66D4FDB16384}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5B89153-3258-4C22-BDC3-E4602B80DA02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5B89153-3258-4C22-BDC3-E4602B80DA02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5B89153-3258-4C22-BDC3-E4602B80DA02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5B89153-3258-4C22-BDC3-E4602B80DA02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D798243-B1AD-41CD-9CC5-3F2E41EBE4A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D798243-B1AD-41CD-9CC5-3F2E41EBE4A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D798243-B1AD-41CD-9CC5-3F2E41EBE4A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D798243-B1AD-41CD-9CC5-3F2E41EBE4A8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
