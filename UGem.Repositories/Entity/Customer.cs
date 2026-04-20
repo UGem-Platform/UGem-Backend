@@ -11,10 +11,10 @@ public class Customer : BaseEntity<Guid>, IAuditableEntity
     
     public Reviewer? Reviewer { get; set; }
     
-    public Guid WishListId { get; set; }
-    public Wishlist? WishList { get; set; }
+    public Wishlist? Wishlist { get; set; }
     
     public ICollection<Order> Orders { get; set; } =  new List<Order>();
+    public ICollection<CheckIn> CheckIns { get; set; } = new List<CheckIn>();
     
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }

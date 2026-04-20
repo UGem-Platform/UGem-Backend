@@ -10,13 +10,13 @@ public class User : BaseEntity<Guid>, IAuditableEntity
     public required string FullName { get; set; }
     public string? AvatarUrl { get; set; }
     public bool IsActive { get; set; } = true;
-    public string Role { get; set; } = "user";
-    
+    public string Role { get; set; } = "Customer"; // Default role is Customer
+
     public Admin? Admin { get; set; }
     public Staff? Staff { get; set; }
     public Customer? Customer { get; set; }
     public Merchant? Merchant { get; set; }
-    
+
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }
