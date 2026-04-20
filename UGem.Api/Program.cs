@@ -1,4 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
 using MailService = UGem.Service.MailService;
+using MediaService = UGem.Service.MediaService;
+using CloudinaryService = UGem.Service.CloudinaryService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +14,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<MailService.IService, MailService.Service>();
+builder.Services.AddScoped<MediaService.IService, CloudinaryService.Service>();
 
 var app = builder.Build();
 
