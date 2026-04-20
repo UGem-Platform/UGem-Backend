@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
-
+using Quartz;
+using UGem.Api.Extensions;
+using UGem.Repositories;
+using UGem.Service.BackGroundJobService;
 using MailService = UGem.Service.MailService;
 using MediaService = UGem.Service.MediaService;
 using CloudinaryService = UGem.Service.CloudinaryService;
@@ -9,13 +12,39 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 
 builder.Services.AddControllers();
+builder.Services.AddHttpContextAccessor();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseNpgsql(
+        builder.Configuration.GetConnectionString("DefaultConnection")
+    )
+);
+builder.Services.AddJwtServices(builder.Configuration);
+builder.Services.AddSwaggerServices();  
 
 builder.Services.AddScoped<MailService.IService, MailService.Service>();
 builder.Services.AddScoped<MediaService.IService, CloudinaryService.Service>();
+builder.Services.AddQuartz(options =>
+{
+    var jobKey = new JobKey(nameof(ProcessTransactionPendingJob));
 
+    options
+        .AddJob<ProcessTransactionPendingJob>(jobKey)
+        .AddTrigger(trigger =>
+            trigger
+                .ForJob(jobKey)
+                .WithSimpleSchedule(schedule => schedule
+                    .WithIntervalInMinutes(2)
+                    .RepeatForever()
+                )
+        );
+});
+builder.Services.AddQuartzHostedService(options =>
+{
+    options.WaitForJobsToComplete = true;
+});
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -25,6 +54,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

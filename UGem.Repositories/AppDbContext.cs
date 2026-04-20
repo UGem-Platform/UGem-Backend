@@ -19,7 +19,9 @@ public class AppDbContext : DbContext
     public DbSet<Review> Reviews { get; set; }
     public DbSet<ReviewDetail> ReviewDetails { get; set; }
     public DbSet<Reviewer> Reviewers { get; set; }
+    public DbSet<Order> Orders { get; set; }
     
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
