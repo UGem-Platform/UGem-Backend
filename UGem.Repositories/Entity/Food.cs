@@ -10,11 +10,13 @@ public class Food: BaseEntity<Guid>, IAuditableEntity
     public bool IsAvailable { get; set; }
     public string? ImageUrl { get; set; }
     
-    
     public Guid MerchantId { get; set; }
-    public Merchant Merchant { get; set; }
+    public required Merchant Merchant { get; set; }
+    
     public ICollection<CategoryDetail> CategoryDetails { get; set; } = new List<CategoryDetail>();
+    
     public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+    
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }

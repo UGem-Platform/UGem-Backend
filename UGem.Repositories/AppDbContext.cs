@@ -121,9 +121,9 @@ public class AppDbContext : DbContext
             builder.Property(r => r.Content)
                 .IsRequired();
 
-            builder.HasOne(r => r.Reviewer)
-                .WithMany(rev => rev.Reviews)
-                .HasForeignKey(r => r.ReviewerId)
+            builder.HasOne(r => r.Order)
+                .WithOne(o => o.Review)
+                .HasForeignKey<Review>(r => r.Id) // Assuming Review has a foreign key to Order
                 .OnDelete(DeleteBehavior.Cascade);
         });
         

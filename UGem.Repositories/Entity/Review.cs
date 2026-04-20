@@ -9,8 +9,11 @@ public class Review : BaseEntity<Guid>, IAuditableEntity
     public string ImageUrl { get; set; } = "";
     public bool IsVerified { get; set; } = false;
     
-    public Guid ReviewerId { get; set; }
-    public Reviewer? Reviewer { get; set; }
+    public Guid OrderId { get; set; }
+    public required Order Order { get; set; }
+    
+    public Guid MerchantId { get; set; }
+    public required Merchant Merchant { get; set; }
     
     public ICollection<ReviewDetail> ReviewDetails { get; set; } = new List<ReviewDetail>();
     
