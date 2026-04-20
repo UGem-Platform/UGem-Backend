@@ -26,6 +26,8 @@ builder.Services.AddSwaggerServices();
 
 builder.Services.AddScoped<MailService.IService, MailService.Service>();
 builder.Services.AddScoped<MediaService.IService, CloudinaryService.Service>();
+
+
 builder.Services.AddQuartz(options =>
 {
     var jobKey = new JobKey(nameof(ProcessTransactionPendingJob));
