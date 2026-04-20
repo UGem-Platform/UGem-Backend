@@ -5,6 +5,7 @@ using UGem.Repositories;
 using UGem.Service.BackGroundJobService;
 using MailService = UGem.Service.MailService;
 using MediaService = UGem.Service.MediaService;
+using CategoryService = UGem.Service.Category;
 using CloudinaryService = UGem.Service.CloudinaryService;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -26,7 +27,7 @@ builder.Services.AddSwaggerServices();
 
 builder.Services.AddScoped<MailService.IService, MailService.Service>();
 builder.Services.AddScoped<MediaService.IService, CloudinaryService.Service>();
-
+builder.Services.AddScoped<CategoryService.IService, CategoryService.Service>();
 
 builder.Services.AddQuartz(options =>
 {
