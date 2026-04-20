@@ -7,7 +7,7 @@ namespace UGem.Service.MailService;
 
 public class Service : IService
 {
-        
+    
     private readonly MailOption.MailOptions _mailOptions = new();
 
     public Service(IConfiguration configuration)
