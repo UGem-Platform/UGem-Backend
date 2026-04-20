@@ -1,3 +1,8 @@
+using Microsoft.EntityFrameworkCore;
+
+using MediaService = UGem.Service.MediaService;
+using CloudinaryService = UGem.Service.CloudinaryService;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -6,6 +11,8 @@ builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddScoped<MediaService.IService, CloudinaryService.Service>();
 
 var app = builder.Build();
 
