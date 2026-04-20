@@ -14,7 +14,18 @@ public class Order: BaseEntity<Guid>, IAuditableEntity
     public DateTime OrderdAt { get; set; }
     public required string Notes { get; set; }
     public required string DeliveryAddress { get; set; }
+    
+    public Guid CustomerId { get; set; }
+    public required Customer Customer { get; set; }
+    
+    public Guid? ReviewId { get; set; }
+    public Review? Review { get; set; }
+    
+    public Guid? AffiliateLinkId { get; set; }
+    public AffiliateLink? AffiliateLink { get; set; }
+    
     public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
+    
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }

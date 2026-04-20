@@ -18,8 +18,18 @@ public class Merchant: BaseEntity<Guid>, IAuditableEntity
     public decimal Latitude { get; set; }   // vĩ độ
     public decimal Longitude { get; set; }  // kinh độ
     
+    public Guid UserId { get; set; }
+    public required User User { get; set; }
     
     public ICollection<Food> Foods { get; set; } = new List<Food>();
+    
+    public ICollection<AffiliateLink> AffiliateLinks { get; set; } = new List<AffiliateLink>();
+    
+    public ICollection<WishlistDetail> WishlistDetails { get; set; } = new List<WishlistDetail>();
+    
+    public ICollection<CheckIn> CheckIns { get; set; } = new List<CheckIn>();
+    
+    public ICollection<Review> Reviews { get; set; } = new List<Review>();
     
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }

@@ -13,6 +13,8 @@ public class Reviewer : BaseEntity<Guid>, IAuditableEntity
     
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     
+    public ICollection<AffiliateLink> AffiliateLinks { get; set; } = new List<AffiliateLink>();
+    
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }
