@@ -19,10 +19,11 @@ public class Service : IService
         configuration.GetSection(nameof(JwtOptions)).Bind(_jwtOption);
     }
 
-    public async Task<Response.IdentityResponse> Login(string email, string password)
+    public async Task<Response.IdentityResponse> Login(string phoneNumber, string password)
     {
         var user = await _dbContext.Users
-            .FirstOrDefaultAsync(u => u.PhoneNumber == email);
+            .Include(x => x.Customer)    
+            .FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
 
         if (user == null)
         {
@@ -44,6 +45,13 @@ public class Service : IService
             new Claim(ClaimTypes.Expired, 
                 DateTimeOffset.UtcNow.AddMinutes(_jwtOption.ExpireMinutes).ToString()),
         };
+        
+        
+        if (user.Role == "Customer")
+        {
+            claims.Add(new Claim("CustomerId", user.Customer!.Id.ToString()));
+
+        }
         
         var token = _jwtService.GenerateAccessToken(claims);
         
