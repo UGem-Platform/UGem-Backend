@@ -8,7 +8,7 @@ public class ReviewDetail : BaseEntity<Guid>, IAuditableEntity
     public int Rating { get; set; } = 0;
     
     public Guid ReviewId { get; set; }
-    public Review? Review { get; set; }
+    public required Review Review { get; set; }
     
     public Guid OrderDetailId { get; set; }
     public required OrderDetail OrderDetail { get; set; }

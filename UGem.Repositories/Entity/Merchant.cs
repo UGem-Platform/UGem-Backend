@@ -12,8 +12,8 @@ public class Merchant: BaseEntity<Guid>, IAuditableEntity
     public required string LogoUrl { get; set; }
     public required string Status {get; set;}
     public decimal UnderratedScore { get; set; }
-    public double rating { get; set; }
-    public decimal PlatFormFeePercent { get; set; }
+    public decimal Rating { get; set; }
+    public decimal PlatformFeePercent { get; set; }
     public required string OpeningHours { get; set; }
     public decimal Latitude { get; set; }   // vĩ độ
     public decimal Longitude { get; set; }  // kinh độ
