@@ -4,6 +4,7 @@ namespace UGem.Repositories.Entity;
 
 public class Order: BaseEntity<Guid>, IAuditableEntity
 {
+   
     public required string Name { get; set; }
     public double Discount { get; set; }
     public decimal FinalPrice { get; set; }
