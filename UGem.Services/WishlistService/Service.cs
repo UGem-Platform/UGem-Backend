@@ -7,7 +7,7 @@ namespace UGem.Service.WishlistService;
 
 public class Service : IService
 {
-    public readonly AppDbContext _dbContext;
+    private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContext;
 
     public Service(AppDbContext dbContext, IHttpContextAccessor httpContext)

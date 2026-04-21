@@ -32,6 +32,7 @@ public class AppDbContext : DbContext
     public DbSet<OrderDetail> OrderDetails { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<ReviewDetail> ReviewDetails { get; set; }
+    public DbSet<Application> Applications { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
