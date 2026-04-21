@@ -138,7 +138,7 @@ public class Service : IService
         };
         _dbContext.Merchants.Add(merchant);
         application.User.Role = "Merchant";
-        var notification = new Repositories.Entity.Notification()
+        var notification = new Notification()
         {
             UserId = application.UserId,
             Title = "Your application has been created",

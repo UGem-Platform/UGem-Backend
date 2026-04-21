@@ -5,7 +5,7 @@ using UGem.Services.Models;
 
 namespace UGem.Api.Controllers;
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class CategoryController: ControllerBase
 {
     private readonly AppDbContext _dbContext;

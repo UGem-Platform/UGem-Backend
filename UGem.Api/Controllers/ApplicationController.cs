@@ -6,7 +6,7 @@ using UGem.Services.Models;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("[controller]")]
+[Route("api/[controller]")]
 public class ApplicationController : ControllerBase
 {
     private readonly IService _applicationService;
@@ -24,7 +24,7 @@ public class ApplicationController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(data));
     }
 
-    [HttpPost("staff/{id}/accept")]
+    [HttpPost("staff/{id:guid}/accept")]
     [Authorize(Roles = "Staff,Admin")]
     public async Task<IActionResult> AcceptApplication(Guid id)
     {
@@ -35,14 +35,14 @@ public class ApplicationController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(null, "Application accepted"));
     }
 
-    [HttpPost("CreateApplicationRequest")]
+    [HttpPost]
     public async Task<IActionResult> CreateApplicationRequest(Request.ApplicationRequest request)
     {
         await _applicationService.CreateApplicationRequest(request);
         return Ok();
     }
 
-    [HttpPut("")]
+    [HttpPut("resubmit")]
     public async Task<IActionResult> EditAfterReject(Request.UpdateApplicationRequest request)
     {
         var result = await _applicationService.EditApplicationAfterReject(request);
@@ -50,7 +50,7 @@ public class ApplicationController : ControllerBase
         return Ok(result);
     }
 
-    [HttpPost("")]
+    [HttpPost("reject")]
     public async Task<IActionResult> Reject(Request.RejectApplicationRequest request)
     {
         var result = await _applicationService.RejectApplication(request);

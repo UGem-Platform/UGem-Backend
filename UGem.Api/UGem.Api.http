@@ -1,6 +1,6 @@
 @UGem.Api_HostAddress = http://localhost:5019
 
-GET {{UGem.Api_HostAddress}}/weatherforecast/
+GET {{UGem.Api_HostAddress}}/api/weatherforecast/
 Accept: application/json
 
 ###
