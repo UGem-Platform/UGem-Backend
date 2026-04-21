@@ -20,4 +20,18 @@ public class ApplicationController : ControllerBase
         return Ok();
     }
     
+    [HttpPut("")]
+    public async Task<IActionResult> EditAfterReject(Request.UpdateApplicationRequest request)
+    {
+        var result = await _service.EditApplicationAfterReject(request);
+
+        return Ok(result);
+    }
+    [HttpPost("")]
+    public async Task<IActionResult> Reject(Request.RejectApplicationRequest request)
+    {
+        var result = await _service.RejectApplication(request);
+
+        return Ok(result);
+    }
 }
