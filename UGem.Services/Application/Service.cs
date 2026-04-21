@@ -18,10 +18,6 @@ public class Service : IService
     
     public Task<string> CreateApplicationRequest(Request.ApplicationRequest request)
     {
-        var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
-        
-        var userIdGuid = Guid.Parse(userId!);
-        
         // var application = new Repositories.Entity.Application()
         // {
         //     UserId = userIdGuid,
