@@ -16,7 +16,7 @@ public class Service : IService
         _httpContext = httpContext;
     }
     
-    public async Task<string> CreateApplicationRequest(Request.CreateApplicationRequest request)
+    public async Task<string> CreateApplicationRequest(Request.ApplicationRequest request)
     {
         var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
         

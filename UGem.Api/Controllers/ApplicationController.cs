@@ -14,7 +14,7 @@ public class ApplicationController : ControllerBase
     }
 
     [HttpPost("CreateApplicationRequest")]
-    public async Task<IActionResult> CreateApplicationRequest(Request.CreateApplicationRequest request)
+    public async Task<IActionResult> CreateApplicationRequest(Request.ApplicationRequest request)
     {
         await _applicationService.CreateApplicationRequest(request);
         return Ok();
@@ -23,14 +23,14 @@ public class ApplicationController : ControllerBase
     [HttpPut("")]
     public async Task<IActionResult> EditAfterReject(Request.UpdateApplicationRequest request)
     {
-        var result = await _service.EditApplicationAfterReject(request);
+        var result = await _applicationService.EditApplicationAfterReject(request);
 
         return Ok(result);
     }
     [HttpPost("")]
     public async Task<IActionResult> Reject(Request.RejectApplicationRequest request)
     {
-        var result = await _service.RejectApplication(request);
+        var result = await _applicationService.RejectApplication(request);;
 
         return Ok(result);
     }
