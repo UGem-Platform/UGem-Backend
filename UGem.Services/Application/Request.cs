@@ -19,7 +19,7 @@ public class Request
         public string Note { get; set; } = "";
     }
     
-    public class UpdateApplicationRequest :ApplicationRequest
+    public class UpdateApplicationRequest : ApplicationRequest
     {
         public Guid ApplicationId { get; set; }
         public required string Type { get; set; }
