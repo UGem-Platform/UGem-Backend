@@ -11,6 +11,6 @@ public class Request
         public decimal Latitude { get; set; }   // vĩ độ
         public decimal Longitude { get; set; }  // kinh độ
         
-        public List<FoodService.Request.CreateFoodRequest>? Menu { get; set; }
+        public required List<FoodService.Request.CreateFoodRequest> Menu { get; set; }
     }
 }
