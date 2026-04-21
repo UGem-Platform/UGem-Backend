@@ -5,7 +5,7 @@ namespace UGem.Repositories.Entity;
 public class Staff : BaseEntity<Guid>, IAuditableEntity
 {
     public required Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
 
     public DateTimeOffset HiredAt { get; set; }
 

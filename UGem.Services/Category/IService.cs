@@ -1,4 +1,4 @@
-namespace UGem.Service.Category;
+namespace UGem.Services.Category;
 
 public interface IService
 {

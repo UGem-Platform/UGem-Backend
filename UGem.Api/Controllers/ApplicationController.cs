@@ -1,6 +1,10 @@
+using Microsoft.AspNetCore.Mvc;
+
 namespace UGem.Api.Controllers;
 
-public class ApplicationController
+[ApiController]
+[Route("[controller]")]
+public class ApplicationController : ControllerBase
 {
     
 }

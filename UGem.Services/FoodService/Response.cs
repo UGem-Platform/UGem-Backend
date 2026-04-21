@@ -1,4 +1,4 @@
-namespace UGem.Service.Food;
+namespace UGem.Services.FoodService;
 
 public class Response
 {

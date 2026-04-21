@@ -1,4 +1,4 @@
-namespace UGem.Service.CheckInService;
+namespace UGem.Services.CheckInService;
 
 public interface IService
 {

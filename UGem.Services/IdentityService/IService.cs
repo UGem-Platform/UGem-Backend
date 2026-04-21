@@ -1,4 +1,4 @@
-namespace UGem.Service.Identity;
+namespace UGem.Services.IdentityService;
 
 public interface IService
 {

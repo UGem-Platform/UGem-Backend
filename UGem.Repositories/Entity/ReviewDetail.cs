@@ -8,10 +8,10 @@ public class ReviewDetail : BaseEntity<Guid>, IAuditableEntity
     public int Rating { get; set; } = 0;
     
     public required Guid ReviewId { get; set; }
-    public Review Review { get; set; }
+    public Review Review { get; set; } = null!;
     
     public required Guid OrderDetailId { get; set; }
-    public OrderDetail OrderDetail { get; set; }
+    public OrderDetail OrderDetail { get; set; } = null!;
     
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }

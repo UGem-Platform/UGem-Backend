@@ -1,4 +1,4 @@
-namespace UGem.Service.AdminService;
+namespace UGem.Services.AdminService;
 
 public class Service
 {

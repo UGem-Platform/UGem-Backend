@@ -1,4 +1,4 @@
-namespace UGem.Service.WishlistService;
+namespace UGem.Services.WishlistService;
 
 public class Response
 {

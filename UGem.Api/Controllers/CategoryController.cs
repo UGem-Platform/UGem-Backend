@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using UGem.Repositories;
-using UGem.Service.Category;
-using UGem.Service.Models;
+using UGem.Services.Category;
+using UGem.Services.Models;
 
 namespace UGem.Api.Controllers;
 [ApiController]

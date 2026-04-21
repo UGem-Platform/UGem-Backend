@@ -2,13 +2,13 @@ using Microsoft.EntityFrameworkCore;
 using Quartz;
 using UGem.Api.Extensions;
 using UGem.Repositories;
-using UGem.Service.BackGroundJobService;
-using MailService = UGem.Service.MailService;
-using MediaService = UGem.Service.MediaService;
-using CategoryService = UGem.Service.Category;
-using CloudinaryService = UGem.Service.CloudinaryService;
-using ApplicationService = UGem.Service.Application;
-using NotificationService = UGem.Service.Notification;
+using UGem.Services.BackGroundJobService;
+using MailService = UGem.Services.MailService;
+using MediaService = UGem.Services.MediaService;
+using CategoryService = UGem.Services.Category;
+using CloudinaryService = UGem.Services.CloudinaryService;
+using ApplicationService = UGem.Services.Application;
+using NotificationService = UGem.Services.Notification;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

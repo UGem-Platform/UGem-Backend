@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using UGem.Repositories;
 using Quartz;
-namespace UGem.Service.BackGroundJobService;
+namespace UGem.Services.BackGroundJobService;
 
 public class ProcessTransactionPendingJob : IJob
 {

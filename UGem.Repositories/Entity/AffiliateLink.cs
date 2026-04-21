@@ -11,10 +11,10 @@ public class AffiliateLink : BaseEntity<Guid>, IAuditableEntity
     public bool IsActive { get; set; } = true;
     
     public required Guid ReviewerId { get; set; }
-    public Reviewer Reviewer { get; set; }
+    public Reviewer Reviewer { get; set; } = null!;
     
     public required Guid MerchantId { get; set; }
-    public Merchant Merchant { get; set; }
+    public Merchant Merchant { get; set; } = null!;
     
     public ICollection<Order> Orders { get; set; } = new List<Order>();
  

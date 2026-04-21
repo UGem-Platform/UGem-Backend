@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using UGem.Service.Identity;
+using UGem.Services.IdentityService;
 
 namespace UGem.Api.Controllers;
 

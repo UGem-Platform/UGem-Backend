@@ -1,4 +1,4 @@
-namespace UGem.Service.AffiliateLinkService;
+namespace UGem.Services.AffiliateLinkService;
 
 public class Request
 {

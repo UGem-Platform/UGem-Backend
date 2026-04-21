@@ -1,4 +1,4 @@
-namespace UGem.Service.Order;
+namespace UGem.Services.OrderService;
 
 public class Request
 {
