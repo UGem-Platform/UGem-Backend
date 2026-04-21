@@ -9,11 +9,11 @@ public class OrderDetail: BaseEntity<Guid>, IAuditableEntity
     public decimal UnitPrice {get; set;}
     public string? Notes {get; set;}
     
-    public Guid OrderId { get; set; }
-    public required Order Order { get; set; }
+    public required Guid OrderId { get; set; }
+    public Order Order { get; set; }
     
-    public Guid FoodId { get; set; }
-    public required Food Food { get; set; }
+    public required Guid FoodId { get; set; }
+    public Food Food { get; set; }
     
     public ReviewDetail? ReviewDetail { get; set; }
     

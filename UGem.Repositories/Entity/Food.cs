@@ -10,8 +10,8 @@ public class Food: BaseEntity<Guid>, IAuditableEntity
     public bool IsAvailable { get; set; }
     public string? ImageUrl { get; set; }
     
-    public Guid MerchantId { get; set; }
-    public required Merchant Merchant { get; set; }
+    public required Guid MerchantId { get; set; }
+    public Merchant Merchant { get; set; }
     
     public ICollection<CategoryDetail> CategoryDetails { get; set; } = new List<CategoryDetail>();
     

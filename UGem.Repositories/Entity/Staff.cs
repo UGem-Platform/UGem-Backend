@@ -4,8 +4,8 @@ namespace UGem.Repositories.Entity;
 
 public class Staff : BaseEntity<Guid>, IAuditableEntity
 {
-    public Guid UserId { get; set; }
-    public required User User { get; set; }
+    public required Guid UserId { get; set; }
+    public User User { get; set; }
 
     public DateTimeOffset HiredAt { get; set; }
 
