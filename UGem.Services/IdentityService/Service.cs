@@ -22,7 +22,8 @@ public class Service : IService
     public async Task<Response.IdentityResponse> Login(string phoneNumber, string password)
     {
         var user = await _dbContext.Users
-            .Include(x => x.Customer)    
+            .Include(x => x.Customer)
+            .Include(x => x.Staff)    
             .FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
 
         if (user == null)
@@ -52,6 +53,7 @@ public class Service : IService
             claims.Add(new Claim("CustomerId", user.Customer!.Id.ToString()));
 
         }
+        
         
         var token = _jwtService.GenerateAccessToken(claims);
         

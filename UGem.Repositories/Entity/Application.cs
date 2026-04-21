@@ -6,6 +6,7 @@ public class Application: BaseEntity<Guid>, IAuditableEntity
 {
     public required string Type { get; set; }
     public required string Status { get; set; }
+    public string? Note { get; set; }
     public DateTime ReviewedAt { get; set; }
     
     public required Guid UserId { get; set; }

@@ -15,22 +15,107 @@ public class Service : IService
         _dbContext = dbContext;
         _httpContext = httpContext;
     }
-
-    public Task<string> CreateApplicationRequest(Request.CreateApplicationRequest request)
+    
+    public async Task<string> CreateApplicationRequest(Request.ApplicationRequest request)
     {
         var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
 
         var userIdGuid = Guid.Parse(userId!);
+        
+        var application = new Repositories.Entity.Application()
+        {
+            UserId = userIdGuid,
+            Type = "Merchant",
+            Status = "Pending",
+            ReviewedAt = DateTime.UtcNow,
+        };
 
-        // var application = new Repositories.Entity.Application()
-        // {
-        //     UserId = userIdGuid,
-        //     Type = request.Type,
-        //     Status = "Pending",
-        //     ReviewedAt = DateTime.UtcNow,
-        // };
+        _dbContext.Add(application);
+        await _dbContext.SaveChangesAsync();
+        
+        List<ApplicationMenu> applicationMenus = new List<ApplicationMenu>();
+        
+        foreach (var menu in request.Menu)
+        {
+            applicationMenus.Add(new ApplicationMenu()
+            {
+                ApplicationId = application.Id,
+                Name = menu.Name,
+                Description = menu.Description,
+                Price = menu.Price,
+                ImageUrl = menu.ImageUrl,
+                Category = menu.Category,
+            });
+        }
+        
+        if (applicationMenus.Any())
+        {
+            _dbContext.AddRange(applicationMenus);
+            await _dbContext.SaveChangesAsync();
+        }
+        
+        return "Application send successfully";
+    }
+    
+    public async Task<string> RejectApplication(Request.RejectApplicationRequest request) 
+    { 
+        var application = await _dbContext.Applications.FirstOrDefaultAsync(
+            x => x.Id == request.ApplicationId);
+        
+        if (application == null) 
+            throw new Exception("Application not found"); 
+        
+        if (application.Status != "Pending") 
+            throw new Exception("Application already processed"); 
+        
+        application.Status = "Rejected"; 
+        application.Note = request.Note;
+        application.ReviewedAt = DateTime.Now; 
+        
+        await _dbContext.SaveChangesAsync(); 
+        return "Reject success"; 
+    }
 
-        throw new NotImplementedException();
+    public async Task<string> EditApplicationAfterReject(Request.UpdateApplicationRequest request)
+    {
+        var app = await _dbContext.Applications
+            .Include(x => x.ApplicationMenus)
+            .FirstOrDefaultAsync(x => x.Id == request.ApplicationId);
+
+        if (app == null)
+            throw new Exception("Application not found"); 
+        
+        if (app.Status != "Rejected")
+            throw new Exception("Just edit when application reject");
+        
+        
+        app.Type = request.Type;
+        app.Note = request.Note;
+        app.Status = "Pending";
+        app.ReviewedAt = default;
+        app.UpdatedAt = DateTimeOffset.UtcNow;
+        
+        if (request.Menu != null)
+        {
+            _dbContext.ApplicationMenus.RemoveRange(app.ApplicationMenus);
+            
+            app.ApplicationMenus = request.Menu.Select(x => new ApplicationMenu()
+            {
+                Id = Guid.NewGuid(),
+                Name = x.Name,
+                Description = x.Description,
+                Price = x.Price,
+                ImageUrl = x.ImageUrl,
+                Category = x.Category,
+                ApplicationId = app.Id,
+                CreatedAt = DateTimeOffset.UtcNow
+            }).ToList();
+        }
+
+        await _dbContext.SaveChangesAsync();
+
+        return "update success";
+       
     }
 
     public async Task AcceptApplication(Guid id, Guid staffId)
