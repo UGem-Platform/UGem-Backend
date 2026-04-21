@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using UGem.Repositories;
 using UGem.Repositories.Entity;
 
-namespace UGem.Service.WishlistService;
+namespace UGem.Services.WishlistService;
 
 public class Service : IService
 {

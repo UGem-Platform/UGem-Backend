@@ -2,7 +2,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using UGem.Service.JwtService;
+using UGem.Services.JwtService;
 
 namespace UGem.Api.Extensions;
 

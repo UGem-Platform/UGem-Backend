@@ -1,4 +1,4 @@
-namespace UGem.Service.Merchant;
+namespace UGem.Services.MerchantService;
 
 public class Request
 {

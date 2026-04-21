@@ -20,6 +20,9 @@ public class AppDbContext : DbContext
     public DbSet<Staff> Staffs { get; set; }
     public DbSet<Customer> Customers { get; set; }
     public DbSet<Merchant> Merchants { get; set; }
+    public DbSet<Application> Applications { get; set; }
+    public DbSet<ApplicationMenu> ApplicationMenus { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
     public DbSet<Reviewer> Reviewers { get; set; }
     public DbSet<AffiliateLink> AffiliateLinks { get; set; }
     public DbSet<Category> Categories { get; set; }
@@ -32,7 +35,7 @@ public class AppDbContext : DbContext
     public DbSet<OrderDetail> OrderDetails { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<ReviewDetail> ReviewDetails { get; set; }
-    public DbSet<Application> Applications { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -158,6 +161,73 @@ public class AppDbContext : DbContext
                 .WithMany(m => m.AffiliateLinks)
                 .HasForeignKey(a => a.MerchantId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Application>(builder =>
+        {
+            ConfigureBaseEntity(builder);
+
+            builder.Property(a => a.Type)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.Property(a => a.Status)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.HasOne(a => a.User)
+                .WithMany(u => u.Applications)
+                .HasForeignKey(a => a.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ApplicationMenu>(builder =>
+        {
+            ConfigureBaseEntity(builder);
+
+            builder.Property(am => am.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            builder.Property(am => am.Description)
+                .IsRequired()
+                .HasMaxLength(2000);
+
+            builder.Property(am => am.Price)
+                .HasPrecision(18, 2);
+
+            builder.Property(am => am.ImageUrl)
+                .HasMaxLength(500);
+
+            builder.Property(am => am.Category)
+                .HasMaxLength(100);
+
+            builder.HasOne(am => am.Application)
+                .WithMany(a => a.ApplicationMenus)
+                .HasForeignKey(am => am.ApplicationId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Notification>(builder =>
+        {
+            ConfigureBaseEntity(builder);
+
+            builder.Property(n => n.Title)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            builder.Property(n => n.Message)
+                .IsRequired()
+                .HasMaxLength(2000);
+
+            builder.Property(n => n.Type)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.HasOne(n => n.User)
+                .WithMany(u => u.Notifications)
+                .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<Customer>(builder =>

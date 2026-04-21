@@ -1,6 +1,6 @@
 using UGem.Repositories;
 
-namespace UGem.Service.ReviewService;
+namespace UGem.Services.ReviewService;
 
 public class Service : IService
 {

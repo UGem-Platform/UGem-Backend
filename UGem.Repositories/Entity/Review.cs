@@ -10,10 +10,10 @@ public class Review : BaseEntity<Guid>, IAuditableEntity
     public bool IsVerified { get; set; } = false;
     
     public required Guid OrderId { get; set; }
-    public Order Order { get; set; }
+    public Order Order { get; set; } = null!;
     
     public required Guid MerchantId { get; set; }
-    public Merchant Merchant { get; set; }
+    public Merchant Merchant { get; set; } = null!;
     
     public ICollection<ReviewDetail> ReviewDetails { get; set; } = new List<ReviewDetail>();
     

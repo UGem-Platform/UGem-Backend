@@ -5,7 +5,7 @@ namespace UGem.Repositories.Entity;
 public class Admin : BaseEntity<Guid>, IAuditableEntity
 {
     public required Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
 
     public string? Permissions { get; set; }
 

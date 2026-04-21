@@ -1,4 +1,4 @@
-namespace UGem.Service.MailService;
+namespace UGem.Services.MailService;
 
 public interface IService
 {

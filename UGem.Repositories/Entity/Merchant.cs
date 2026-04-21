@@ -19,7 +19,7 @@ public class Merchant: BaseEntity<Guid>, IAuditableEntity
     public decimal Longitude { get; set; }  // kinh độ
     
     public required Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
     
     public ICollection<Food> Foods { get; set; } = new List<Food>();
     

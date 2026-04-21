@@ -17,7 +17,7 @@ public class Order: BaseEntity<Guid>, IAuditableEntity
     public required string DeliveryAddress { get; set; }
     
     public required Guid CustomerId { get; set; }
-    public Customer Customer { get; set; }
+    public Customer Customer { get; set; } = null!;
     
     public Review? Review { get; set; }
     

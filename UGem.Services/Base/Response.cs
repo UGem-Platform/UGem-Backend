@@ -1,4 +1,4 @@
-namespace UGem.Service.Base;
+namespace UGem.Services.Base;
 
 public class Response
 {

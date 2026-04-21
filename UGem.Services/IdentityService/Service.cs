@@ -2,9 +2,9 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using UGem.Repositories;
-using UGem.Service.JwtService;
+using UGem.Services.JwtService;
 
-namespace UGem.Service.Identity;
+namespace UGem.Services.IdentityService;
 
 public class Service : IService
 {

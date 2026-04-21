@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using UGem.Repositories;
 
-namespace UGem.Service.Category;
+namespace UGem.Services.Category;
 
 public class Service : IService
 {
