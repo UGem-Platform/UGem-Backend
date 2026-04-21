@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace UGem.Service.MailService;
+namespace UGem.Services.MailService;
 
 public class MailOption
 {

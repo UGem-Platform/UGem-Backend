@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UGem.Api.Extensions;
-using UGem.Service.WishlistService;
+using UGem.Services.WishlistService;
 
 namespace UGem.Api.Controllers;
 

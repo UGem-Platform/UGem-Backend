@@ -7,7 +7,7 @@ public class Customer : BaseEntity<Guid>, IAuditableEntity
     public int TotalCheckIns { get; set; }
     
     public required Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
     
     public Reviewer? Reviewer { get; set; }
     

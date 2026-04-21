@@ -1,6 +1,6 @@
 using System.Security.Claims;
 
-namespace UGem.Service.JwtService;
+namespace UGem.Services.JwtService;
 
 public interface IService
 {

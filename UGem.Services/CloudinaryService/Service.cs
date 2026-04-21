@@ -2,9 +2,9 @@
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using UGem.Service.MediaService;
+using UGem.Services.MediaService;
 
-namespace UGem.Service.CloudinaryService;
+namespace UGem.Services.CloudinaryService;
 
 public class Service : IService
 {

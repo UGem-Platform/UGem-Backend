@@ -5,7 +5,7 @@ namespace UGem.Repositories.Entity;
 public class Wishlist : BaseEntity<Guid>, IAuditableEntity
 {
     public required Guid CustomerId { get; set; }
-    public Customer Customer { get; set; }
+    public Customer Customer { get; set; } = null!;
     
     public ICollection<WishlistDetail> WishlistDetails { get; set; } = new List<WishlistDetail>();
     

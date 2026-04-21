@@ -9,7 +9,7 @@ public class Reviewer : BaseEntity<Guid>, IAuditableEntity
     public decimal CommissionRate { get; set; }
     
     public required Guid CustomerId { get; set; }
-    public Customer Customer { get; set; }
+    public Customer Customer { get; set; } = null!;
     
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     

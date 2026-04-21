@@ -1,4 +1,4 @@
-namespace UGem.Service.Notification;
+namespace UGem.Services.Notification;
 
 public class Service : IService
 {

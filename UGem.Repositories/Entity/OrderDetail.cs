@@ -10,10 +10,10 @@ public class OrderDetail: BaseEntity<Guid>, IAuditableEntity
     public string? Notes {get; set;}
     
     public required Guid OrderId { get; set; }
-    public Order Order { get; set; }
+    public Order Order { get; set; } = null!;
     
     public required Guid FoodId { get; set; }
-    public Food Food { get; set; }
+    public Food Food { get; set; } = null!;
     
     public ReviewDetail? ReviewDetail { get; set; }
     

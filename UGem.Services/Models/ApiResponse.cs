@@ -1,4 +1,4 @@
-namespace UGem.Service.Models;
+namespace UGem.Services.Models;
 
 public class ApiResponse
 {

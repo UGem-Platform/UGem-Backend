@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace UGem.Service.CloudinaryService;
+namespace UGem.Services.CloudinaryService;
 
 public record CloudinaryOptions
 {

@@ -1,4 +1,4 @@
-namespace UGem.Service.StaffService;
+namespace UGem.Services.StaffService;
 
 public class Response
 {

@@ -3,7 +3,7 @@ using MailKit.Security;
 using Microsoft.Extensions.Configuration;
 using MimeKit;
 
-namespace UGem.Service.MailService;
+namespace UGem.Services.MailService;
 
 public class Service : IService
 {

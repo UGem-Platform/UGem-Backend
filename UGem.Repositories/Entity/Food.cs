@@ -11,7 +11,7 @@ public class Food: BaseEntity<Guid>, IAuditableEntity
     public string? ImageUrl { get; set; }
     
     public required Guid MerchantId { get; set; }
-    public Merchant Merchant { get; set; }
+    public Merchant Merchant { get; set; } = null!;
     
     public ICollection<CategoryDetail> CategoryDetails { get; set; } = new List<CategoryDetail>();
     

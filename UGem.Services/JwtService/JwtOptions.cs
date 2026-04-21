@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace UGem.Service.JwtService;
+namespace UGem.Services.JwtService;
 
 public class JwtOptions
 {

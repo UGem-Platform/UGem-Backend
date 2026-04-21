@@ -1,4 +1,4 @@
-namespace UGem.Service.CustomerService;
+namespace UGem.Services.CustomerService;
 
 public class Service
 {

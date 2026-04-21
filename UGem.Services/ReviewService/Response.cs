@@ -1,4 +1,4 @@
-namespace UGem.Service.ReviewService;
+namespace UGem.Services.ReviewService;
 
 public class Response
 {

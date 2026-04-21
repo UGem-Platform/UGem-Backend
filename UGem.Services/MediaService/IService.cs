@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 
-namespace UGem.Service.MediaService;
+namespace UGem.Services.MediaService;
 
 public interface IService
 {
