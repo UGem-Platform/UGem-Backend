@@ -7,11 +7,17 @@ namespace UGem.Api.Controllers;
 [Route("[controller]")]
 public class ApplicationController : ControllerBase
 {
-    private readonly IService _service;
-
-    public ApplicationController(IService service)
+    private readonly IService _applicationService;
+    public ApplicationController(IService applicationService)
     {
-        _service = service;
+        _applicationService = applicationService;
+    }
+
+    [HttpPost("CreateApplicationRequest")]
+    public async Task<IActionResult> CreateApplicationRequest(Request.CreateApplicationRequest request)
+    {
+        await _applicationService.CreateApplicationRequest(request);
+        return Ok();
     }
     
     [HttpPut("")]
