@@ -86,11 +86,12 @@ public class Service : IService
     {
         var app = await _dbContext.Applications
             .Include(x => x.ApplicationMenus)
+            .Include(x => x.User)
             .FirstOrDefaultAsync(x => x.Id == request.ApplicationId);
 
         if (app == null)
             throw new Exception("Application not found");
-
+        
         if (app.Status != "Rejected")
             throw new Exception("Just edit when application reject");
 
@@ -103,7 +104,8 @@ public class Service : IService
 
         _dbContext.ApplicationMenus.RemoveRange(app.ApplicationMenus);
 
-        app.ApplicationMenus = request.Menu.Select(x => new ApplicationMenu()
+        app.ApplicationMenus = request.Menu.Select(
+            x => new ApplicationMenu()
         {
             Id = Guid.NewGuid(),
             Name = x.Name,
@@ -114,7 +116,18 @@ public class Service : IService
             ApplicationId = app.Id,
             CreatedAt = DateTimeOffset.UtcNow
         }).ToList();
-
+        
+        var notification = new Notification()
+        {
+            UserId = app.UserId,
+            Title = "Your application has been reject",
+            Message = $"{app.Note}",
+            Type = "Reject",
+            IsRead = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+        _dbContext.Notifications.Add(notification);
+        
         await _dbContext.SaveChangesAsync();
 
         return "update success";
