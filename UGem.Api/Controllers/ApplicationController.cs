@@ -10,6 +10,12 @@ namespace UGem.Api.Controllers;
 public class ApplicationController : ControllerBase
 {
     private readonly IService _applicationService;
+
+    public ApplicationController(IService applicationService)
+    {
+        _applicationService = applicationService;
+    }
+
     [HttpGet("staff")]
     [Authorize(Roles = "Staff,Admin")]
     public async Task<IActionResult> GetApplications([FromQuery] string? status = null)
@@ -17,18 +23,16 @@ public class ApplicationController : ControllerBase
         var data = await _applicationService.GetApplications(status);
         return Ok(ApiResponseFactory.SuccessResponse(data));
     }
+
     [HttpPost("staff/{id}/accept")]
     [Authorize(Roles = "Staff,Admin")]
     public async Task<IActionResult> AcceptApplication(Guid id)
     {
         var staffId = Guid.Parse(User.Claims.FirstOrDefault(x => x.Type == "UserId")!.Value);
- 
+
         await _applicationService.AcceptApplication(id, staffId);
- 
+
         return Ok(ApiResponseFactory.SuccessResponse(null, "Application accepted"));
-    public ApplicationController(IService applicationService)
-    {
-        _applicationService = applicationService;
     }
 
     [HttpPost("CreateApplicationRequest")]
@@ -37,7 +41,7 @@ public class ApplicationController : ControllerBase
         await _applicationService.CreateApplicationRequest(request);
         return Ok();
     }
-    
+
     [HttpPut("")]
     public async Task<IActionResult> EditAfterReject(Request.UpdateApplicationRequest request)
     {
@@ -45,10 +49,11 @@ public class ApplicationController : ControllerBase
 
         return Ok(result);
     }
+
     [HttpPost("")]
     public async Task<IActionResult> Reject(Request.RejectApplicationRequest request)
     {
-        var result = await _applicationService.RejectApplication(request);;
+        var result = await _applicationService.RejectApplication(request);
 
         return Ok(result);
     }
