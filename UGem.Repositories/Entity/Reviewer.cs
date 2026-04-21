@@ -8,8 +8,8 @@ public class Reviewer : BaseEntity<Guid>, IAuditableEntity
     public required string Rank { get; set; }
     public decimal CommissionRate { get; set; }
     
-    public Guid CustomerId { get; set; }
-    public required Customer Customer { get; set; }
+    public required Guid CustomerId { get; set; }
+    public Customer Customer { get; set; }
     
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
     
