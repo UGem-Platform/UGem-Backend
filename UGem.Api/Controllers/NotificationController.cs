@@ -1,6 +1,22 @@
+using Microsoft.AspNetCore.Mvc;
+using UGem.Services.Models;
+using UGem.Services.NotificationService;
+
 namespace UGem.Api.Controllers;
 
-public class NotificationController
+public class NotificationController : ControllerBase
 {
+    private readonly IService _notificationService;
     
+    public NotificationController(IService notificationService)
+    {
+        _notificationService = notificationService;
+    }
+
+    [HttpGet("GetNotifications")]
+    public async Task<IActionResult> GetNotifications()
+    {
+        var result = await _notificationService.GetNotificationRequests();
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Notifications retrieved", HttpContext.TraceIdentifier));
+    }
 }

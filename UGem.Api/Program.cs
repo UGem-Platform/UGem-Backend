@@ -8,7 +8,8 @@ using MediaService = UGem.Services.MediaService;
 using CategoryService = UGem.Services.Category;
 using CloudinaryService = UGem.Services.CloudinaryService;
 using ApplicationService = UGem.Services.Application;
-using NotificationService = UGem.Services.Notification;
+using NotificationService = UGem.Services.NotificationService;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.

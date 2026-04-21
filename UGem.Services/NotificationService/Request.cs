@@ -1,4 +1,4 @@
-namespace UGem.Services.Notification;
+namespace UGem.Services.NotificationService;
 
 public class Request
 {

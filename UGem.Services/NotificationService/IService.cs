@@ -1,6 +1,6 @@
-namespace UGem.Services.Notification;
+namespace UGem.Services.NotificationService;
 
 public interface IService
 {
-    
+    public Task<List<Response.NotificationResponse>> GetNotificationRequests();
 }
