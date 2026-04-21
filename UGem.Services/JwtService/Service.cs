@@ -20,7 +20,7 @@ public class Service : IService
         var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtOption.SecretKey));
         var signinCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256);
         var tokeOptions = new JwtSecurityToken(
-            issuer: _jwtOption.Issuer, 
+            issuer: _jwtOption.Issuer,
             audience: _jwtOption.Audience,
             claims: claims,
             expires: DateTime.Now.AddMinutes(_jwtOption.ExpireMinutes),
@@ -28,8 +28,8 @@ public class Service : IService
         );
 
         var tokenString = new JwtSecurityTokenHandler().WriteToken(tokeOptions);
-        
-        return tokenString;     
+
+        return tokenString;
     }
 
     public ClaimsPrincipal ValidateToken(string token)

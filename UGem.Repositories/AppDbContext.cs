@@ -175,6 +175,35 @@ public class AppDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(50);
 
+            builder.Property(a => a.Note)
+                .HasMaxLength(2000);
+
+            builder.Property(a => a.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            builder.Property(a => a.Description)
+                .IsRequired()
+                .HasMaxLength(2000);
+
+            builder.Property(a => a.Email)
+                .IsRequired()
+                .HasMaxLength(255);
+
+            builder.Property(a => a.Phone)
+                .IsRequired()
+                .HasMaxLength(20);
+
+            builder.Property(a => a.LogoUrl)
+                .IsRequired()
+                .HasMaxLength(500);
+
+            builder.Property(a => a.Latitude)
+                .HasPrecision(9, 6);
+
+            builder.Property(a => a.Longitude)
+                .HasPrecision(9, 6);
+
             builder.HasOne(a => a.User)
                 .WithMany(u => u.Applications)
                 .HasForeignKey(a => a.UserId)
@@ -276,6 +305,10 @@ public class AppDbContext : DbContext
             builder.Property(m => m.Name)
                 .IsRequired()
                 .HasMaxLength(200);
+
+            builder.Property(m => m.Description)
+                .IsRequired()
+                .HasMaxLength(2000);
 
             builder.Property(m => m.Email)
                 .IsRequired()

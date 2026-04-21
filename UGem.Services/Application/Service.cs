@@ -28,6 +28,13 @@ public class Service : IService
             Type = "Merchant",
             Status = "Pending",
             ReviewedAt = DateTime.UtcNow,
+            Name = request.Name,
+            Description = request.Description,
+            Email = request.Email,
+            Phone = request.Phone,
+            LogoUrl = request.LogoUrl,
+            Longitude = request.Longitude,
+            Latitude = request.Latitude,
         };
 
         _dbContext.Add(application);
@@ -119,6 +126,7 @@ public class Service : IService
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (application == null) throw new Exception("Cannot found application");
+        if (application.User == null) throw new Exception("Application user not found");
         if (application.Status != "Pending") throw new Exception("The application is not pending.");
         application.Status = "Approved";
         application.ReviewedAt = DateTime.UtcNow;
@@ -126,11 +134,12 @@ public class Service : IService
         var merchant = new Merchant()
         {
             UserId = application.UserId,
-            Name = application.User!.FullName,
-            Email = application.User.Email,
-            Phone = application.User.PhoneNumber,
+            Name = application.Name,
+            Description = application.Description,
+            Email = application.Email,
+            Phone = application.Phone,
             Address = "",
-            LogoUrl = application.User.AvatarUrl ?? "",
+            LogoUrl = application.LogoUrl ?? "",
             Status = "Active",
             IsActive = true,
             OpeningHours = "",

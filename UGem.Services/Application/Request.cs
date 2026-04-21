@@ -8,6 +8,7 @@ public class Request
         public required string Description { get; set; }
         public required string Email { get; set; }
         public required string Phone { get; set; }
+        public required string LogoUrl { get; set; }
         public decimal Latitude { get; set; } // vĩ độ
         public decimal Longitude { get; set; } // kinh độ
 

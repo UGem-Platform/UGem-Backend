@@ -5,6 +5,7 @@ namespace UGem.Repositories.Entity;
 public class Merchant: BaseEntity<Guid>, IAuditableEntity
 {
     public  required string Name { get; set; }
+    public required string Description { get; set; }
     public required  string Email { get; set; }
     public required  string Phone { get; set; }
     public required  string Address { get; set; }
