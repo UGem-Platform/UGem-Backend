@@ -17,7 +17,7 @@ public class ApplicationController : ControllerBase
         _applicationService = applicationService;
     }
 
-    [HttpGet("s")]
+    [HttpGet("staff")]
     [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
     public async Task<IActionResult> GetApplications()
     {
@@ -25,7 +25,7 @@ public class ApplicationController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(data));
     }
 
-    [HttpPost("s/accept")]
+    [HttpPost("accept")]
     [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
     public async Task<IActionResult> AcceptApplication(Guid id)
     {
