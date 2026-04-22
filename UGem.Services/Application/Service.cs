@@ -133,7 +133,7 @@ public class Service : IService
         return "update success";
     }
 
-    public async Task AcceptApplication(Guid id, Guid staffId)
+    public async Task AcceptApplication(Guid id)
     {
         var application = await _dbContext.Applications.Include(application => application.User)
             .FirstOrDefaultAsync(a => a.Id == id);
