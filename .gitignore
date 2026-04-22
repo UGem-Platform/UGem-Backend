@@ -35,6 +35,14 @@ _ReSharper*/
 .env
 .env.*
 
+# App settings
+**/appsettings.*.json
+!**/appsettings.json
+
+# EF Core generated migrations
+UGem.Repositories/Migrations/[0-9]*_*.cs
+UGem.Repositories/Migrations/[0-9]*_*.Designer.cs
+
 # OS files
 .DS_Store
 Thumbs.db
