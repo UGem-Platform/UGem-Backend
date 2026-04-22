@@ -1,4 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UGem.Api.Extensions;
+using UGem.Services.CustomerService;
+using UGem.Services.Models;
 
 namespace UGem.Api.Controllers;
 
@@ -6,21 +10,26 @@ namespace UGem.Api.Controllers;
     [Route("api/[controller]")]
     public class CustomerController : ControllerBase
     {
-        [HttpPost]
-        public IActionResult Create()
-        {
-            return Ok();
-        }
+        private readonly IService _service;
 
-        [HttpGet]
-        public IActionResult GetAll()
+        public CustomerController(IService service)
         {
-            return Ok();
+            _service = service;
         }
-
-        [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+        [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+        [HttpPut("confirm-received")]
+        public async Task<IActionResult> ConfirmOrderReceived(Request.ConfirmOrderRequest request)
         {
-            return Ok();
+            await _service.ConfirmOrderReceived(request);
+            return Ok(ApiResponseFactory.SuccessResponse(null, "Confirm order received success"));
         }
+        [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+        [HttpPut("confirm-not-received")]
+        public async Task<IActionResult> ConfirmOrderNotReceived(Request.ConfirmOrderRequest request)
+        {
+            await _service.ConfirmOrderNotReceived(request);
+            return Ok(ApiResponseFactory.SuccessResponse(null, "Confirm order not received success"));
+        }
+        
+        
     }

@@ -10,4 +10,10 @@ public class Request
         public string? ImageUrl { get; set; }
         public string? Category { get; set; }
     }
+    
+    public class FoodOrderRequest
+    {
+        public Guid FoodId { get; set; }
+        public int Quantity { get; set; }
+    }
 }
