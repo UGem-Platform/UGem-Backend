@@ -48,13 +48,6 @@ public class Service : IService
         };
         
         
-        if (user.Role == "Customer")
-        {
-            claims.Add(new Claim("CustomerId", user.Customer!.Id.ToString()));
-
-        }
-        
-        
         var token = _jwtService.GenerateAccessToken(claims);
         
             var result = new Response.IdentityResponse()

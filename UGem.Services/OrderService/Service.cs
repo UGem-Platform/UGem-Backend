@@ -16,6 +16,11 @@ public class Service : IService
         _httpContext = httpContext;
     }
 
+    public Task<List<Response.GetOrderListResponse>> GetOrdersList()
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task CreateOrder(Request.CreateOrderRequest request)
     {
         var customerId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
