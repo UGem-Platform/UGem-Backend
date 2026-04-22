@@ -7,17 +7,23 @@ namespace UGem.Api.Controllers;
 [Route("api/[controller]")]
 public class OrderController: ControllerBase
 {
-    private readonly IService _service;
-
-    public OrderController(IService service)
+    private readonly IService _orderService;
+    public OrderController(IService orderService)
     {
-        _service = service;
+        _orderService = orderService;
+    }
+    
+    [HttpGet]
+    public async Task<IActionResult> GetOrderList()
+    {
+        var result = await _orderService.GetOrdersList();
+        return Ok(ApiResponseFactory.SuccessResponse(result));
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateOrder(Request.CreateOrderRequest request)
     {
-        await _service.CreateOrder(request);
+        await _orderService.CreateOrder(request);
         return Ok(ApiResponseFactory.SuccessResponse(null, "Create order success"));
     }
 }
