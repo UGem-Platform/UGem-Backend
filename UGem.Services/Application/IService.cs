@@ -2,9 +2,9 @@ namespace UGem.Services.Application;
 
 public interface IService
 {
-    public Task AcceptApplication(Guid id, Guid staffId);
+    public Task AcceptApplication(Guid id);
 
-    public Task<List<Response.GetApplicationForStaffResponse>> GetApplications(string? status = null);
+    public Task<List<Response.GetApplicationForStaffResponse>> GetApplications();
 
     public Task<string> CreateApplicationRequest(Request.ApplicationRequest request);
 

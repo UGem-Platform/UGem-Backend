@@ -17,26 +17,25 @@ public class ApplicationController : ControllerBase
         _applicationService = applicationService;
     }
 
-    [HttpGet("staff")]
-    [Authorize(Roles = "Staff,Admin")]
-    public async Task<IActionResult> GetApplications([FromQuery] string? status = null)
+    [HttpGet("s")]
+    [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
+    public async Task<IActionResult> GetApplications()
     {
-        var data = await _applicationService.GetApplications(status);
+        var data = await _applicationService.GetApplications();
         return Ok(ApiResponseFactory.SuccessResponse(data));
     }
 
-    [HttpPost("staff/{id:guid}/accept")]
-    [Authorize(Roles = "Staff,Admin")]
+    [HttpPost("s/accept")]
+    [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
     public async Task<IActionResult> AcceptApplication(Guid id)
     {
-        var staffId = Guid.Parse(User.Claims.FirstOrDefault(x => x.Type == "UserId")!.Value);
+         await _applicationService.AcceptApplication(id);
 
-        await _applicationService.AcceptApplication(id, staffId);
-
-        return Ok(ApiResponseFactory.SuccessResponse(null, "Application accepted"));
+        return Ok(ApiResponseFactory.SuccessResponse(null,"Application accepted"));
     }
     
     [HttpPost]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     public async Task<IActionResult> CreateApplicationRequest(Request.ApplicationRequest request)
     {
         await _applicationService.CreateApplicationRequest(request);
@@ -44,6 +43,7 @@ public class ApplicationController : ControllerBase
     }
 
     [HttpPut("resubmit")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     public async Task<IActionResult> EditAfterReject(Request.UpdateApplicationRequest request)
     {
         var result = await _applicationService.EditApplicationAfterReject(request);
