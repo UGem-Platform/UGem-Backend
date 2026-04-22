@@ -76,7 +76,18 @@ public class Service : IService
 
         application.Status = "Rejected";
         application.Note = request.Note;
-        application.ReviewedAt = DateTime.Now;
+        application.ReviewedAt = DateTime.UtcNow;
+        
+        var notification = new Notification()
+        {
+            UserId = application.UserId,
+            Title = "Your application has been reject",
+            Message = $"{application.Note}",
+            Type = "Reject",
+            IsRead = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+        _dbContext.Notifications.Add(notification);
 
         await _dbContext.SaveChangesAsync();
         return "Reject success";
@@ -84,49 +95,39 @@ public class Service : IService
 
     public async Task<string> EditApplicationAfterReject(Request.UpdateApplicationRequest request)
     {
-        var app = await _dbContext.Applications
+        var application = await _dbContext.Applications
             .Include(x => x.ApplicationMenus)
             .Include(x => x.User)
             .FirstOrDefaultAsync(x => x.Id == request.ApplicationId);
 
-        if (app == null)
+        if (application == null)
             throw new Exception("Application not found");
         
-        if (app.Status != "Rejected")
+        if (application.Status != "Rejected")
             throw new Exception("Just edit when application reject");
 
 
-        app.Type = request.Type;
-        app.Note = request.Note;
-        app.Status = "Pending";
-        app.ReviewedAt = default;
-        app.UpdatedAt = DateTimeOffset.UtcNow;
+        application.Type = request.Type;
+        application.Note = request.Note;
+        application.Status = "Pending";
+        application.ReviewedAt = default;
+        application.UpdatedAt = DateTimeOffset.UtcNow;
 
-        _dbContext.ApplicationMenus.RemoveRange(app.ApplicationMenus);
-
-        app.ApplicationMenus = request.Menu.Select(
-            x => new ApplicationMenu()
-        {
-            Id = Guid.NewGuid(),
-            Name = x.Name,
-            Description = x.Description,
-            Price = x.Price,
-            ImageUrl = x.ImageUrl,
-            Category = x.Category,
-            ApplicationId = app.Id,
-            CreatedAt = DateTimeOffset.UtcNow
-        }).ToList();
+        _dbContext.ApplicationMenus.RemoveRange(application.ApplicationMenus);
         
-        var notification = new Notification()
+        foreach (var menuRequest in request.Menu)
         {
-            UserId = app.UserId,
-            Title = "Your application has been reject",
-            Message = $"{app.Note}",
-            Type = "Reject",
-            IsRead = false,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
-        _dbContext.Notifications.Add(notification);
+            var appMenu = new ApplicationMenu
+            {
+                ApplicationId = application.Id,
+                Name = menuRequest.Name,
+                Price = menuRequest.Price,
+                Description = menuRequest.Description,
+                Category = menuRequest.Category,
+                ImageUrl = menuRequest.ImageUrl,
+            };
+            _dbContext.ApplicationMenus.Add(appMenu);
+        }
         
         await _dbContext.SaveChangesAsync();
 
