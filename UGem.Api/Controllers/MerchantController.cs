@@ -1,27 +1,24 @@
 using Microsoft.AspNetCore.Mvc;
+using UGem.Services.MerchantService;
+using UGem.Services.Models;
 
 namespace UGem.Api.Controllers;
+
 [ApiController]
 [Route("api/[controller]")]
-public class MerchantController: ControllerBase
+public class MerchantController : ControllerBase
 {
-    [HttpPost]
-    public IActionResult Create()
+    private readonly IService _service;
+
+    public MerchantController(IService service)
     {
-        return Ok();
+        _service = service;
     }
 
-    // GET /merchant
-    [HttpGet]
-    public IActionResult GetAll()
+    [HttpGet("Merchants")]
+    public async Task<IActionResult> Search(string? searchTerm, int pageSize, int pageIndex)
     {
-        return Ok();
-    }
-
-    // GET /merchant/{id}
-    [HttpGet("{id}")]
-    public IActionResult GetById(Guid id)
-    {
-        return Ok();
+        var result = await _service.Search(searchTerm, pageSize, pageIndex);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Merchants retrieved", HttpContext.TraceIdentifier));
     }
 }

@@ -17,7 +17,14 @@ public class ApplicationController : ControllerBase
         _applicationService = applicationService;
     }
 
-    [HttpGet("")]
+    [HttpGet("user/applications")]
+    public async Task<IActionResult> GetMyApplications()
+    {
+        var data = await _applicationService.GetMyApplications();
+        return Ok(ApiResponseFactory.SuccessResponse(data));
+    }
+
+    [HttpGet("staff/applications")]
     [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
     public async Task<IActionResult> GetApplications()
     {
@@ -29,11 +36,11 @@ public class ApplicationController : ControllerBase
     [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
     public async Task<IActionResult> AcceptApplication(Guid id)
     {
-         await _applicationService.AcceptApplication(id);
+        await _applicationService.AcceptApplication(id);
 
-        return Ok(ApiResponseFactory.SuccessResponse(null,"Application accepted"));
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Application accepted"));
     }
-    
+
     [HttpPost]
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     public async Task<IActionResult> CreateApplicationRequest(Request.ApplicationRequest request)

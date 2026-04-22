@@ -9,7 +9,30 @@ public class AppDbContext : DbContext
 {
     private static readonly Guid AdminUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid AdminProfileId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-    public static Guid userId1 = Guid.NewGuid();
+    private static readonly Guid UserStaffId1 = Guid.Parse("19191919-1919-1919-1919-191919191919");
+    private static readonly Guid UserCustomerId2 = Guid.Parse("20202020-2020-2020-2020-202020202020");
+    private static readonly Guid StaffProfileId1 = Guid.Parse("21212121-2121-2121-2121-212121212121");
+    private static readonly Guid CustomerProfileId1 = Guid.Parse("23232323-2323-2323-2323-232323232323");
+    private static readonly Guid StaffUserId2 = Guid.Parse("33333333-3333-3333-3333-333333333333");
+    private static readonly Guid StaffProfileId2 = Guid.Parse("44444444-4444-4444-4444-444444444444");
+    private static readonly Guid ApplicantUserId = Guid.Parse("55555555-5555-5555-5555-555555555555");
+    private static readonly Guid ApplicantCustomerId = Guid.Parse("66666666-6666-6666-6666-666666666666");
+    private static readonly Guid MerchantUserId = Guid.Parse("77777777-7777-7777-7777-777777777777");
+    private static readonly Guid MerchantProfileId = Guid.Parse("88888888-8888-8888-8888-888888888888");
+    private static readonly Guid DiscoveryUserId = Guid.Parse("99999999-9999-9999-9999-999999999999");
+    private static readonly Guid DiscoveryCustomerId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa");
+    private static readonly Guid PendingApplicationId = Guid.Parse("bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb");
+    private static readonly Guid ApplicationMenuId1 = Guid.Parse("cccccccc-cccc-cccc-cccc-cccccccccccc");
+    private static readonly Guid ApplicationMenuId2 = Guid.Parse("dddddddd-dddd-dddd-dddd-dddddddddddd");
+    private static readonly Guid CategoryStreetFoodId = Guid.Parse("eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee");
+    private static readonly Guid CategoryTraditionalFoodId = Guid.Parse("ffffffff-ffff-ffff-ffff-ffffffffffff");
+    private static readonly Guid FoodId1 = Guid.Parse("12121212-1212-1212-1212-121212121212");
+    private static readonly Guid FoodId2 = Guid.Parse("13131313-1313-1313-1313-131313131313");
+    private static readonly Guid CategoryDetailId1 = Guid.Parse("14141414-1414-1414-1414-141414141414");
+    private static readonly Guid CategoryDetailId2 = Guid.Parse("15151515-1515-1515-1515-151515151515");
+    private static readonly Guid WishlistId1 = Guid.Parse("16161616-1616-1616-1616-161616161616");
+    private static readonly Guid WishlistDetailId1 = Guid.Parse("17171717-1717-1717-1717-171717171717");
+    private static readonly Guid CheckInId1 = Guid.Parse("18181818-1818-1818-1818-181818181818");
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -106,9 +129,9 @@ public class AppDbContext : DbContext
                 CreatedAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
                 IsDeleted = false
             },
-        new User
+            new User
             {
-                Id = Guid.NewGuid(),
+                Id = UserCustomerId2,
                 Email = "hungsui@gmail.com",
                 FullName = "Trần Văn Hùng",
                 PasswordHash = "123456",
@@ -118,9 +141,9 @@ public class AppDbContext : DbContext
                 CreatedAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
                 IsDeleted = false
             },
-        new User
+            new User
             {
-                Id = userId1,
+                Id = UserStaffId1,
                 Email = "staff.ngoc@ugem.com",
                 FullName = "Lê Bảo Ngọc",
                 PasswordHash = "123456",
@@ -129,8 +152,55 @@ public class AppDbContext : DbContext
                 Role = "Staff",
                 CreatedAt = new DateTimeOffset(2026, 4, 21, 8, 0, 0, TimeSpan.Zero),
                 IsDeleted = false
+            },
+            new User
+            {
+                Id = StaffUserId2,
+                Email = "staff.duyet@ugem.com",
+                FullName = "Nguyen Tran Admin",
+                PasswordHash = "123456",
+                PhoneNumber = "0901000001",
+                IsActive = true,
+                Role = "Staff",
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
+                IsDeleted = false
+            },
+            new User
+            {
+                Id = ApplicantUserId,
+                Email = "chuquan.bun@ugem.com",
+                FullName = "Tran Bun Cha",
+                PasswordHash = "123456",
+                PhoneNumber = "0902000002",
+                IsActive = true,
+                Role = "Customer",
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
+                IsDeleted = false
+            },
+            new User
+            {
+                Id = MerchantUserId,
+                Email = "chuquan.che@ugem.com",
+                FullName = "Le Thi Che",
+                PasswordHash = "123456",
+                PhoneNumber = "0902000003",
+                IsActive = true,
+                Role = "Merchant",
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
+                IsDeleted = false
+            },
+            new User
+            {
+                Id = DiscoveryUserId,
+                Email = "khach.sanh@ugem.com",
+                FullName = "Pham Thuc Khach",
+                PasswordHash = "123456",
+                PhoneNumber = "0903000004",
+                IsActive = true,
+                Role = "Customer",
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
+                IsDeleted = false
             }
-            
         );
 
         modelBuilder.Entity<Admin>(builder =>
@@ -169,15 +239,22 @@ public class AppDbContext : DbContext
             {
                 new()
                 {
-                    Id = Guid.NewGuid(),
-                    UserId = userId1,
+                    Id = StaffProfileId1,
+                    UserId = UserStaffId1,
                     HiredAt = new DateTimeOffset(2026, 1, 15, 0, 0, 0, TimeSpan.Zero),
+                    CreatedAt = new DateTimeOffset(2026, 1, 15, 0, 0, 0, TimeSpan.Zero),
+                    IsDeleted = false
+                },
+                new()
+                {
+                    Id = StaffProfileId2,
+                    UserId = StaffUserId2,
+                    HiredAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                    CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
+                    IsDeleted = false
                 }
             };
             builder.HasData(staff);
-
-
-
         });
 
         modelBuilder.Entity<AffiliateLink>(builder =>
@@ -249,6 +326,27 @@ public class AppDbContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<Application>().HasData(
+            new Application
+            {
+                Id = PendingApplicationId,
+                UserId = ApplicantUserId,
+                Type = "Merchant",
+                Status = "Pending",
+                Note = null,
+                ReviewedAt = new DateTime(2026, 4, 23, 8, 0, 0, DateTimeKind.Utc),
+                Name = "Bun Cha Ngo Tram",
+                Description = "Nam sau trong ngo, thit nuong kep que tre truyen thong 30 nam.",
+                Email = "lienhe@bunchangotram.vn",
+                Phone = "0911223344",
+                LogoUrl = "logo_buncha.jpg",
+                Latitude = 21.030500m,
+                Longitude = 105.845600m,
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
+                IsDeleted = false
+            }
+        );
+
         modelBuilder.Entity<ApplicationMenu>(builder =>
         {
             ConfigureBaseEntity(builder);
@@ -275,6 +373,33 @@ public class AppDbContext : DbContext
                 .HasForeignKey(am => am.ApplicationId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<ApplicationMenu>().HasData(
+            new ApplicationMenu
+            {
+                Id = ApplicationMenuId1,
+                ApplicationId = PendingApplicationId,
+                Name = "Bun cha thap cam",
+                Description = "Day du cha bam, cha mieng, cha la lot nuong xiem.",
+                Price = 45000m,
+                Category = "Mon chinh",
+                ImageUrl = "img_buncha_1.jpg",
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 5, 0, TimeSpan.Zero),
+                IsDeleted = false
+            },
+            new ApplicationMenu
+            {
+                Id = ApplicationMenuId2,
+                ApplicationId = PendingApplicationId,
+                Name = "Nem cua be",
+                Description = "Nem vuong, vo gion rum, nhan cua bien tuoi.",
+                Price = 25000m,
+                Category = "An kem",
+                ImageUrl = "img_nemcua.jpg",
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 5, 0, TimeSpan.Zero),
+                IsDeleted = false
+            }
+        );
 
         modelBuilder.Entity<Notification>(builder =>
         {
@@ -317,7 +442,33 @@ public class AppDbContext : DbContext
                 .WithOne(w => w.Customer)
                 .HasForeignKey<Wishlist>(w => w.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
+
+            builder.HasData(
+                new Customer
+                {
+                    Id = CustomerProfileId1,
+                    UserId = UserCustomerId2,
+                    TotalCheckIns = 5,
+                    CreatedAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                    IsDeleted = false
+                },
+                new Customer
+                {
+                    Id = ApplicantCustomerId,
+                    UserId = ApplicantUserId,
+                    TotalCheckIns = 0,
+                    CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
+                    IsDeleted = false
+                },
+                new Customer
+                {
+                    Id = DiscoveryCustomerId,
+                    UserId = DiscoveryUserId,
+                    TotalCheckIns = 1,
+                    CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
+                    IsDeleted = false
+                }
+            );
         });
 
         modelBuilder.Entity<Reviewer>(builder =>
@@ -394,7 +545,33 @@ public class AppDbContext : DbContext
 
             builder.Property(m => m.Longitude)
                 .HasPrecision(9, 6);
+
+            builder.HasIndex(m => new { m.Name, m.Description });
         });
+
+        modelBuilder.Entity<Merchant>().HasData(
+            new Merchant
+            {
+                Id = MerchantProfileId,
+                UserId = MerchantUserId,
+                Name = "Che Mam Cau Hai",
+                Description = "Quan che 16 mon an minh trong chung cu cu, khong bien hieu.",
+                Email = "checauhai@ugem.com",
+                Phone = "0909888777",
+                Address = "Lau 2 Chung cu Ton That Dam, Q1",
+                IsActive = true,
+                LogoUrl = "logo_che.png",
+                Status = "Active",
+                UnderratedScore = 4.90m,
+                Rating = 4.80m,
+                PlatformFeePercent = 5.00m,
+                OpeningHours = "15:00 - 22:00",
+                Latitude = 10.771500m,
+                Longitude = 106.703200m,
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 15, 0, TimeSpan.Zero),
+                IsDeleted = false
+            }
+        );
 
         modelBuilder.Entity<Category>(builder =>
         {
@@ -420,6 +597,29 @@ public class AppDbContext : DbContext
                 .HasForeignKey(c => c.ParentId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        modelBuilder.Entity<Category>().HasData(
+            new Category
+            {
+                Id = CategoryStreetFoodId,
+                Name = "An Vat Le Duong",
+                Description = "Cac mon an vat moc mac, gia hoc sinh sinh vien.",
+                Slug = "an-vat-le-duong",
+                IsActive = true,
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 10, 0, TimeSpan.Zero),
+                IsDeleted = false
+            },
+            new Category
+            {
+                Id = CategoryTraditionalFoodId,
+                Name = "Mon Nuoc Truyen Thong",
+                Description = "Pho, bun, hu tieu voi nuoc dung ninh ham lau nam.",
+                Slug = "mon-nuoc-truyen-thong",
+                IsActive = true,
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 10, 0, TimeSpan.Zero),
+                IsDeleted = false
+            }
+        );
 
         modelBuilder.Entity<CategoryDetail>(builder =>
         {
@@ -451,6 +651,31 @@ public class AppDbContext : DbContext
                 .IsUnique();
         });
 
+        modelBuilder.Entity<CategoryDetail>().HasData(
+            new CategoryDetail
+            {
+                Id = CategoryDetailId1,
+                CategoryId = CategoryStreetFoodId,
+                FoodId = FoodId1,
+                Name = "Che Ba Ba Nam Bo",
+                ImgUrl = "img_che_baba.jpg",
+                Description = "Mon ngot dac trung mien Tay Nam Bo.",
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 25, 0, TimeSpan.Zero),
+                IsDeleted = false
+            },
+            new CategoryDetail
+            {
+                Id = CategoryDetailId2,
+                CategoryId = CategoryStreetFoodId,
+                FoodId = FoodId2,
+                Name = "Trang Mieng",
+                ImgUrl = "img_flan_cotdua.jpg",
+                Description = "Phu hop an nhe buoi chieu.",
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 25, 0, TimeSpan.Zero),
+                IsDeleted = false
+            }
+        );
+
         modelBuilder.Entity<Food>(builder =>
         {
             ConfigureBaseEntity(builder);
@@ -473,7 +698,36 @@ public class AppDbContext : DbContext
                 .WithMany(m => m.Foods)
                 .HasForeignKey(f => f.MerchantId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
+            builder.HasIndex(f => new { f.Name, f.Description });
         });
+
+        modelBuilder.Entity<Food>().HasData(
+            new Food
+            {
+                Id = FoodId1,
+                MerchantId = MerchantProfileId,
+                Name = "Che Ba Ba",
+                Description = "Khoai lang, khoai mi, chuoi chung cot dua beo ngay.",
+                Price = 20000m,
+                IsAvailable = true,
+                ImageUrl = "img_che_baba.jpg",
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 20, 0, TimeSpan.Zero),
+                IsDeleted = false
+            },
+            new Food
+            {
+                Id = FoodId2,
+                MerchantId = MerchantProfileId,
+                Name = "Banh Flan Cot Dua",
+                Description = "Banh flan mem min an kem ca phe den va cot dua.",
+                Price = 15000m,
+                IsAvailable = true,
+                ImageUrl = "img_flan_cotdua.jpg",
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 20, 0, TimeSpan.Zero),
+                IsDeleted = false
+            }
+        );
 
         modelBuilder.Entity<Wishlist>(builder =>
         {
@@ -482,6 +736,16 @@ public class AppDbContext : DbContext
             builder.HasIndex(w => w.CustomerId)
                 .IsUnique();
         });
+
+        modelBuilder.Entity<Wishlist>().HasData(
+            new Wishlist
+            {
+                Id = WishlistId1,
+                CustomerId = DiscoveryCustomerId,
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 30, 0, TimeSpan.Zero),
+                IsDeleted = false
+            }
+        );
 
         modelBuilder.Entity<WishlistDetail>(builder =>
         {
@@ -501,6 +765,17 @@ public class AppDbContext : DbContext
                 .IsUnique();
         });
 
+        modelBuilder.Entity<WishlistDetail>().HasData(
+            new WishlistDetail
+            {
+                Id = WishlistDetailId1,
+                WishlistId = WishlistId1,
+                MerchantId = MerchantProfileId,
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 31, 0, TimeSpan.Zero),
+                IsDeleted = false
+            }
+        );
+
         modelBuilder.Entity<CheckIn>(builder =>
         {
             ConfigureBaseEntity(builder);
@@ -515,6 +790,17 @@ public class AppDbContext : DbContext
                 .HasForeignKey(ci => ci.MerchantId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<CheckIn>().HasData(
+            new CheckIn
+            {
+                Id = CheckInId1,
+                MerchantId = MerchantProfileId,
+                CustomerId = DiscoveryCustomerId,
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 32, 0, TimeSpan.Zero),
+                IsDeleted = false
+            }
+        );
 
         modelBuilder.Entity<Order>(builder =>
         {
@@ -659,7 +945,8 @@ public class AppDbContext : DbContext
         return base.SaveChangesAsync(cancellationToken);
     }
 
-    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+    public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess,
+        CancellationToken cancellationToken = default)
     {
         ApplyEntityRules();
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);

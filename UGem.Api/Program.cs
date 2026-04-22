@@ -12,6 +12,9 @@ using NotificationService = UGem.Services.NotificationService;
 using OrderService = UGem.Services.OrderService;
 using IdentityService = UGem.Services.IdentityService;
 using JwtService = UGem.Services.JwtService;
+using CustomerService = UGem.Services.CustomerService;
+using MerchantService = UGem.Services.MerchantService;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -27,7 +30,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     )
 );
 builder.Services.AddJwtServices(builder.Configuration);
-builder.Services.AddSwaggerServices();  
+builder.Services.AddSwaggerServices();
 
 builder.Services.AddScoped<MailService.IService, MailService.Service>();
 builder.Services.AddScoped<MediaService.IService, CloudinaryService.Service>();
@@ -37,6 +40,8 @@ builder.Services.AddScoped<NotificationService.IService, NotificationService.Ser
 builder.Services.AddScoped<OrderService.IService, OrderService.Service>();
 builder.Services.AddScoped<IdentityService.IService, IdentityService.Service>();
 builder.Services.AddScoped<JwtService.IService, JwtService.Service>();
+builder.Services.AddScoped<CustomerService.IService, CustomerService.Service>();
+builder.Services.AddScoped<MerchantService.IService, MerchantService.Service>();
 builder.Services.AddQuartz(options =>
 {
     var jobKey = new JobKey(nameof(ProcessTransactionPendingJob));
@@ -52,10 +57,7 @@ builder.Services.AddQuartz(options =>
                 )
         );
 });
-builder.Services.AddQuartzHostedService(options =>
-{
-    options.WaitForJobsToComplete = true;
-});
+builder.Services.AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; });
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

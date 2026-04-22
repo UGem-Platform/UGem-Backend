@@ -6,5 +6,6 @@ public abstract class Response
     {
         public Guid Id { get; set; }
         public required string Name { get; set; }
+        public required decimal Rating { get; set; }
     }
 }

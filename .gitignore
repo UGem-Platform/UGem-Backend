@@ -42,6 +42,7 @@ _ReSharper*/
 # EF Core generated migrations
 UGem.Repositories/Migrations/[0-9]*_*.cs
 UGem.Repositories/Migrations/[0-9]*_*.Designer.cs
+!UGem.Repositories/Migrations/AppDbContextModelSnapshot.cs
 
 # OS files
 .DS_Store

@@ -16,6 +16,48 @@ public class Service : IService
         _httpContext = httpContext;
     }
 
+    public Task<List<Response.GetApplicationForStaffResponse>> GetMyApplications()
+    {
+        var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
+
+        var userIdGuid = Guid.Parse(userId!);
+
+        var query = _dbContext.Applications
+            .Include(a => a.ApplicationMenus)
+            .Where(a => a.UserId == userIdGuid)
+            .OrderByDescending(a => a.CreatedAt);
+
+        if (query == null)
+        {
+            throw new Exception("Cannot found application");
+        }
+
+        var selectQuery = query.Select(a => new Response.GetApplicationForStaffResponse
+        {
+            Id = a.Id,
+            Name = a.Name,
+            Description = a.Description,
+            Type = a.Type,
+            Status = a.Status,
+            CreatedAt = a.CreatedAt,
+            ReviewedAt = a.ReviewedAt,
+            UpdatedAt = a.UpdatedAt,
+
+            ApplicationMenus = a.ApplicationMenus.Select(m => new Response.ApplicationMenuResponse
+            {
+                Id = m.Id,
+                Name = m.Name,
+                Description = m.Description,
+                Price = m.Price,
+                ImageUrl = m.ImageUrl,
+                Category = m.Category,
+            }).ToList(),
+        });
+
+        var listResult = selectQuery.ToList();
+        return Task.FromResult(listResult);
+    }
+
     public async Task<string> CreateApplicationRequest(Request.ApplicationRequest request)
     {
         var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
@@ -77,7 +119,7 @@ public class Service : IService
         application.Status = "Rejected";
         application.Note = request.Note;
         application.ReviewedAt = DateTime.UtcNow;
-        
+
         var notification = new Notification()
         {
             UserId = application.UserId,
@@ -102,7 +144,7 @@ public class Service : IService
 
         if (application == null)
             throw new Exception("Application not found");
-        
+
         if (application.Status != "Rejected")
             throw new Exception("Just edit when application reject");
 
@@ -114,7 +156,7 @@ public class Service : IService
         application.UpdatedAt = DateTimeOffset.UtcNow;
 
         _dbContext.ApplicationMenus.RemoveRange(application.ApplicationMenus);
-        
+
         foreach (var menuRequest in request.Menu)
         {
             var appMenu = new ApplicationMenu
@@ -128,7 +170,7 @@ public class Service : IService
             };
             _dbContext.ApplicationMenus.Add(appMenu);
         }
-        
+
         await _dbContext.SaveChangesAsync();
 
         return "update success";
@@ -192,7 +234,7 @@ public class Service : IService
             CreatedAt = a.CreatedAt,
             ReviewedAt = a.ReviewedAt,
             UpdatedAt = a.UpdatedAt,
-            
+
             Applicant = new Response.ApplicantInfoResponse
             {
                 UserId = a.UserId,
