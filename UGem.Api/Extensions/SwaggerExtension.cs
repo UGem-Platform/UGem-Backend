@@ -9,7 +9,7 @@ public static class SwaggerExtensions
     {
         services.AddSwaggerGen(options =>
         {
-            options.SwaggerDoc("v1", new OpenApiInfo() { Title = "TetPee APIs", Version = "v1" });
+            options.SwaggerDoc("v1", new OpenApiInfo() { Title = "UGem APIs", Version = "v1" });
 
             options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
             {
@@ -18,7 +18,8 @@ public static class SwaggerExtensions
                 Scheme = "bearer",
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
-                Description = "Enter 'Bearer' [space] and then your token in the text input below.\nExample: 'Bearer eyJhbGciOiJIUzI1NiIsInR...' "
+                Description =
+                    "Enter 'Bearer' [space] and then your token in the text input below.\nExample: 'Bearer eyJhbGciOiJIUzI1NiIsInR...' "
             });
 
             options.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -32,12 +33,12 @@ public static class SwaggerExtensions
                             Id = "Bearer"
                         }
                     },
-                    new string[] {}
+                    new string[] { }
                 }
             });
         });
     }
-    
+
     public static void UseSwaggerApi(this WebApplication app)
     {
         app.UseSwagger();
@@ -46,8 +47,8 @@ public static class SwaggerExtensions
             // foreach (var version in app.DescribeApiVersions().Select(version => version.GroupName))
             //     options.SwaggerEndpoint($"/swagger/{version}/swagger.json", version);
 
-            options.DisplayRequestDuration();   
-            options.EnableTryItOutByDefault(); 
+            options.DisplayRequestDuration();
+            options.EnableTryItOutByDefault();
             options.DocExpansion(DocExpansion.List);
         });
 
