@@ -841,11 +841,11 @@ namespace UGem.Repositories.Migrations
                     b.HasData(
                         new
                         {
-                            Id = new Guid("c1aa1e3e-2cd9-46da-b385-ad3a17d94177"),
+                            Id = new Guid("86804995-8845-4d6c-92c1-30feaa350373"),
                             CreatedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             HiredAt = new DateTimeOffset(new DateTime(2026, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             IsDeleted = false,
-                            UserId = new Guid("f742e71b-cc7d-4ac0-a544-e9be4ab9f6ee")
+                            UserId = new Guid("99863d73-fc6d-47c0-8da8-a3d9d2dc3983")
                         });
                 });
 
@@ -920,7 +920,7 @@ namespace UGem.Repositories.Migrations
                         },
                         new
                         {
-                            Id = new Guid("35d0b22c-793f-4109-8757-09204c9ef96e"),
+                            Id = new Guid("b818e41a-0ada-4495-90b3-9f7a71d3ffc8"),
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Email = "hungsui@gmail.com",
                             FullName = "Trần Văn Hùng",
@@ -932,7 +932,7 @@ namespace UGem.Repositories.Migrations
                         },
                         new
                         {
-                            Id = new Guid("f742e71b-cc7d-4ac0-a544-e9be4ab9f6ee"),
+                            Id = new Guid("99863d73-fc6d-47c0-8da8-a3d9d2dc3983"),
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 4, 21, 8, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Email = "staff.ngoc@ugem.com",
                             FullName = "Lê Bảo Ngọc",

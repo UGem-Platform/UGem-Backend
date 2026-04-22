@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace UGem.Repositories.Migrations
 {
     /// <inheritdoc />
@@ -572,12 +574,22 @@ namespace UGem.Repositories.Migrations
             migrationBuilder.InsertData(
                 table: "Users",
                 columns: new[] { "Id", "AvatarUrl", "CreatedAt", "Email", "FullName", "IsActive", "IsDeleted", "PasswordHash", "PhoneNumber", "Role", "UpdatedAt" },
-                values: new object[] { new Guid("11111111-1111-1111-1111-111111111111"), null, new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "admin@ugem.com", "System Administrator", true, false, "swccwevwvwvw", "0123456789", "Admin", null });
+                values: new object[,]
+                {
+                    { new Guid("11111111-1111-1111-1111-111111111111"), null, new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "admin@ugem.com", "System Administrator", true, false, "swccwevwvwvw", "0123456789", "Admin", null },
+                    { new Guid("99863d73-fc6d-47c0-8da8-a3d9d2dc3983"), null, new DateTimeOffset(new DateTime(2026, 4, 21, 8, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "staff.ngoc@ugem.com", "Lê Bảo Ngọc", true, false, "123456", "901111111", "Staff", null },
+                    { new Guid("b818e41a-0ada-4495-90b3-9f7a71d3ffc8"), null, new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), "hungsui@gmail.com", "Trần Văn Hùng", true, false, "123456", "902222222", "Customer", null }
+                });
 
             migrationBuilder.InsertData(
                 table: "Admins",
                 columns: new[] { "Id", "CreatedAt", "IsDeleted", "Permissions", "UpdatedAt", "UserId" },
                 values: new object[] { new Guid("22222222-2222-2222-2222-222222222222"), new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), false, "*", null, new Guid("11111111-1111-1111-1111-111111111111") });
+
+            migrationBuilder.InsertData(
+                table: "Staffs",
+                columns: new[] { "Id", "CreatedAt", "HiredAt", "IsDeleted", "UpdatedAt", "UserId" },
+                values: new object[] { new Guid("86804995-8845-4d6c-92c1-30feaa350373"), new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), new DateTimeOffset(new DateTime(2026, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)), false, null, new Guid("99863d73-fc6d-47c0-8da8-a3d9d2dc3983") });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Admins_UserId",

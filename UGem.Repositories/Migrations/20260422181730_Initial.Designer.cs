@@ -12,8 +12,8 @@ using UGem.Repositories;
 namespace UGem.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260422150221_seeddata")]
-    partial class seeddata
+    [Migration("20260422181730_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -840,6 +840,16 @@ namespace UGem.Repositories.Migrations
                         .IsUnique();
 
                     b.ToTable("Staffs");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("86804995-8845-4d6c-92c1-30feaa350373"),
+                            CreatedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            HiredAt = new DateTimeOffset(new DateTime(2026, 1, 15, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            IsDeleted = false,
+                            UserId = new Guid("99863d73-fc6d-47c0-8da8-a3d9d2dc3983")
+                        });
                 });
 
             modelBuilder.Entity("UGem.Repositories.Entity.User", b =>
@@ -913,7 +923,7 @@ namespace UGem.Repositories.Migrations
                         },
                         new
                         {
-                            Id = new Guid("fc8a15cd-a6a9-4cb6-92cf-b820714056f4"),
+                            Id = new Guid("b818e41a-0ada-4495-90b3-9f7a71d3ffc8"),
                             CreatedAt = new DateTimeOffset(new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
                             Email = "hungsui@gmail.com",
                             FullName = "Trần Văn Hùng",
@@ -922,6 +932,18 @@ namespace UGem.Repositories.Migrations
                             PasswordHash = "123456",
                             PhoneNumber = "902222222",
                             Role = "Customer"
+                        },
+                        new
+                        {
+                            Id = new Guid("99863d73-fc6d-47c0-8da8-a3d9d2dc3983"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 4, 21, 8, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            Email = "staff.ngoc@ugem.com",
+                            FullName = "Lê Bảo Ngọc",
+                            IsActive = true,
+                            IsDeleted = false,
+                            PasswordHash = "123456",
+                            PhoneNumber = "901111111",
+                            Role = "Staff"
                         });
                 });
 
