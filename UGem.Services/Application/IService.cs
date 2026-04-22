@@ -4,7 +4,7 @@ public interface IService
 {
     public Task AcceptApplication(Guid id, Guid staffId);
 
-    public Task<List<Response.GetApplicationForStaffResponse>> GetApplications(string? status = null);
+    public Task<List<Response.GetApplicationForStaffResponse>> GetApplications();
 
     public Task<string> CreateApplicationRequest(Request.ApplicationRequest request);
 

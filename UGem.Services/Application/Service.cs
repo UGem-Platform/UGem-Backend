@@ -173,22 +173,25 @@ public class Service : IService
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<List<Response.GetApplicationForStaffResponse>> GetApplications(string? status = null)
+    public async Task<List<Response.GetApplicationForStaffResponse>> GetApplications()
     {
         var query = _dbContext.Applications
             .Include(a => a.User)
             .Include(a => a.ApplicationMenus)
-            .Where(a => status == null || a.Status == status)
+            .Where(a => a.Status == "Pending")
             .OrderByDescending(a => a.CreatedAt);
 
         var selectQuery = query.Select(a => new Response.GetApplicationForStaffResponse
         {
             Id = a.Id,
+            Name = a.Name,
+            Description = a.Description,
             Type = a.Type,
             Status = a.Status,
             CreatedAt = a.CreatedAt,
             ReviewedAt = a.ReviewedAt,
             UpdatedAt = a.UpdatedAt,
+            
             Applicant = new Response.ApplicantInfoResponse
             {
                 UserId = a.UserId,

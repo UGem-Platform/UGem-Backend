@@ -17,15 +17,15 @@ public class ApplicationController : ControllerBase
         _applicationService = applicationService;
     }
 
-    [HttpGet("staff")]
+    [HttpGet("s")]
     [Authorize(Roles = "Staff,Admin")]
-    public async Task<IActionResult> GetApplications([FromQuery] string? status = null)
+    public async Task<IActionResult> GetApplications()
     {
-        var data = await _applicationService.GetApplications(status);
+        var data = await _applicationService.GetApplications();
         return Ok(ApiResponseFactory.SuccessResponse(data));
     }
 
-    [HttpPost("staff/{id:guid}/accept")]
+    [HttpPost("s/accept")]
     [Authorize(Roles = "Staff,Admin")]
     public async Task<IActionResult> AcceptApplication(Guid id)
     {
