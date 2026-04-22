@@ -9,7 +9,9 @@ using CategoryService = UGem.Services.Category;
 using CloudinaryService = UGem.Services.CloudinaryService;
 using ApplicationService = UGem.Services.Application;
 using NotificationService = UGem.Services.NotificationService;
-
+using OrderService = UGem.Services.OrderService;
+using IdentityService = UGem.Services.IdentityService;
+using JwtService = UGem.Services.JwtService;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -32,7 +34,9 @@ builder.Services.AddScoped<MediaService.IService, CloudinaryService.Service>();
 builder.Services.AddScoped<CategoryService.IService, CategoryService.Service>();
 builder.Services.AddScoped<ApplicationService.IService, ApplicationService.Service>();
 builder.Services.AddScoped<NotificationService.IService, NotificationService.Service>();
-
+builder.Services.AddScoped<OrderService.IService, OrderService.Service>();
+builder.Services.AddScoped<IdentityService.IService, IdentityService.Service>();
+builder.Services.AddScoped<JwtService.IService, JwtService.Service>();
 builder.Services.AddQuartz(options =>
 {
     var jobKey = new JobKey(nameof(ProcessTransactionPendingJob));

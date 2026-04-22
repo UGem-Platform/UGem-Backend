@@ -1,24 +1,33 @@
 using Microsoft.AspNetCore.Mvc;
+using UGem.Services.Models;
+using UGem.Services.OrderService;
 
 namespace UGem.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class OrderController: ControllerBase
 {
+    private readonly IService _orderService;
+    public OrderController(IService orderService)
+    {
+        _orderService = orderService;
+    }
+    
     [HttpPost]
     public IActionResult Create()
     {
         return Ok();
     }
 
-    // GET /category
+    
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetOrderList()
     {
-        return Ok();
+        var result = await _orderService.GetOrdersList();
+        return Ok(ApiResponseFactory.SuccessResponse(result));
     }
 
-    // GET /category/{id}
+
     [HttpGet("{id}")]
     public IActionResult GetById(int id)
     {

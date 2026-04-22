@@ -9,6 +9,7 @@ public class AppDbContext : DbContext
 {
     private static readonly Guid AdminUserId = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid AdminProfileId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+    public static Guid userId1 = Guid.NewGuid();
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -104,7 +105,32 @@ public class AppDbContext : DbContext
                 Role = "Admin",
                 CreatedAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
                 IsDeleted = false
+            },
+        new User
+            {
+                Id = Guid.NewGuid(),
+                Email = "hungsui@gmail.com",
+                FullName = "Trần Văn Hùng",
+                PasswordHash = "123456",
+                PhoneNumber = "902222222",
+                IsActive = true,
+                Role = "Customer",
+                CreatedAt = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                IsDeleted = false
+            },
+        new User
+            {
+                Id = userId1,
+                Email = "staff.ngoc@ugem.com",
+                FullName = "Lê Bảo Ngọc",
+                PasswordHash = "123456",
+                PhoneNumber = "901111111",
+                IsActive = true,
+                Role = "Staff",
+                CreatedAt = new DateTimeOffset(2026, 4, 21, 8, 0, 0, TimeSpan.Zero),
+                IsDeleted = false
             }
+            
         );
 
         modelBuilder.Entity<Admin>(builder =>
@@ -139,6 +165,19 @@ public class AppDbContext : DbContext
 
             builder.HasIndex(s => s.UserId)
                 .IsUnique();
+            var staff = new List<Staff>()
+            {
+                new()
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId1,
+                    HiredAt = new DateTimeOffset(2026, 1, 15, 0, 0, 0, TimeSpan.Zero),
+                }
+            };
+            builder.HasData(staff);
+
+
+
         });
 
         modelBuilder.Entity<AffiliateLink>(builder =>
@@ -278,6 +317,7 @@ public class AppDbContext : DbContext
                 .WithOne(w => w.Customer)
                 .HasForeignKey<Wishlist>(w => w.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
         });
 
         modelBuilder.Entity<Reviewer>(builder =>

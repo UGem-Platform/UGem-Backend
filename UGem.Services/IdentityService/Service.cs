@@ -19,12 +19,12 @@ public class Service : IService
         configuration.GetSection(nameof(JwtOptions)).Bind(_jwtOption);
     }
 
-    public async Task<Response.IdentityResponse> Login(string phoneNumber, string password)
+    public async Task<Response.IdentityResponse> Login(string email, string password)
     {
         var user = await _dbContext.Users
             .Include(x => x.Customer)
             .Include(x => x.Staff)    
-            .FirstOrDefaultAsync(u => u.PhoneNumber == phoneNumber);
+            .FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
         {
