@@ -13,13 +13,6 @@ public class OrderController: ControllerBase
         _orderService = orderService;
     }
     
-    [HttpPost]
-    public IActionResult Create()
-    {
-        return Ok();
-    }
-
-    
     [HttpGet]
     public async Task<IActionResult> GetOrderList()
     {
@@ -27,11 +20,10 @@ public class OrderController: ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result));
     }
 
-
-    [HttpGet("{id}")]
-    public IActionResult GetById(int id)
+    [HttpPost]
+    public async Task<IActionResult> CreateOrder(Request.CreateOrderRequest request)
     {
-        return Ok();
-        
+        await _orderService.CreateOrder(request);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Create order success"));
     }
 }
