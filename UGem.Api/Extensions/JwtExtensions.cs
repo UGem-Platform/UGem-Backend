@@ -61,7 +61,7 @@ public static class JwtExtensions
             // [Authorize(Policy = JwtExtensions.StaffPolicy)]
             
             options.AddPolicy(AdminAndStaffPolicy, policy =>
-                policy.RequireRole("AdminAndStaff"));
+                policy.RequireRole("Admin", "Staff"));
             
             // [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
         });
