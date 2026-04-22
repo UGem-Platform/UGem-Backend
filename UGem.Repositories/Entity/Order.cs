@@ -12,7 +12,6 @@ public class Order: BaseEntity<Guid>, IAuditableEntity
     public decimal PlatformFee { get; set; }
     public required string Status { get; set; }
     public required string PaymentMethod { get; set; }
-    
     public DateTimeOffset OrderedAt { get; set; }
     public required string Notes { get; set; }
     public required string DeliveryAddress { get; set; }
