@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UGem.Api.Extensions;
 using UGem.Services.Application;
 using UGem.Services.Models;
 
@@ -34,7 +35,7 @@ public class ApplicationController : ControllerBase
 
         return Ok(ApiResponseFactory.SuccessResponse(null, "Application accepted"));
     }
-
+    
     [HttpPost]
     public async Task<IActionResult> CreateApplicationRequest(Request.ApplicationRequest request)
     {
@@ -50,6 +51,7 @@ public class ApplicationController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
     [HttpPost("reject")]
     public async Task<IActionResult> Reject(Request.RejectApplicationRequest request)
     {
