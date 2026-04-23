@@ -6,6 +6,7 @@ public class Request
 {
     public class CreateOrderRequest
     {
+        /*public Guid customerId { get; set; }*/
         public required string Name { get; set; }
         public decimal Discount { get; set; }
         public decimal FinalPrice { get; set; }

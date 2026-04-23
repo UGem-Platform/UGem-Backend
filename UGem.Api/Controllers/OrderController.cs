@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UGem.Api.Extensions;
 using UGem.Services.Models;
 using UGem.Services.OrderService;
 
@@ -19,11 +21,28 @@ public class OrderController: ControllerBase
         var result = await _orderService.GetOrdersList();
         return Ok(ApiResponseFactory.SuccessResponse(result));
     }
-
-    [HttpPost]
+    
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [HttpPost("customer/orders")]
     public async Task<IActionResult> CreateOrder(Request.CreateOrderRequest request)
     {
         await _orderService.CreateOrder(request);
-        return Ok(ApiResponseFactory.SuccessResponse(null, "Create order success"));
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Create order success", HttpContext.TraceIdentifier));
+    }
+    
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [HttpGet("list")]
+    public async Task<IActionResult> GetOrderListFromCustomerId()
+    {
+        var result = await _orderService.GetOrderListFromCustomerId();
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Get order list success", HttpContext.TraceIdentifier));
+    }
+
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [HttpGet("detail")]
+    public async Task<IActionResult> GetOrderDetail(Guid orderId)
+    {
+        var result = await _orderService.GetOrderDetail(orderId);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Get order detail success", HttpContext.TraceIdentifier));
     }
 }

@@ -47,6 +47,11 @@ public class Service : IService
                 DateTimeOffset.UtcNow.AddMinutes(_jwtOption.ExpireMinutes).ToString()),
         };
         
+        var customer = await _dbContext.Customers.FirstOrDefaultAsync(u => u.UserId == user.Id);
+        if (customer != null)
+        {
+            claims.Add(new Claim("CustomerId", customer.Id.ToString()));
+        }
         
         var token = _jwtService.GenerateAccessToken(claims);
         
