@@ -72,13 +72,13 @@ public class Service : IService
         var userIdGuid = Guid.Parse(userId!);
         var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userIdGuid);
         
-        var merchantId = order.OrderDetails
-            .Select(x => x.Food.Merchant.UserId)
+        var merchant = order.OrderDetails
+            .Select(x => x.Food.Merchant)
             .FirstOrDefault();
 
         var notificationMerchant = new Notification()
         {
-            UserId = merchantId,
+            UserId = merchant!.UserId,
             Title = "Order completed",
             Message = $"{user!.FullName} has received the order",
             Type = "order",
@@ -114,13 +114,13 @@ public class Service : IService
         var userIdGuid = Guid.Parse(userId!);
         var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userIdGuid);
         
-        var merchantId = order.OrderDetails
-            .Select(x => x.Food.Merchant.UserId)
+        var merchant = order.OrderDetails
+            .Select(x => x.Food.Merchant)
             .FirstOrDefault();
 
         var notificationMerchant = new Notification()
         {
-            UserId = merchantId,
+            UserId = merchant!.UserId,
             Title = "Order issue",
             Message = $"{user!.FullName} has not received the order",
             Type = "order",

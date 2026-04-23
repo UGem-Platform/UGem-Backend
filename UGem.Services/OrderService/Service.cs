@@ -23,9 +23,9 @@ public class Service : IService
 
     public async Task CreateOrder(Request.CreateOrderRequest request)
     {
-        var customerId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
+        var cusId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
 
-        var cusIdGuid = Guid.Parse(customerId!);
+        var cusIdGuid = Guid.Parse(cusId!);
 
         var foodIdList = request.Foods.Select(x => x.FoodId).Distinct().ToList();
 
@@ -59,7 +59,7 @@ public class Service : IService
         {
             throw new Exception("total amount must be greater than 0");
         }
-
+        
         var order = new Order()
         {
             Id =  Guid.NewGuid(),
@@ -72,12 +72,11 @@ public class Service : IService
             Discount = request.Discount,
             FinalPrice = totalAmount,
             ReviewerFee = request.ReviewerFee,
-            OrderedAt = DateTimeOffset.Now,
+            OrderedAt = DateTimeOffset.UtcNow,
             PlatformFee = request.PlatformFee,
         };
         
         _dbContext.Orders.Add(order);
-        await _dbContext.SaveChangesAsync();
 
         List<OrderDetail> orderDetails = new List<OrderDetail>();
         foreach (var food in result)
@@ -101,5 +100,62 @@ public class Service : IService
             _dbContext.AddRange(orderDetails);
             await _dbContext.SaveChangesAsync();
         }
+    }
+
+    public async Task<List<Response.OrderResponse>> GetOrderListFromCustomerId()
+    {
+        var cusId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
+
+        var cusIdGuid = Guid.Parse(cusId!);
+        
+        var order = _dbContext.Orders.Where(x => x.CustomerId == cusIdGuid);
+
+        var isExist = await order.AnyAsync();
+
+        if (!isExist)
+        {
+            throw new Exception("No orders");
+        }
+
+        var selectOrder = order.Select(x => new Response.OrderResponse()
+        {
+            Name = x.Name,
+            DeliveryAddress = x.DeliveryAddress,
+            Notes = x.Notes,
+            Status = x.Status,
+            Discount = x.Discount,
+            FinalPrice = x.FinalPrice,
+            OrderedAt = x.OrderedAt,
+        });
+        
+        var listOrder = await selectOrder.ToListAsync();
+
+        return listOrder;
+    }
+
+    public async Task<List<Response.GetOrderDetailResponse>> GetOrderDetail(Guid orderId)
+    {
+        var orderDetail = _dbContext.OrderDetails.Where(x => x.OrderId == orderId);
+
+        var isExist = await orderDetail.AnyAsync();
+
+        if (!isExist)
+        {
+            throw new Exception("No orders");
+        }
+
+        var selectOrder = orderDetail.Select(x => new Response.GetOrderDetailResponse()
+        {
+            Name = x.Name,
+            Quantity =  x.Quantity,
+            UnitPrice =  x.UnitPrice,
+            Notes =  x.Notes,
+            OrderId = x.OrderId,
+            FoodId =  x.FoodId,
+        });
+        
+        var listOrder = await selectOrder.ToListAsync();
+
+        return listOrder;
     }
 }
