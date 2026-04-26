@@ -815,6 +815,59 @@ namespace UGem.Repositories.Migrations
                     b.HasIndex("CustomerId");
 
                     b.ToTable("Orders");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("bd98fae3-a88d-4ab9-a9fa-89f633fd0b7b"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 4, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            CustomerId = new Guid("23232323-2323-2323-2323-232323232323"),
+                            DeliveryAddress = "69 Đình Phong Phú",
+                            Discount = 0m,
+                            FinalPrice = 50000m,
+                            IsDeleted = false,
+                            Name = "Order test",
+                            Notes = "Nhớ lấy muỗng đũa",
+                            OrderedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            PaymentMethod = "COD",
+                            PlatformFee = 0m,
+                            ReviewerFee = 0m,
+                            Status = "Pending"
+                        },
+                        new
+                        {
+                            Id = new Guid("4e78e495-05f0-4e0c-8afd-ec7994075e01"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 4, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            CustomerId = new Guid("66666666-6666-6666-6666-666666666666"),
+                            DeliveryAddress = "80 Đình Phong Phú",
+                            Discount = 0m,
+                            FinalPrice = 20000m,
+                            IsDeleted = false,
+                            Name = "Order test 2",
+                            Notes = "Nhớ lấy muỗng đũa",
+                            OrderedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            PaymentMethod = "COD",
+                            PlatformFee = 0m,
+                            ReviewerFee = 0m,
+                            Status = "Pending"
+                        },
+                        new
+                        {
+                            Id = new Guid("6df1fc07-f2c2-4182-a718-e76b338e175c"),
+                            CreatedAt = new DateTimeOffset(new DateTime(2026, 4, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            CustomerId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+                            DeliveryAddress = "100 Đình Phong Phú",
+                            Discount = 0m,
+                            FinalPrice = 100000m,
+                            IsDeleted = false,
+                            Name = "Order test 3",
+                            Notes = "Nhớ lấy muỗng đũa",
+                            OrderedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            PaymentMethod = "COD",
+                            PlatformFee = 0m,
+                            ReviewerFee = 0m,
+                            Status = "Pending"
+                        });
                 });
 
             modelBuilder.Entity("UGem.Repositories.Entity.OrderDetail", b =>
@@ -861,6 +914,52 @@ namespace UGem.Repositories.Migrations
                     b.HasIndex("OrderId");
 
                     b.ToTable("OrderDetails");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("74f67ed4-5a37-4d31-b77b-f50ac7e52fbb"),
+                            CreatedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            FoodId = new Guid("12121212-1212-1212-1212-121212121212"),
+                            IsDeleted = false,
+                            Name = "Che Ba Ba",
+                            OrderId = new Guid("bd98fae3-a88d-4ab9-a9fa-89f633fd0b7b"),
+                            Quantity = 1,
+                            UnitPrice = 20000m
+                        },
+                        new
+                        {
+                            Id = new Guid("80f7c137-c3bd-4721-be12-1ab944f0f023"),
+                            CreatedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            FoodId = new Guid("13131313-1313-1313-1313-131313131313"),
+                            IsDeleted = false,
+                            Name = "Banh Flan Cot Dua",
+                            OrderId = new Guid("bd98fae3-a88d-4ab9-a9fa-89f633fd0b7b"),
+                            Quantity = 2,
+                            UnitPrice = 15000m
+                        },
+                        new
+                        {
+                            Id = new Guid("1680df7b-6e71-4b35-bd25-f45cbbf6138e"),
+                            CreatedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            FoodId = new Guid("12121212-1212-1212-1212-121212121212"),
+                            IsDeleted = false,
+                            Name = "Che Ba Ba",
+                            OrderId = new Guid("4e78e495-05f0-4e0c-8afd-ec7994075e01"),
+                            Quantity = 1,
+                            UnitPrice = 20000m
+                        },
+                        new
+                        {
+                            Id = new Guid("218e9136-36f5-4eb0-b2cf-d8bfa376904b"),
+                            CreatedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
+                            FoodId = new Guid("12121212-1212-1212-1212-121212121212"),
+                            IsDeleted = false,
+                            Name = "Che Ba Ba",
+                            OrderId = new Guid("6df1fc07-f2c2-4182-a718-e76b338e175c"),
+                            Quantity = 5,
+                            UnitPrice = 20000m
+                        });
                 });
 
             modelBuilder.Entity("UGem.Repositories.Entity.Review", b =>

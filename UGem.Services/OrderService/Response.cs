@@ -1,15 +1,32 @@
+using UGem.Repositories.Entity;
+
 namespace UGem.Services.OrderService;
 
 public class Response
 {
     public class GetOrderListResponse
     {
-       public required string Name { get; set; }
-       public decimal FinalPrice { get; set; }
-       public required string DeliveryAddress { get; set; }
-       public required string PaymentMethod { get; set; }
-       public required string Status { get; set; }
-       public required string CustomerName { get; set; }
+        public Guid OrderId { get; set; }
+
+        public decimal FinalPrice { get; set; }
+
+        public string DeliveryAddress { get; set; } = null!;
+
+        public string PaymentMethod { get; set; } = null!;
+
+        public string Status { get; set; } = null!;
+
+        public string CustomerName { get; set; } = null!;
+
+        public DateTimeOffset CreatedAt { get; set; }
+
+        public List<OrderItemResponse> Items { get; set; } = new();
+    }
+    public class OrderItemResponse
+    {
+        public string FoodName { get; set; } = null!;
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
     }
     public class OrderResponse
     {

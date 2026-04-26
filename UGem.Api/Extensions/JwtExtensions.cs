@@ -13,6 +13,7 @@ public static class JwtExtensions
     public const string CustomerPolicy = "CustomerPolicy";
     public const string StaffPolicy = "StaffPolicy";
     public const string AdminAndStaffPolicy = "AdminAndStaffPolicy";
+    public const string MerchantPolicy = "MerchantPolicy";
 
     public static void AddJwtServices(this IServiceCollection services, IConfiguration configuration)
     {
@@ -29,7 +30,7 @@ public static class JwtExtensions
             {
                 options.TokenValidationParameters = new TokenValidationParameters()
                 {
-                    ValidateIssuer = true, 
+                    ValidateIssuer = true,
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
@@ -46,24 +47,28 @@ public static class JwtExtensions
             options.AddPolicy(AdminPolicy, policy =>
                 policy.RequireRole("Admin"));
             // [Authorize(Policy = JwtExtensions.AdminPolicy)]
-        
+
             options.AddPolicy(ReviewerPolicy, policy =>
                 policy.RequireRole("Reviewer"));
             // [Authorize(Policy = JwtExtensions.ReviewerPolicy)]
-        
+
             options.AddPolicy(CustomerPolicy, policy =>
                 policy.RequireRole("Customer"));
             // [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-            
+
             options.AddPolicy(StaffPolicy, policy =>
                 policy.RequireRole("Staff"));
-        
+
             // [Authorize(Policy = JwtExtensions.StaffPolicy)]
-            
+
             options.AddPolicy(AdminAndStaffPolicy, policy =>
                 policy.RequireRole("Admin", "Staff"));
             
-            // [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
+        // [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
+        
+        //// [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+        options.AddPolicy(MerchantPolicy, policy =>
+            policy.RequireRole("Merchant"));
         });
     }
 }
