@@ -16,11 +16,12 @@ public class Service : IService
         _httpContext = httpContext;
     }
 
-    public async Task<List<Response.GetOrderListResponse>> GetOrdersList(Guid userId)
+    public async Task<List<Response.GetOrderListResponse>> GetOrdersList()
     {
+        var userId = _httpContext.HttpContext.User.Claims.First(x => x.Type == "UserId")?.Value; 
+        var userIdGuid = Guid.Parse(userId);
         var query = _dbContext.Orders
-            .Include(o => o.OrderDetails)
-            .Where(o => o.OrderDetails.Any(od => od.Food.Merchant.UserId == userId));
+            .Where(o => o.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
         query = query.OrderByDescending(o => o.CreatedAt);
         
         var selectQuery = query.Select(x => new Response.GetOrderListResponse()
@@ -31,7 +32,7 @@ public class Service : IService
             Status = x.Status,
             FinalPrice =  x.FinalPrice,
             CustomerName = x.Customer.User.FullName,
-            
+            CreatedAt = x.CreatedAt,
         });
         var listOrder = await selectQuery.ToListAsync();
         return listOrder;

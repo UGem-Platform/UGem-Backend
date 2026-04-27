@@ -17,9 +17,9 @@ public class OrderController: ControllerBase
     
     [HttpGet]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
-    public async Task<IActionResult> GetOrderList(Guid userId)
+    public async Task<IActionResult> GetOrderList()
     {
-        var result = await _orderService.GetOrdersList(userId);
+        var result = await _orderService.GetOrdersList();
         return Ok(ApiResponseFactory.SuccessResponse(result));
     }
     

@@ -7,26 +7,12 @@ public class Response
     public class GetOrderListResponse
     {
         public Guid OrderId { get; set; }
-
         public decimal FinalPrice { get; set; }
-
         public string DeliveryAddress { get; set; } = null!;
-
         public string PaymentMethod { get; set; } = null!;
-
         public string Status { get; set; } = null!;
-
         public string CustomerName { get; set; } = null!;
-
         public DateTimeOffset CreatedAt { get; set; }
-
-        public List<OrderItemResponse> Items { get; set; } = new();
-    }
-    public class OrderItemResponse
-    {
-        public string FoodName { get; set; } = null!;
-        public int Quantity { get; set; }
-        public decimal Price { get; set; }
     }
     public class OrderResponse
     {
