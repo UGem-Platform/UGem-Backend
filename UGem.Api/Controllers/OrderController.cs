@@ -16,6 +16,7 @@ public class OrderController: ControllerBase
     }
     
     [HttpGet]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> GetOrderList()
     {
         var result = await _orderService.GetOrdersList();

@@ -16,9 +16,26 @@ public class Service : IService
         _httpContext = httpContext;
     }
 
-    public Task<List<Response.GetOrderListResponse>> GetOrdersList()
+    public async Task<List<Response.GetOrderListResponse>> GetOrdersList()
     {
-        throw new NotImplementedException();
+        var userId = _httpContext.HttpContext.User.Claims.First(x => x.Type == "UserId")?.Value; 
+        var userIdGuid = Guid.Parse(userId);
+        var query = _dbContext.Orders
+            .Where(o => o.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
+        query = query.OrderByDescending(o => o.CreatedAt);
+        
+        var selectQuery = query.Select(x => new Response.GetOrderListResponse()
+        {
+            OrderId = x.Id,
+            DeliveryAddress = x.DeliveryAddress,
+            PaymentMethod = x.PaymentMethod,
+            Status = x.Status,
+            FinalPrice =  x.FinalPrice,
+            CustomerName = x.Customer.User.FullName,
+            CreatedAt = x.CreatedAt,
+        });
+        var listOrder = await selectQuery.ToListAsync();
+        return listOrder;
     }
 
     public async Task CreateOrder(Request.CreateOrderRequest request)
@@ -39,7 +56,7 @@ public class Service : IService
         }
 
         var result = await query.ToListAsync();
-        
+
         decimal totalAmount = 0;
 
         foreach (var food in result)
@@ -48,21 +65,21 @@ public class Service : IService
 
             if (quality <= 0)
             {
-                throw new  Exception($"Quantity of product {food.Id} must be greater than 0");
+                throw new Exception($"Quantity of product {food.Id} must be greater than 0");
             }
-            
+
             totalAmount += quality * food.Price;
         }
-        
-        
+
+
         if (totalAmount <= 0)
         {
             throw new Exception("total amount must be greater than 0");
         }
-        
+
         var order = new Order()
         {
-            Id =  Guid.NewGuid(),
+            Id = Guid.NewGuid(),
             CustomerId = cusIdGuid,
             DeliveryAddress = request.DeliveryAddress,
             Name = request.Name,
@@ -75,7 +92,7 @@ public class Service : IService
             OrderedAt = DateTimeOffset.UtcNow,
             PlatformFee = request.PlatformFee,
         };
-        
+
         _dbContext.Orders.Add(order);
 
         List<OrderDetail> orderDetails = new List<OrderDetail>();
@@ -94,7 +111,7 @@ public class Service : IService
             };
             orderDetails.Add(orderdt);
         }
-        
+
         if (orderDetails.Any())
         {
             _dbContext.AddRange(orderDetails);
@@ -107,7 +124,7 @@ public class Service : IService
         var cusId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
 
         var cusIdGuid = Guid.Parse(cusId!);
-        
+
         var order = _dbContext.Orders.Where(x => x.CustomerId == cusIdGuid);
 
         var isExist = await order.AnyAsync();
@@ -127,7 +144,7 @@ public class Service : IService
             FinalPrice = x.FinalPrice,
             OrderedAt = x.OrderedAt,
         });
-        
+
         var listOrder = await selectOrder.ToListAsync();
 
         return listOrder;
@@ -147,13 +164,13 @@ public class Service : IService
         var selectOrder = orderDetail.Select(x => new Response.GetOrderDetailResponse()
         {
             Name = x.Name,
-            Quantity =  x.Quantity,
-            UnitPrice =  x.UnitPrice,
-            Notes =  x.Notes,
+            Quantity = x.Quantity,
+            UnitPrice = x.UnitPrice,
+            Notes = x.Notes,
             OrderId = x.OrderId,
-            FoodId =  x.FoodId,
+            FoodId = x.FoodId,
         });
-        
+
         var listOrder = await selectOrder.ToListAsync();
 
         return listOrder;
