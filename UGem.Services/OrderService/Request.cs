@@ -6,6 +6,7 @@ public class Request
 {
     public class CreateOrderRequest
     {
+        /*public Guid customerId { get; set; }*/
         public required string Name { get; set; }
         public decimal Discount { get; set; }
         public decimal FinalPrice { get; set; }
@@ -18,6 +19,12 @@ public class Request
         public required string DeliveryAddress { get; set; }
         
         public List<FoodService.Request.FoodOrderRequest> Foods { get; set; }
+    }
+
+    public class ReasonRejectRequest
+    {
+        public string? Reason { get; set; }
+        public Guid OrderId { get; set; }
     }
     
 

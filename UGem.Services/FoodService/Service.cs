@@ -1,6 +1,6 @@
 namespace UGem.Services.FoodService;
 
-public class Service
+public class Service : IService
 {
     
 }

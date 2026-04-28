@@ -34,6 +34,7 @@ public class AppDbContext : DbContext
     private static readonly Guid WishlistId1 = Guid.Parse("16161616-1616-1616-1616-161616161616");
     private static readonly Guid WishlistDetailId1 = Guid.Parse("17171717-1717-1717-1717-171717171717");
     private static readonly Guid CheckInId1 = Guid.Parse("18181818-1818-1818-1818-181818181818");
+    
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -851,6 +852,7 @@ public class AppDbContext : DbContext
                 .WithMany(a => a.Orders)
                 .HasForeignKey(o => o.AffiliateLinkId)
                 .OnDelete(DeleteBehavior.SetNull);
+            
         });
 
         modelBuilder.Entity<OrderDetail>(builder =>
@@ -876,6 +878,8 @@ public class AppDbContext : DbContext
                 .WithMany(f => f.OrderDetails)
                 .HasForeignKey(od => od.FoodId)
                 .OnDelete(DeleteBehavior.Restrict);
+           
+           
         });
 
         modelBuilder.Entity<Review>(builder =>

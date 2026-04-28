@@ -9,7 +9,7 @@ public class Food: BaseEntity<Guid>, IAuditableEntity
     public decimal Price { get; set; }
     public bool IsAvailable { get; set; }
     public string? ImageUrl { get; set; }
-    
+        
     public required Guid MerchantId { get; set; }
     public Merchant Merchant { get; set; } = null!;
     
