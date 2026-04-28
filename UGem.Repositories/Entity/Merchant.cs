@@ -1,3 +1,4 @@
+using NetTopologySuite.Geometries;
 using UGem.Repositories.Abtraction;
 
 namespace UGem.Repositories.Entity;
@@ -12,12 +13,11 @@ public class Merchant: BaseEntity<Guid>, IAuditableEntity
     public bool IsActive { get; set; }
     public required string LogoUrl { get; set; }
     public required string Status {get; set;}
-    public decimal UnderratedScore { get; set; }
+    public double UnderratedScore { get; set; }
     public decimal Rating { get; set; }
     public decimal PlatformFeePercent { get; set; }
     public required string OpeningHours { get; set; }
-    public decimal Latitude { get; set; }   // vĩ độ
-    public decimal Longitude { get; set; }  // kinh độ
+    public Point Location { get; set; } = null!;
     
     public required Guid UserId { get; set; }
     public User User { get; set; } = null!;

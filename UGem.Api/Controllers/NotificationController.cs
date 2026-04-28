@@ -9,7 +9,7 @@ namespace UGem.Api.Controllers;
 public class NotificationController : ControllerBase
 {
     private readonly IService _notificationService;
-    
+
     public NotificationController(IService notificationService)
     {
         _notificationService = notificationService;

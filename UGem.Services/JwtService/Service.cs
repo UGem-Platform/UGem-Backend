@@ -31,7 +31,7 @@ public class Service : IService
 
         return tokenString;
     }
-
+    
     public ClaimsPrincipal ValidateToken(string token)
     {
         try

@@ -16,7 +16,7 @@ public class CustomerController : ControllerBase
     {
         _service = service;
     }
-    
+
     [HttpGet("profile")]
     public async Task<IActionResult> GetProfile()
     {

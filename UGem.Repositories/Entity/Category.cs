@@ -8,6 +8,7 @@ public class Category: BaseEntity<Guid>, IAuditableEntity
     public required string Description { get; set; }
     public required string Slug { get; set; }
     public bool IsActive { get; set; }
+    public required string Path {get; set;}
     
     public Guid? ParentId { get; set; }
     public Category? Parent { get; set; }

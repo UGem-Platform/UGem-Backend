@@ -32,7 +32,7 @@ public class Response
 
         public ApplicantInfoResponse Applicant { get; set; } = null!;
         public List<ApplicationMenuResponse> ApplicationMenus { get; set; } = new();
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public required string Name { get; set; }
+        public required string Description { get; set; }
     }
 }
