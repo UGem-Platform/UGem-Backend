@@ -38,6 +38,49 @@ public class Service : IService
         return listOrder;
     }
 
+    public async Task AcceptOrder(Guid orderId)
+    {
+        var userId = _httpContext.HttpContext.User
+            .Claims.First(x => x.Type == "UserId").Value;
+
+        var userIdGuid = Guid.Parse(userId);
+
+        var order = await _dbContext.Orders
+            .Where(x => x.Id == orderId &&  x.Customer.UserId == userIdGuid)
+            .FirstOrDefaultAsync(x => x.Id == orderId);
+        if (order == null)
+            throw new Exception("Order not found");
+        if(order.OrderedAt.AddMinutes(30) > DateTimeOffset.UtcNow)
+            throw new Exception("The delivery deadline hasn't passed yet");
+        if (order.Status != "Delivered")
+            throw new Exception("Order is not ready to be accepted");
+        order.Status = "Completed";
+        order.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
+    }
+    
+
+    public async Task RejectOrder(Request.ReasonRejectRequest request)
+    {
+       var  userId = _httpContext.HttpContext.User.Claims.First(x => x.Type == "UserId").Value;
+       var userIdGuid = Guid.Parse(userId);
+       var order = _dbContext.Orders.Where(x => x.Id == request.OrderId  &&  x.Customer.UserId == userIdGuid)
+           .FirstOrDefault(x => x.Id == request.OrderId);
+       if(order == null)
+           throw new Exception("Order not found");
+       if (order.OrderedAt.AddMinutes(30) > DateTimeOffset.UtcNow)
+           throw new Exception("The delivery deadline hasn't passed yet");
+       if (order.Status != "Delivered")
+           throw new Exception("Order is not ready to be accepted");
+       order.Status = "Rejected";
+       order.UpdatedAt = DateTimeOffset.UtcNow;
+       
+       order.RejectReason = request.Reason;
+       await _dbContext.SaveChangesAsync();
+    }
+    
+
     public async Task CreateOrder(Request.CreateOrderRequest request)
     {
         var cusId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;

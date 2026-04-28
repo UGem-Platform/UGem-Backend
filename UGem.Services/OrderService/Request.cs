@@ -20,6 +20,12 @@ public class Request
         
         public List<FoodService.Request.FoodOrderRequest> Foods { get; set; }
     }
+
+    public class ReasonRejectRequest
+    {
+        public string? Reason { get; set; }
+        public Guid OrderId { get; set; }
+    }
     
 
 }
