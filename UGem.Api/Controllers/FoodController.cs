@@ -7,11 +7,20 @@ namespace UGem.Api.Controllers;
 public class FoodController : ControllerBase
 {
     [HttpPost]
-    public IActionResult Create() { return Ok(); }
+    public IActionResult Create()
+    {
+        return Ok();
+    }
 
     [HttpGet]
-    public IActionResult GetAll() { return Ok(); }
+    public IActionResult GetAll()
+    {
+        return Ok();
+    }
 
     [HttpGet("{id}")]
-    public IActionResult GetById(int id) { return Ok(); }
+    public IActionResult GetById(int id)
+    {
+        return Ok();
+    }
 }

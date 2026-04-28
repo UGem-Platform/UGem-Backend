@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using NetTopologySuite.Geometries;
 using UGem.Repositories.Abtraction;
 using UGem.Repositories.Entity;
 
@@ -540,11 +541,9 @@ public class AppDbContext : DbContext
             builder.Property(m => m.PlatformFeePercent)
                 .HasPrecision(5, 2);
 
-            builder.Property(m => m.Latitude)
-                .HasPrecision(9, 6);
-
-            builder.Property(m => m.Longitude)
-                .HasPrecision(9, 6);
+            builder.Property(m => m.Location)
+                .IsRequired()
+                .HasColumnType("geometry(Point, 4326)");
 
             builder.HasIndex(m => new { m.Name, m.Description });
         });
@@ -562,12 +561,11 @@ public class AppDbContext : DbContext
                 IsActive = true,
                 LogoUrl = "logo_che.png",
                 Status = "Active",
-                UnderratedScore = 4.90m,
+                UnderratedScore = 4.90,
                 Rating = 4.80m,
                 PlatformFeePercent = 5.00m,
                 OpeningHours = "15:00 - 22:00",
-                Latitude = 10.771500m,
-                Longitude = 106.703200m,
+                Location = new Point(106.703200, 10.771500) { SRID = 4326 },
                 CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 15, 0, TimeSpan.Zero),
                 IsDeleted = false
             }
@@ -589,6 +587,10 @@ public class AppDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(150);
 
+            builder.Property(c => c.Path)
+                .IsRequired()
+                .HasMaxLength(500);
+
             builder.HasIndex(c => c.Slug)
                 .IsUnique();
 
@@ -605,6 +607,7 @@ public class AppDbContext : DbContext
                 Name = "An Vat Le Duong",
                 Description = "Cac mon an vat moc mac, gia hoc sinh sinh vien.",
                 Slug = "an-vat-le-duong",
+                Path = "/an-vat-le-duong",
                 IsActive = true,
                 CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 10, 0, TimeSpan.Zero),
                 IsDeleted = false
@@ -615,6 +618,7 @@ public class AppDbContext : DbContext
                 Name = "Mon Nuoc Truyen Thong",
                 Description = "Pho, bun, hu tieu voi nuoc dung ninh ham lau nam.",
                 Slug = "mon-nuoc-truyen-thong",
+                Path = "/mon-nuoc-truyen-thong",
                 IsActive = true,
                 CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 10, 0, TimeSpan.Zero),
                 IsDeleted = false

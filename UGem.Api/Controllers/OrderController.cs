@@ -3,16 +3,18 @@ using UGem.Services.Models;
 using UGem.Services.OrderService;
 
 namespace UGem.Api.Controllers;
+
 [ApiController]
 [Route("api/[controller]")]
-public class OrderController: ControllerBase
+public class OrderController : ControllerBase
 {
     private readonly IService _orderService;
+
     public OrderController(IService orderService)
     {
         _orderService = orderService;
     }
-    
+
     [HttpGet]
     public async Task<IActionResult> GetOrderList()
     {

@@ -8,13 +8,14 @@ namespace UGem.Api.Controllers;
 [ApiController]
 [Route("api/[controller]")]
 public class WishlistController : ControllerBase
-{   
+{
     private readonly IService _service;
 
     public WishlistController(IService service)
     {
         _service = service;
     }
+
     //add 1 merchant to your wish list.
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     [HttpPost("")]
@@ -32,7 +33,7 @@ public class WishlistController : ControllerBase
         var rs = await _service.GetWishlist();
         return Ok(rs);
     }
-    
+
     //delete 1 merchant from wishlist
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     [HttpDelete("{merchantId}")]
@@ -40,5 +41,5 @@ public class WishlistController : ControllerBase
     {
         var rs = await _service.RemoveFromWishlist(merchantId);
         return Ok(rs);
-    }    
+    }
 }
