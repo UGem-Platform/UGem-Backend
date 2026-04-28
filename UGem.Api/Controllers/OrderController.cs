@@ -5,16 +5,18 @@ using UGem.Services.Models;
 using UGem.Services.OrderService;
 
 namespace UGem.Api.Controllers;
+
 [ApiController]
 [Route("api/[controller]")]
-public class OrderController: ControllerBase
+public class OrderController : ControllerBase
 {
     private readonly IService _orderService;
+
     public OrderController(IService orderService)
     {
         _orderService = orderService;
     }
-    
+
     [HttpGet]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> GetOrderList()
@@ -22,7 +24,23 @@ public class OrderController: ControllerBase
         var result = await _orderService.GetOrdersList();
         return Ok(ApiResponseFactory.SuccessResponse(result));
     }
+
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [HttpPost("accept")]
+    public async Task<IActionResult> AcceptOrder(Guid orderId)
+    {
+        await _orderService.AcceptOrder(orderId);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Accept order success", HttpContext.TraceIdentifier));
+    }
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [HttpPost("accept")]
+    public async Task<IActionResult> RejectOrder(Guid orderId)
+    {
+        await _orderService.AcceptOrder(orderId);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Accept order success", HttpContext.TraceIdentifier));
+    }
     
+
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     [HttpPost("customer/orders")]
     public async Task<IActionResult> CreateOrder(Request.CreateOrderRequest request)
@@ -30,7 +48,7 @@ public class OrderController: ControllerBase
         await _orderService.CreateOrder(request);
         return Ok(ApiResponseFactory.SuccessResponse(null, "Create order success", HttpContext.TraceIdentifier));
     }
-    
+
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     [HttpGet("list")]
     public async Task<IActionResult> GetOrderListFromCustomerId()
