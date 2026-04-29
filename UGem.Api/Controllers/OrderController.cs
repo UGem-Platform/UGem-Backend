@@ -33,11 +33,11 @@ public class OrderController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(null, "Accept order success", HttpContext.TraceIdentifier));
     }
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpPost("accept")]
-    public async Task<IActionResult> RejectOrder(Guid orderId)
+    [HttpPost("reject")]
+    public async Task<IActionResult> RejectOrder([FromBody] Request.ReasonRejectRequest request)
     {
-        await _orderService.AcceptOrder(orderId);
-        return Ok(ApiResponseFactory.SuccessResponse(null, "Accept order success", HttpContext.TraceIdentifier));
+        await _orderService.RejectOrder(request);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Order rejected successfully", HttpContext.TraceIdentifier));
     }
     
 
