@@ -18,7 +18,7 @@ public class Service : IService
 
     public async Task<List<Response.GetOrderListResponse>> GetOrdersList()
     {
-        var userId = _httpContext.HttpContext.User.Claims.First(x => x.Type == "UserId")?.Value; 
+        var userId = _httpContext.HttpContext.User.Claims.First(x => x.Type == "UserId").Value; 
         var userIdGuid = Guid.Parse(userId);
         var query = _dbContext.Orders
             .Where(o => o.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
@@ -65,14 +65,14 @@ public class Service : IService
     {
        var  userId = _httpContext.HttpContext.User.Claims.First(x => x.Type == "UserId").Value;
        var userIdGuid = Guid.Parse(userId);
-       var order = _dbContext.Orders.Where(x => x.Id == request.OrderId  &&  x.Customer.UserId == userIdGuid)
-           .FirstOrDefault(x => x.Id == request.OrderId);
+       var order = await _dbContext.Orders
+           .FirstOrDefaultAsync(x => x.Id == request.OrderId && x.Customer.UserId == userIdGuid);
        if(order == null)
            throw new Exception("Order not found");
        if (order.OrderedAt.AddMinutes(30) > DateTimeOffset.UtcNow)
            throw new Exception("The delivery deadline hasn't passed yet");
        if (order.Status != "Delivered")
-           throw new Exception("Order is not ready to be accepted");
+           throw new Exception("Order is not eligible for rejection");
        order.Status = "Rejected";
        order.UpdatedAt = DateTimeOffset.UtcNow;
        
