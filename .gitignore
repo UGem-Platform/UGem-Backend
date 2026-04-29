@@ -36,13 +36,13 @@ _ReSharper*/
 .env.*
 
 # App settings
-**/appsettings.*.json
-!**/appsettings.json
+**/appsettings*.json
+!**/appsettings.example.json
+!**/appsettings.template.json
+!**/appsettings.Template.json
 
 # EF Core generated migrations
-UGem.Repositories/Migrations/[0-9]*_*.cs
-UGem.Repositories/Migrations/[0-9]*_*.Designer.cs
-!UGem.Repositories/Migrations/AppDbContextModelSnapshot.cs
+UGem.Repositories/Migrations/
 
 # OS files
 .DS_Store
