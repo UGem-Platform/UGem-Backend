@@ -16,6 +16,7 @@ public class Order: BaseEntity<Guid>, IAuditableEntity
     
     public DateTimeOffset OrderedAt { get; set; }
     public required string Notes { get; set; }
+    public string? RejectionReason { get; set; }
     public required string DeliveryAddress { get; set; }
     
     public required Guid CustomerId { get; set; }

@@ -60,6 +60,20 @@ builder.Services.AddQuartz(options =>
                 )
         );
 });
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:3001",
+                "https://stimulate-gutter-sliceable.ngrok-free.dev" // your ngrok URL
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials(); // IMPORTANT for SignalR
+    });
+});
 builder.Services.AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; });
 var app = builder.Build();
 
@@ -70,6 +84,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
 
