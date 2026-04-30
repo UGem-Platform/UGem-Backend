@@ -25,12 +25,18 @@ builder.Services.AddHttpContextAccessor();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+var connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration["DATABASE_URL"];
+
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
+        connectionString,
         o => o.UseNetTopologySuite()
     )
 );
+
 builder.Services.AddJwtServices(builder.Configuration);
 builder.Services.AddSwaggerServices();
 
@@ -67,7 +73,8 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(
                 "http://localhost:3001",
-                "https://stimulate-gutter-sliceable.ngrok-free.dev" // your ngrok URL
+                "https://stimulate-gutter-sliceable.ngrok-free.dev", // your ngrok URL
+                "https://u-gem-frontend-89gd.vercel.app"
             )
             .AllowAnyHeader()
             .AllowAnyMethod()

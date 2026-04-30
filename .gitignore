@@ -34,15 +34,24 @@ _ReSharper*/
 *.log
 .env
 .env.*
+!.env.example
+!.env.template
+!.env.sample
+*.env.local
+.envrc
 
-# App settings
-**/appsettings*.json
-!**/appsettings.example.json
-!**/appsettings.template.json
-!**/appsettings.Template.json
+# Local app settings and launch profiles
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/appsettings.*.local.json
+**/appsettings.Secrets.json
+**/Properties/launchSettings.json
 
-# EF Core generated migrations
-UGem.Repositories/Migrations/
+# Local Docker Compose overrides
+docker-compose.override.yml
+docker-compose.override.yaml
+compose.override.yml
+compose.override.yaml
 
 # OS files
 .DS_Store
