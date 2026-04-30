@@ -84,6 +84,12 @@ builder.Services.AddCors(options =>
 builder.Services.AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; });
 var app = builder.Build();
 
+await using (var scope = app.Services.CreateAsyncScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await dbContext.Database.MigrateAsync();
+}
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
