@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using UGem.Repositories;
 
@@ -20,6 +21,7 @@ namespace UGem.Repositories.Migrations
                 .HasAnnotation("ProductVersion", "8.0.0")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
+            NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
             modelBuilder.Entity("UGem.Repositories.Entity.Admin", b =>
@@ -304,6 +306,11 @@ namespace UGem.Repositories.Migrations
                     b.Property<Guid?>("ParentId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("Slug")
                         .IsRequired()
                         .HasMaxLength(150)
@@ -330,6 +337,7 @@ namespace UGem.Repositories.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             Name = "An Vat Le Duong",
+                            Path = "/an-vat-le-duong",
                             Slug = "an-vat-le-duong"
                         },
                         new
@@ -340,6 +348,7 @@ namespace UGem.Repositories.Migrations
                             IsActive = true,
                             IsDeleted = false,
                             Name = "Mon Nuoc Truyen Thong",
+                            Path = "/mon-nuoc-truyen-thong",
                             Slug = "mon-nuoc-truyen-thong"
                         });
                 });
@@ -613,18 +622,14 @@ namespace UGem.Repositories.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<decimal>("Latitude")
-                        .HasPrecision(9, 6)
-                        .HasColumnType("numeric(9,6)");
+                    b.Property<Point>("Location")
+                        .IsRequired()
+                        .HasColumnType("geometry(Point, 4326)");
 
                     b.Property<string>("LogoUrl")
                         .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("character varying(500)");
-
-                    b.Property<decimal>("Longitude")
-                        .HasPrecision(9, 6)
-                        .HasColumnType("numeric(9,6)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -654,9 +659,9 @@ namespace UGem.Repositories.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
-                    b.Property<decimal>("UnderratedScore")
+                    b.Property<double>("UnderratedScore")
                         .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)");
+                        .HasColumnType("double precision");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -686,16 +691,15 @@ namespace UGem.Repositories.Migrations
                             Email = "checauhai@ugem.com",
                             IsActive = true,
                             IsDeleted = false,
-                            Latitude = 10.771500m,
+                            Location = (NetTopologySuite.Geometries.Point)new NetTopologySuite.IO.WKTReader().Read("SRID=4326;POINT (106.7032 10.7715)"),
                             LogoUrl = "logo_che.png",
-                            Longitude = 106.703200m,
                             Name = "Che Mam Cau Hai",
                             OpeningHours = "15:00 - 22:00",
                             Phone = "0909888777",
                             PlatformFeePercent = 5.00m,
                             Rating = 4.80m,
                             Status = "Active",
-                            UnderratedScore = 4.90m,
+                            UnderratedScore = 4.9000000000000004,
                             UserId = new Guid("77777777-7777-7777-7777-777777777777")
                         });
                 });
@@ -796,6 +800,9 @@ namespace UGem.Repositories.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
 
+                    b.Property<string>("RejectReason")
+                        .HasColumnType("text");
+
                     b.Property<decimal>("ReviewerFee")
                         .HasPrecision(18, 2)
                         .HasColumnType("numeric(18,2)");
@@ -815,59 +822,6 @@ namespace UGem.Repositories.Migrations
                     b.HasIndex("CustomerId");
 
                     b.ToTable("Orders");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("bd98fae3-a88d-4ab9-a9fa-89f633fd0b7b"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 4, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerId = new Guid("23232323-2323-2323-2323-232323232323"),
-                            DeliveryAddress = "69 Đình Phong Phú",
-                            Discount = 0m,
-                            FinalPrice = 50000m,
-                            IsDeleted = false,
-                            Name = "Order test",
-                            Notes = "Nhớ lấy muỗng đũa",
-                            OrderedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            PaymentMethod = "COD",
-                            PlatformFee = 0m,
-                            ReviewerFee = 0m,
-                            Status = "Pending"
-                        },
-                        new
-                        {
-                            Id = new Guid("4e78e495-05f0-4e0c-8afd-ec7994075e01"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 4, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerId = new Guid("66666666-6666-6666-6666-666666666666"),
-                            DeliveryAddress = "80 Đình Phong Phú",
-                            Discount = 0m,
-                            FinalPrice = 20000m,
-                            IsDeleted = false,
-                            Name = "Order test 2",
-                            Notes = "Nhớ lấy muỗng đũa",
-                            OrderedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            PaymentMethod = "COD",
-                            PlatformFee = 0m,
-                            ReviewerFee = 0m,
-                            Status = "Pending"
-                        },
-                        new
-                        {
-                            Id = new Guid("6df1fc07-f2c2-4182-a718-e76b338e175c"),
-                            CreatedAt = new DateTimeOffset(new DateTime(2026, 4, 27, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            CustomerId = new Guid("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
-                            DeliveryAddress = "100 Đình Phong Phú",
-                            Discount = 0m,
-                            FinalPrice = 100000m,
-                            IsDeleted = false,
-                            Name = "Order test 3",
-                            Notes = "Nhớ lấy muỗng đũa",
-                            OrderedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            PaymentMethod = "COD",
-                            PlatformFee = 0m,
-                            ReviewerFee = 0m,
-                            Status = "Pending"
-                        });
                 });
 
             modelBuilder.Entity("UGem.Repositories.Entity.OrderDetail", b =>
@@ -914,52 +868,6 @@ namespace UGem.Repositories.Migrations
                     b.HasIndex("OrderId");
 
                     b.ToTable("OrderDetails");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = new Guid("74f67ed4-5a37-4d31-b77b-f50ac7e52fbb"),
-                            CreatedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            FoodId = new Guid("12121212-1212-1212-1212-121212121212"),
-                            IsDeleted = false,
-                            Name = "Che Ba Ba",
-                            OrderId = new Guid("bd98fae3-a88d-4ab9-a9fa-89f633fd0b7b"),
-                            Quantity = 1,
-                            UnitPrice = 20000m
-                        },
-                        new
-                        {
-                            Id = new Guid("80f7c137-c3bd-4721-be12-1ab944f0f023"),
-                            CreatedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            FoodId = new Guid("13131313-1313-1313-1313-131313131313"),
-                            IsDeleted = false,
-                            Name = "Banh Flan Cot Dua",
-                            OrderId = new Guid("bd98fae3-a88d-4ab9-a9fa-89f633fd0b7b"),
-                            Quantity = 2,
-                            UnitPrice = 15000m
-                        },
-                        new
-                        {
-                            Id = new Guid("1680df7b-6e71-4b35-bd25-f45cbbf6138e"),
-                            CreatedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            FoodId = new Guid("12121212-1212-1212-1212-121212121212"),
-                            IsDeleted = false,
-                            Name = "Che Ba Ba",
-                            OrderId = new Guid("4e78e495-05f0-4e0c-8afd-ec7994075e01"),
-                            Quantity = 1,
-                            UnitPrice = 20000m
-                        },
-                        new
-                        {
-                            Id = new Guid("218e9136-36f5-4eb0-b2cf-d8bfa376904b"),
-                            CreatedAt = new DateTimeOffset(new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), new TimeSpan(0, 0, 0, 0, 0)),
-                            FoodId = new Guid("12121212-1212-1212-1212-121212121212"),
-                            IsDeleted = false,
-                            Name = "Che Ba Ba",
-                            OrderId = new Guid("6df1fc07-f2c2-4182-a718-e76b338e175c"),
-                            Quantity = 5,
-                            UnitPrice = 20000m
-                        });
                 });
 
             modelBuilder.Entity("UGem.Repositories.Entity.Review", b =>

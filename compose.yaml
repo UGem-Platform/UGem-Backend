@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgis/postgis:15-3.4
+    container_name: ugem-db
+    restart: always
+    environment:
+      POSTGRES_DB: UGem
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: MyStrongPassword123@
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  ugem.api:
+    image: ugem.api
+    container_name: ugem-api
+    build:
+      context: .
+      dockerfile: UGem.Api/Dockerfile
+    depends_on:
+      - db
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=UGem;Username=postgres;Password=MyStrongPassword123@
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
