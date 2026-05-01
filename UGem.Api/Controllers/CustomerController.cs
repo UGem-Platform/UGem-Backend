@@ -18,6 +18,7 @@ public class CustomerController : ControllerBase
     }
 
     [HttpGet("profile")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     public async Task<IActionResult> GetProfile()
     {
         var result = await _service.GetProfile();

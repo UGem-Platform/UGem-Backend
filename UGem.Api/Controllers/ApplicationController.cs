@@ -18,6 +18,7 @@ public class ApplicationController : ControllerBase
     }
 
     [HttpGet("user/applications")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     public async Task<IActionResult> GetMyApplications()
     {
         var data = await _applicationService.GetMyApplications();
