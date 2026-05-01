@@ -64,6 +64,18 @@ public class Service : IService
 
         var userIdGuid = Guid.Parse(userId!);
 
+        var merchantExistsForUser = await _dbContext.Merchants
+            .AnyAsync(m => m.UserId == userIdGuid);
+
+        if (merchantExistsForUser)
+            throw new InvalidOperationException("This user already has a merchant profile.");
+
+        var applicationExistsForUser = await _dbContext.Applications
+            .AnyAsync(m => m.UserId == userIdGuid);
+
+        if (applicationExistsForUser)
+            throw new InvalidOperationException("This user already has an application.");
+
         var application = new Repositories.Entity.Application()
         {
             UserId = userIdGuid,
@@ -203,7 +215,7 @@ public class Service : IService
         application.Status = "Approved";
         application.ReviewedAt = DateTime.UtcNow;
         application.User.Role = "Merchant";
-        
+
         var geometryFactory = NetTopologySuite.NtsGeometryServices.Instance
             .CreateGeometryFactory(srid: 4326);
         var location = geometryFactory.CreatePoint(
@@ -228,7 +240,7 @@ public class Service : IService
             CreatedAt = DateTimeOffset.UtcNow,
         };
         _dbContext.Merchants.Add(merchant);
-        
+
         var notification = new Notification()
         {
             UserId = application.UserId,
