@@ -63,12 +63,12 @@ public static class JwtExtensions
 
             options.AddPolicy(AdminAndStaffPolicy, policy =>
                 policy.RequireRole("Admin", "Staff"));
-            
-        // [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
-        
-        //// [Authorize(Policy = JwtExtensions.MerchantPolicy)]
-        options.AddPolicy(MerchantPolicy, policy =>
-            policy.RequireRole("Merchant"));
+
+            // [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
+
+            //// [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+            options.AddPolicy(MerchantPolicy, policy =>
+                policy.RequireRole("Merchant"));
         });
     }
 }

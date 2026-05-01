@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UGem.Services.Models;
 using UGem.Services.NotificationService;
@@ -16,6 +17,7 @@ public class NotificationController : ControllerBase
     }
 
     [HttpGet]
+    [Authorize]
     public async Task<IActionResult> GetNotifications()
     {
         var result = await _notificationService.GetNotificationRequests();

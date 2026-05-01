@@ -41,6 +41,7 @@ public class Service : IService
         {
             new Claim("UserId", user.Id.ToString()),
             new Claim("Email", user.Email),
+            new Claim(type: "Name", user.FullName),
             new Claim("Role", user.Role),
             new Claim(ClaimTypes.Role, user.Role),
             new Claim(ClaimTypes.Expired, 

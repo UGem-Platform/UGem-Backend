@@ -842,6 +842,10 @@ public class AppDbContext : DbContext
             builder.Property(o => o.DeliveryAddress)
                 .IsRequired()
                 .HasMaxLength(500);
+            
+            builder.Property(o => o.RejectionReason)
+                .IsRequired()
+                .HasMaxLength(500);
 
             builder.HasOne(o => o.Customer)
                 .WithMany(c => c.Orders)

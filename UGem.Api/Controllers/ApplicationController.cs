@@ -17,7 +17,8 @@ public class ApplicationController : ControllerBase
         _applicationService = applicationService;
     }
 
-    [HttpGet("user/applications")]
+    [HttpGet("merchant/applications")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> GetMyApplications()
     {
         var data = await _applicationService.GetMyApplications();
@@ -41,8 +42,8 @@ public class ApplicationController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(null, "Application accepted"));
     }
 
-    [HttpPost]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [HttpPost ("merchant/applications/create")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> CreateApplicationRequest(Request.ApplicationRequest request)
     {
         await _applicationService.CreateApplicationRequest(request);
@@ -50,7 +51,7 @@ public class ApplicationController : ControllerBase
     }
 
     [HttpPut("resubmit")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> EditAfterReject(Request.UpdateApplicationRequest request)
     {
         var result = await _applicationService.EditApplicationAfterReject(request);
