@@ -13,8 +13,8 @@ using UGem.Repositories;
 namespace UGem.Repositories.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260430174536_Initial")]
-    partial class Initial
+    [Migration("20260501081530_MakeRejectionReasonNullable")]
+    partial class MakeRejectionReasonNullable
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
