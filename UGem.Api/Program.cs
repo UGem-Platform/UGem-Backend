@@ -3,6 +3,7 @@ using Quartz;
 using UGem.Api.Extensions;
 using UGem.Repositories;
 using UGem.Services.BackGroundJobService;
+using WishlistService = UGem.Services.WishlistService;
 using FoodService = UGem.Services.FoodService;
 using MailService = UGem.Services.MailService;
 using MediaService = UGem.Services.MediaService;
@@ -45,6 +46,7 @@ builder.Services.AddScoped<JwtService.IService, JwtService.Service>();
 builder.Services.AddScoped<CustomerService.IService, CustomerService.Service>();
 builder.Services.AddScoped<MerchantService.IService, MerchantService.Service>();
 builder.Services.AddScoped<FoodService.IService, FoodService.Service>();
+builder.Services.AddScoped<WishlistService.IService, WishlistService.Service>();
 builder.Services.AddQuartz(options =>
 {
     var jobKey = new JobKey(nameof(ProcessTransactionPendingJob));

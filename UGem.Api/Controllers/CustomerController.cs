@@ -24,19 +24,5 @@ public class CustomerController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result, "Get profile success"));
     }
 
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpPut("confirm-received")]
-    public async Task<IActionResult> ConfirmOrderReceived(Request.ConfirmOrderRequest request)
-    {
-        await _service.ConfirmOrderReceived(request);
-        return Ok(ApiResponseFactory.SuccessResponse(null, "Confirm order received success"));
-    }
 
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpPut("confirm-not-received")]
-    public async Task<IActionResult> ConfirmOrderNotReceived(Request.ConfirmOrderRequest request)
-    {
-        await _service.ConfirmOrderNotReceived(request);
-        return Ok(ApiResponseFactory.SuccessResponse(null, "Confirm order not received success"));
-    }
 }

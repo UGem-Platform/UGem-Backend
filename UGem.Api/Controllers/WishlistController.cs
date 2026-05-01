@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UGem.Api.Extensions;
+using UGem.Services.Models;
 using UGem.Services.WishlistService;
 
 namespace UGem.Api.Controllers;
@@ -21,8 +22,8 @@ public class WishlistController : ControllerBase
     [HttpPost("")]
     public async Task<IActionResult> AddToWishlist(Request.CreateWishlistRequest request)
     {
-        var rs = await _service.AddToWishlist(request);
-        return Ok(rs);
+        await _service.AddToWishlist(request);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Add to Wishlist success"));
     }
 
     //show all wish list
@@ -31,7 +32,7 @@ public class WishlistController : ControllerBase
     public async Task<IActionResult> GetWishlist()
     {
         var rs = await _service.GetWishlist();
-        return Ok(rs);
+        return Ok(ApiResponseFactory.SuccessResponse(rs, "Get success"));
     }
 
     //delete 1 merchant from wishlist
@@ -39,7 +40,7 @@ public class WishlistController : ControllerBase
     [HttpDelete("{merchantId}")]
     public async Task<IActionResult> RemoveFromWishlist(Guid merchantId)
     {
-        var rs = await _service.RemoveFromWishlist(merchantId);
-        return Ok(rs);
+        await _service.RemoveFromWishlist(merchantId);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Confirm order not received success"));
     }
 }

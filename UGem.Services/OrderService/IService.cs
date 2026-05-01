@@ -10,5 +10,8 @@ public interface IService
     public Task CreateOrder(Request.CreateOrderRequest request);
     public Task<List<Response.OrderResponse>> GetOrderListFromCustomerId();
     public Task<List<Response.GetOrderDetailResponse>> GetOrderDetail(Guid orderId);
+    public Task ConfirmOrderReceived(Request.ConfirmOrderRequest request);
+    
+    public Task ConfirmOrderNotReceived(Request.ConfirmOrderRequest request);
 
 }

@@ -26,6 +26,9 @@ public class Request
         public string? Reason { get; set; }
         public Guid OrderId { get; set; }
     }
-    
+    public class ConfirmOrderRequest
+    {
+        public Guid OrderId { get; set; }
+    }
 
 }
