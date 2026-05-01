@@ -2,7 +2,7 @@ namespace UGem.Services.WishlistService;
 
 public interface IService
 {
-    public Task<string> AddToWishlist(Request.CreateWishlistRequest request);
+    public Task AddToWishlist(Request.CreateWishlistRequest request);
     Task<List<Response.WishlistItemResponse>> GetWishlist();
-    Task<string> RemoveFromWishlist(Guid merchantId);
+    Task RemoveFromWishlist(Guid merchantId);
 }

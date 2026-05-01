@@ -24,6 +24,9 @@ public class CustomerController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result, "Get profile success"));
     }
 
+<<<<<<< feature/FixFunc
+}
+=======
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     [HttpPut("confirm-received")]
     public async Task<IActionResult> ConfirmOrderReceived(Request.ConfirmOrderRequest request)
@@ -46,3 +49,4 @@ public class CustomerController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result, "Register success"));
     }
 }
+>>>>>>> main

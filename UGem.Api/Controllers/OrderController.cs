@@ -64,4 +64,20 @@ public class OrderController : ControllerBase
         var result = await _orderService.GetOrderDetail(orderId);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Get order detail success", HttpContext.TraceIdentifier));
     }
+    
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [HttpPut("confirm-received")]
+    public async Task<IActionResult> ConfirmOrderReceived(Request.ConfirmOrderRequest request)
+    {
+        await _orderService.ConfirmOrderReceived(request);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Confirm order received success"));
+    }
+
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [HttpPut("confirm-not-received")]
+    public async Task<IActionResult> ConfirmOrderNotReceived(Request.ConfirmOrderRequest request)
+    {
+        await _orderService.ConfirmOrderNotReceived(request);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Confirm order not received success"));
+    }
 }

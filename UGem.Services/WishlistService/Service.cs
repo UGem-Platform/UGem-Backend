@@ -16,48 +16,52 @@ public class Service : IService
         _httpContext = httpContext;
     }
 
-    public async Task<string> AddToWishlist(Request.CreateWishlistRequest request)
+    public async Task AddToWishlist(Request.CreateWishlistRequest request)
     {
         var customerId = _httpContext.HttpContext.User.Claims.FirstOrDefault(
             x => x.Type == "CustomerId")?.Value;
         
         var customerIdGuid = Guid.Parse(customerId!);
        
+        if (request.MerchantId == Guid.Empty)
+        {
+            throw new Exception("MerchantId is required");
+        }
+
+        
         var wishlist = await _dbContext.Wishlists
             .FirstOrDefaultAsync(x => x.CustomerId == customerIdGuid);
-        
+
         if (wishlist == null)
         {
-            wishlist = new Wishlist()
+            wishlist = new Wishlist
             {
                 Id = Guid.NewGuid(),
                 CustomerId = customerIdGuid,
             };
 
-            _dbContext.Add(wishlist);
+            _dbContext.Wishlists.Add(wishlist);
+            await _dbContext.SaveChangesAsync();
         }
         
         var isExist = await _dbContext.WishlistDetails
-            .AnyAsync(x => x.WishlistId == wishlist.Id 
-                           && x.MerchantId == request.MerchantId);
+            .AnyAsync(x => x.WishlistId == wishlist.Id &&
+                           x.MerchantId == request.MerchantId);
 
         if (isExist)
         {
-            return "Already in wishlist";
+            throw new Exception("Merchant already in wishlist");
         }
-        
-        var detail = new WishlistDetail()
+
+        var detail = new WishlistDetail
         {
             Id = Guid.NewGuid(),
             WishlistId = wishlist.Id,
             MerchantId = request.MerchantId,
         };
 
-        _dbContext.Add(detail);
+        _dbContext.WishlistDetails.Add(detail);
         await _dbContext.SaveChangesAsync();
-
-        return "Add success";
-        
     }
     public async Task<List<Response.WishlistItemResponse>> GetWishlist()
     {
@@ -87,7 +91,7 @@ public class Service : IService
         return result;
     }
     
-    public async Task<string> RemoveFromWishlist(Guid merchantId)
+    public async Task RemoveFromWishlist(Guid merchantId)
     {
         var customerId = _httpContext.HttpContext.User.Claims
             .FirstOrDefault(x => x.Type == "CustomerId")?.Value;
@@ -99,7 +103,7 @@ public class Service : IService
 
         if (wishlist == null)
         {
-            return "Wishlist not found";
+            throw new Exception("Wishlist not found");
         }
 
         var detail = await _dbContext.WishlistDetails
@@ -108,12 +112,10 @@ public class Service : IService
 
         if (detail == null)
         {
-            return "Merchant not in wishlist";
+            throw new Exception("Merchant not in wishlist");
         }
 
         _dbContext.Remove(detail);
         await _dbContext.SaveChangesAsync();
-
-        return "Remove success";
     }
 }

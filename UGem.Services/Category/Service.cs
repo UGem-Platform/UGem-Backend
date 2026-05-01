@@ -27,6 +27,14 @@ public class Service : IService
     public async Task<List<Response.GetCategoryResponse>> GetCategoryById(Guid parentId)
     {
         var query = _dbContext.Categories.Where(x => x.Id == parentId);
+        
+        var parentExists = await query
+            .AnyAsync();
+
+        if (!parentExists)
+        {
+            throw new Exception("Parent category not found");
+        }
         var selectQuery = query.Select(x => new Response.GetCategoryResponse()
         {
             Id = x.Id,
