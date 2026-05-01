@@ -7,7 +7,7 @@ using UGem.Services.OrderService;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/order")]
+[Route("api/v1/orders")]
 public class OrderController : ControllerBase
 {
     private readonly IService _orderService;
@@ -17,7 +17,7 @@ public class OrderController : ControllerBase
         _orderService = orderService;
     }
 
-    [HttpGet("merchant")]
+    [HttpGet("")]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> GetOrderList()
     {
@@ -25,14 +25,14 @@ public class OrderController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result));
     }
 
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     [HttpPost("{orderId}/accept")]
     public async Task<IActionResult> AcceptOrder(Guid orderId)
     {
         await _orderService.AcceptOrder(orderId);
         return Ok(ApiResponseFactory.SuccessResponse(null, "Accept order success", HttpContext.TraceIdentifier));
     }
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     [HttpPost("{orderId}/reject")]
     public async Task<IActionResult> RejectOrder([FromBody] Request.ReasonRejectRequest request)
     {
@@ -42,7 +42,7 @@ public class OrderController : ControllerBase
     
 
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpPost("create")]
+    [HttpPost("")]
     public async Task<IActionResult> CreateOrder(Request.CreateOrderRequest request)
     {
         await _orderService.CreateOrder(request);
@@ -50,7 +50,7 @@ public class OrderController : ControllerBase
     }
 
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpGet("customer/list")]
+    [HttpGet("me")]
     public async Task<IActionResult> GetOrderListFromCustomerId()
     {
         var result = await _orderService.GetOrderListFromCustomerId();
@@ -58,7 +58,7 @@ public class OrderController : ControllerBase
     }
 
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpGet("{orderId}/detail")]
+    [HttpGet("{orderId}")]
     public async Task<IActionResult> GetOrderDetail(Guid orderId)
     {
         var result = await _orderService.GetOrderDetail(orderId);

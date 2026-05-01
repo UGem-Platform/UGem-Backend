@@ -8,7 +8,7 @@ using UGem.Services.Models;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/application")]
+[Route("api/v1/applications")]
 public class ApplicationController : ControllerBase
 {
     private readonly IService _applicationService;
@@ -18,7 +18,7 @@ public class ApplicationController : ControllerBase
         _applicationService = applicationService;
     }
 
-    [HttpGet("merchant/my")]
+    [HttpGet("me")]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> GetMyApplications()
     {
@@ -26,7 +26,7 @@ public class ApplicationController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(data));
     }
 
-    [HttpGet("staff/list")]
+    [HttpGet("")]
     [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
     public async Task<IActionResult> GetApplications()
     {
@@ -60,7 +60,7 @@ public class ApplicationController : ControllerBase
         }
     }
 
-    [HttpPost ("create")]
+    [HttpPost ("")]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> CreateApplicationRequest(Request.ApplicationRequest request)
     {
@@ -68,7 +68,7 @@ public class ApplicationController : ControllerBase
         return Ok();
     }
 
-    [HttpPut("resubmit")]
+    [HttpPut("{id}")]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> EditAfterReject(Request.UpdateApplicationRequest request)
     {
@@ -78,7 +78,7 @@ public class ApplicationController : ControllerBase
     }
 
     [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
-    [HttpPost("reject")]
+    [HttpPost("{id}/reject")]
     public async Task<IActionResult> Reject(Request.RejectApplicationRequest request)
     {
         var result = await _applicationService.RejectApplication(request);

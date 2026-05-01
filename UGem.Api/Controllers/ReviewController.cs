@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api")]
+[Route("api/v1")]
 public class ReviewController : ControllerBase
 {
     [HttpPost]

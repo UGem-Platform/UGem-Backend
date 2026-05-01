@@ -7,7 +7,7 @@ using UGem.Services.Models;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/customer")]
+[Route("api/v1")]
 public class CustomerController : ControllerBase
 {
     private readonly IService _service;
@@ -17,13 +17,13 @@ public class CustomerController : ControllerBase
         _service = service;
     }
 
-    [HttpGet("profile")]
+    [HttpGet("customers/me")]
     public async Task<IActionResult> GetProfile()
     {
         var result = await _service.GetProfile();
         return Ok(ApiResponseFactory.SuccessResponse(result, "Get profile success"));
     }
-    [HttpPost("register")]
+    [HttpPost("auth/register")]
     public async Task<IActionResult> Register([FromBody] Request.RegisterCustomerRequest request)
     {
         var result = await _service.CreateCustomer(request);
