@@ -186,6 +186,14 @@ public class Service : IService
         if (application.Status != "Pending") throw new Exception("The application is not pending.");
         application.Status = "Approved";
         application.ReviewedAt = DateTime.UtcNow;
+        
+        var geometryFactory = NetTopologySuite.NtsGeometryServices.Instance
+            .CreateGeometryFactory(srid: 4326);
+        var location = geometryFactory.CreatePoint(
+            new NetTopologySuite.Geometries.Coordinate(
+                (double)application.Longitude,
+                (double)application.Latitude));
+
 
         var merchant = new Merchant()
         {
@@ -199,10 +207,11 @@ public class Service : IService
             Status = "Active",
             IsActive = true,
             OpeningHours = "",
+            Location = location,
             CreatedAt = DateTimeOffset.UtcNow,
         };
         _dbContext.Merchants.Add(merchant);
-        application.User.Role = "Merchant";
+        
         var notification = new Notification()
         {
             UserId = application.UserId,
