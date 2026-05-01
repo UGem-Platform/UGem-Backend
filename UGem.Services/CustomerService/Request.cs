@@ -2,9 +2,6 @@ namespace UGem.Services.CustomerService;
 
 public class Request
 {
-<<<<<<< feature/FixFunc
-
-=======
     public class ConfirmOrderRequest
     {
         public Guid OrderId { get; set; }
@@ -18,5 +15,4 @@ public class Request
         public string? AvatarUrl { get; set; }
         public required string Role { get; set; }
     }
->>>>>>> main
 }

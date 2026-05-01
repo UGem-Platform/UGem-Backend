@@ -49,50 +49,7 @@ public class Service : IService
     {
         throw new NotImplementedException();
     }
-
-
-<<<<<<< feature/FixFunc
-=======
-    public async Task ConfirmOrderNotReceived(Request.ConfirmOrderRequest request)
-    {
-        var customerId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
-
-        var cusIdGuid = Guid.Parse(customerId!);
-        
-        var order = await _dbContext.Orders
-            .Include(x => x.OrderDetails)
-            .ThenInclude(x => x.Food)
-            .ThenInclude(x => x.Merchant)
-            .FirstOrDefaultAsync(x => x.Id == request.OrderId && x.CustomerId == cusIdGuid);
-
-        if (order == null)
-        {
-            throw new  Exception("Order not found");
-        }
-        
-        order.Status = "NotReceived";
     
-        
-        var userId  = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
-        var userIdGuid = Guid.Parse(userId!);
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userIdGuid);
-        
-        var merchant = order.OrderDetails
-            .Select(x => x.Food.Merchant)
-            .FirstOrDefault();
-
-        var notificationMerchant = new Notification()
-        {
-            UserId = merchant!.UserId,
-            Title = "Order issue",
-            Message = $"{user!.FullName} has not received the order",
-            Type = "order",
-            IsRead = false,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
-        _dbContext.Notifications.Add(notificationMerchant);
-        await _dbContext.SaveChangesAsync();
-    }
     public async Task<string> CreateCustomer(Request.RegisterCustomerRequest request)
     {
         var existingUserQuery = _dbContext.Users.Where(x => x.Email == request.Email);
@@ -138,5 +95,5 @@ public class Service : IService
 
         return "Fail to add Customer";
     }
->>>>>>> main
+
 }
