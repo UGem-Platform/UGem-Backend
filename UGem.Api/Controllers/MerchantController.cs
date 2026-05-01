@@ -5,7 +5,7 @@ using UGem.Services.Models;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/merchant")]
 public class MerchantController : ControllerBase
 {
     private readonly IService _service;
@@ -15,14 +15,14 @@ public class MerchantController : ControllerBase
         _service = service;
     }
 
-    [HttpGet("Merchants")]
+    [HttpGet("search")]
     public async Task<IActionResult> Search(Request.SearchRequest request)
     {
         var result = await _service.Search(request);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Merchants retrieved", HttpContext.TraceIdentifier));
     }
 
-    [HttpGet("Merchants/{id}")]
+    [HttpGet("{id}/detail")]
     public async Task<IActionResult> GetDetail(Guid id)
     {
         var result = await _service.GetDetail(id);
@@ -34,7 +34,7 @@ public class MerchantController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result, "Merchant detail retrieved", HttpContext.TraceIdentifier));
     }
 
-    [HttpGet("Category/Merchants")]
+    [HttpGet("by-category")]
     public async Task<IActionResult> GetMerchantByCategory(Request.GetByCategoryRequest request)
     {
         var result = await _service.GetMerchantByCategory(request);
@@ -42,7 +42,7 @@ public class MerchantController : ControllerBase
             HttpContext.TraceIdentifier));
     }
     
-    [HttpGet("Map/Merchants")]
+    [HttpGet("map")]
     public async Task<IActionResult> Map(Request.MapRequest request)
     {
         var result = await _service.MapRequest(request);

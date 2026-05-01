@@ -8,7 +8,7 @@ using UGem.Services.Models;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/application")]
 public class ApplicationController : ControllerBase
 {
     private readonly IService _applicationService;
@@ -18,7 +18,7 @@ public class ApplicationController : ControllerBase
         _applicationService = applicationService;
     }
 
-    [HttpGet("merchant/applications")]
+    [HttpGet("merchant/my")]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> GetMyApplications()
     {
@@ -26,7 +26,7 @@ public class ApplicationController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(data));
     }
 
-    [HttpGet("staff/applications")]
+    [HttpGet("staff/list")]
     [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
     public async Task<IActionResult> GetApplications()
     {
@@ -60,7 +60,7 @@ public class ApplicationController : ControllerBase
         }
     }
 
-    [HttpPost ("merchant/applications/create")]
+    [HttpPost ("create")]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> CreateApplicationRequest(Request.ApplicationRequest request)
     {

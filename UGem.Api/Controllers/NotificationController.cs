@@ -6,7 +6,7 @@ using UGem.Services.NotificationService;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/notification")]
 public class NotificationController : ControllerBase
 {
     private readonly IService _notificationService;
@@ -16,7 +16,7 @@ public class NotificationController : ControllerBase
         _notificationService = notificationService;
     }
 
-    [HttpGet]
+    [HttpGet("list")]
     [Authorize]
     public async Task<IActionResult> GetNotifications()
     {

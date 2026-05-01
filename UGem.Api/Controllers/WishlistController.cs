@@ -7,7 +7,7 @@ using UGem.Services.WishlistService;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/wishlist")]
 public class WishlistController : ControllerBase
 {
     private readonly IService _service;
@@ -19,7 +19,7 @@ public class WishlistController : ControllerBase
 
     //add 1 merchant to your wish list.
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpPost("")]
+    [HttpPost("add")]
     public async Task<IActionResult> AddToWishlist(Request.CreateWishlistRequest request)
     {
         await _service.AddToWishlist(request);
@@ -37,7 +37,7 @@ public class WishlistController : ControllerBase
 
     //delete 1 merchant from wishlist
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpDelete("{merchantId}")]
+    [HttpDelete("{merchantId}/remove")]
     public async Task<IActionResult> RemoveFromWishlist(Guid merchantId)
     {
         await _service.RemoveFromWishlist(merchantId);

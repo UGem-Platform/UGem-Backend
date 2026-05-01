@@ -4,7 +4,7 @@ using UGem.Services.IdentityService;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/auth")]
 public class IdentityController : ControllerBase
 {
     private readonly IService _identityService;

@@ -7,7 +7,7 @@ using UGem.Services.OrderService;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/order")]
 public class OrderController : ControllerBase
 {
     private readonly IService _orderService;
@@ -17,7 +17,7 @@ public class OrderController : ControllerBase
         _orderService = orderService;
     }
 
-    [HttpGet]
+    [HttpGet("merchant")]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> GetOrderList()
     {
@@ -26,14 +26,14 @@ public class OrderController : ControllerBase
     }
 
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpPost("accept")]
+    [HttpPost("{orderId}/accept")]
     public async Task<IActionResult> AcceptOrder(Guid orderId)
     {
         await _orderService.AcceptOrder(orderId);
         return Ok(ApiResponseFactory.SuccessResponse(null, "Accept order success", HttpContext.TraceIdentifier));
     }
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpPost("reject")]
+    [HttpPost("{orderId}/reject")]
     public async Task<IActionResult> RejectOrder([FromBody] Request.ReasonRejectRequest request)
     {
         await _orderService.RejectOrder(request);
@@ -42,7 +42,7 @@ public class OrderController : ControllerBase
     
 
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpPost("customer/orders")]
+    [HttpPost("create")]
     public async Task<IActionResult> CreateOrder(Request.CreateOrderRequest request)
     {
         await _orderService.CreateOrder(request);
@@ -50,7 +50,7 @@ public class OrderController : ControllerBase
     }
 
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpGet("list")]
+    [HttpGet("customer/list")]
     public async Task<IActionResult> GetOrderListFromCustomerId()
     {
         var result = await _orderService.GetOrderListFromCustomerId();
@@ -58,7 +58,7 @@ public class OrderController : ControllerBase
     }
 
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpGet("detail")]
+    [HttpGet("{orderId}/detail")]
     public async Task<IActionResult> GetOrderDetail(Guid orderId)
     {
         var result = await _orderService.GetOrderDetail(orderId);
@@ -66,7 +66,7 @@ public class OrderController : ControllerBase
     }
     
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpPut("confirm-received")]
+    [HttpPut("{orderId}/confirm-received")]
     public async Task<IActionResult> ConfirmOrderReceived(Request.ConfirmOrderRequest request)
     {
         await _orderService.ConfirmOrderReceived(request);
@@ -74,7 +74,7 @@ public class OrderController : ControllerBase
     }
 
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    [HttpPut("confirm-not-received")]
+    [HttpPut("{orderId}/confirm-not-received")]
     public async Task<IActionResult> ConfirmOrderNotReceived(Request.ConfirmOrderRequest request)
     {
         await _orderService.ConfirmOrderNotReceived(request);
