@@ -23,7 +23,9 @@ public class Service : IService
     {
         var user = await _dbContext.Users
             .Include(x => x.Customer)
-            .Include(x => x.Staff)    
+            .Include(x => x.Staff)
+            .Include(x => x.Merchant)
+            .Include(x => x.Admin)
             .FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
@@ -51,6 +53,23 @@ public class Service : IService
         if (customer != null)
         {
             claims.Add(new Claim("CustomerId", customer.Id.ToString()));
+        }
+
+        var merchant = await _dbContext.Merchants.FirstOrDefaultAsync(u => u.UserId == user.Id);
+        if (merchant != null)
+        {
+            claims.Add(new Claim("MerchantId", merchant.Id.ToString()));
+        }
+        var staff = await _dbContext.Staffs.FirstOrDefaultAsync(u => u.UserId == user.Id);
+        if (staff != null)
+        {
+            claims.Add(new Claim("StaffId", staff.Id.ToString()));
+        }
+        
+        var admin = await _dbContext.Admins.FirstOrDefaultAsync(u => u.UserId == user.Id);
+        if (admin != null)
+        {
+            claims.Add(new Claim("AdminId", admin.Id.ToString()));
         }
         
         var token = _jwtService.GenerateAccessToken(claims);
