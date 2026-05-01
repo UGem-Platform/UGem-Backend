@@ -15,7 +15,7 @@ public class MerchantController : ControllerBase
         _service = service;
     }
 
-    [HttpGet("Merchants")]
+    [HttpPost("Merchants")]
     public async Task<IActionResult> Search(Request.SearchRequest request)
     {
         var result = await _service.Search(request);
