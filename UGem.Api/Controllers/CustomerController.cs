@@ -18,7 +18,6 @@ public class CustomerController : ControllerBase
     }
 
     [HttpGet("profile")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     public async Task<IActionResult> GetProfile()
     {
         var result = await _service.GetProfile();
@@ -39,5 +38,11 @@ public class CustomerController : ControllerBase
     {
         await _service.ConfirmOrderNotReceived(request);
         return Ok(ApiResponseFactory.SuccessResponse(null, "Confirm order not received success"));
+    }
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] Request.RegisterCustomerRequest request)
+    {
+        var result = await _service.CreateCustomer(request);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Register success"));
     }
 }

@@ -9,5 +9,5 @@ public interface IService
     public Task ConfirmOrderReceived(Request.ConfirmOrderRequest request);
     
     public Task ConfirmOrderNotReceived(Request.ConfirmOrderRequest request);
-    
+    public Task<string> CreateCustomer(Request.RegisterCustomerRequest request);
 }
