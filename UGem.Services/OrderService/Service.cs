@@ -46,15 +46,16 @@ public class Service : IService
         var userIdGuid = Guid.Parse(userId);
 
         var order = await _dbContext.Orders
-            .Where(x => x.Id == orderId &&  x.Customer.UserId == userIdGuid)
-            .FirstOrDefaultAsync(x => x.Id == orderId);
+            .Include(x => x.OrderDetails)
+            .ThenInclude(od => od.Food)
+            .ThenInclude(f => f.Merchant)
+            .FirstOrDefaultAsync(x => x.Id == orderId 
+                                      && x.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
         if (order == null)
             throw new Exception("Order not found");
-        if(order.OrderedAt.AddMinutes(30) > DateTimeOffset.UtcNow)
-            throw new Exception("The delivery deadline hasn't passed yet");
-        if (order.Status != "Delivered")
-            throw new Exception("Order is not ready to be accepted");
-        order.Status = "Completed";
+        if (order.Status != "Pending")
+            throw new Exception("Order is not eligible for rejection");
+        order.Status = "Accepted";
         order.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _dbContext.SaveChangesAsync();
@@ -66,12 +67,16 @@ public class Service : IService
        var  userId = _httpContext.HttpContext.User.Claims.First(x => x.Type == "UserId").Value;
        var userIdGuid = Guid.Parse(userId);
        var order = await _dbContext.Orders
-           .FirstOrDefaultAsync(x => x.Id == request.OrderId && x.Customer.UserId == userIdGuid);
+           .Include(x => x.OrderDetails)
+           .ThenInclude(od => od.Food)
+           .ThenInclude(f => f.Merchant)
+           .FirstOrDefaultAsync(x => x.Id == request.OrderId 
+                                     && x.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
        if(order == null)
            throw new Exception("Order not found");
        if (order.OrderedAt.AddMinutes(30) > DateTimeOffset.UtcNow)
            throw new Exception("The delivery deadline hasn't passed yet");
-       if (order.Status != "Delivered")
+       if (order.Status != "Pending")
            throw new Exception("Order is not eligible for rejection");
        order.Status = "Rejected";
        order.UpdatedAt = DateTimeOffset.UtcNow;
@@ -134,6 +139,7 @@ public class Service : IService
             ReviewerFee = request.ReviewerFee,
             OrderedAt = DateTimeOffset.UtcNow,
             PlatformFee = request.PlatformFee,
+            
         };
 
         _dbContext.Orders.Add(order);
