@@ -181,11 +181,28 @@ public class Service : IService
         var application = await _dbContext.Applications.Include(application => application.User)
             .FirstOrDefaultAsync(a => a.Id == id);
 
-        if (application == null) throw new Exception("Cannot found application");
-        if (application.User == null) throw new Exception("Application user not found");
-        if (application.Status != "Pending") throw new Exception("The application is not pending.");
+        if (application == null) throw new KeyNotFoundException("Application not found.");
+        if (application.User == null) throw new InvalidOperationException("Application user not found.");
+        if (application.Status != "Pending") throw new InvalidOperationException("The application is not pending.");
+
+        var merchantExistsForUser = await _dbContext.Merchants
+            .AnyAsync(m => m.UserId == application.UserId);
+
+        if (merchantExistsForUser)
+            throw new InvalidOperationException("This user already has a merchant profile.");
+
+        var merchantEmailExists = await _dbContext.Merchants
+            .AnyAsync(m => m.Email == application.Email);
+
+        if (merchantEmailExists)
+            throw new InvalidOperationException("This application email is already used by another merchant.");
+
+        if (application.Latitude is < -90 or > 90 || application.Longitude is < -180 or > 180)
+            throw new InvalidOperationException("Application coordinates are invalid.");
+
         application.Status = "Approved";
         application.ReviewedAt = DateTime.UtcNow;
+        application.User.Role = "Merchant";
         
         var geometryFactory = NetTopologySuite.NtsGeometryServices.Instance
             .CreateGeometryFactory(srid: 4326);
@@ -215,7 +232,7 @@ public class Service : IService
         var notification = new Notification()
         {
             UserId = application.UserId,
-            Title = "Your application has been created",
+            Title = "Your application has been approved",
             Message = $"Congratulate, Well come {application.User.FullName}! ",
             Type = "Application",
             IsRead = false,

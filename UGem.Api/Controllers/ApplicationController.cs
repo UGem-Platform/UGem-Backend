@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using UGem.Api.Extensions;
 using UGem.Services.Application;
@@ -37,9 +38,26 @@ public class ApplicationController : ControllerBase
     [Authorize(Policy = JwtExtensions.AdminAndStaffPolicy)]
     public async Task<IActionResult> AcceptApplication(Guid id)
     {
-        await _applicationService.AcceptApplication(id);
-
-        return Ok(ApiResponseFactory.SuccessResponse(null, "Application accepted"));
+        try
+        {
+            await _applicationService.AcceptApplication(id);
+            return Ok(ApiResponseFactory.SuccessResponse(null, "Application accepted", HttpContext.TraceIdentifier));
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ApiResponseFactory.ErrorResponse(ex.Message, traceId: HttpContext.TraceIdentifier));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(ApiResponseFactory.ErrorResponse(ex.Message, traceId: HttpContext.TraceIdentifier));
+        }
+        catch (DbUpdateException ex)
+        {
+            return Conflict(ApiResponseFactory.ErrorResponse(
+                "Failed to approve application because merchant data conflicts with existing records.",
+                ex.InnerException?.Message ?? ex.Message,
+                HttpContext.TraceIdentifier));
+        }
     }
 
     [HttpPost ("merchant/applications/create")]
