@@ -82,13 +82,13 @@ public class Service : IService
             };
             _dbContext.Customers.Add(customer);
             var customerResult = await _dbContext.SaveChangesAsync();
-            await _mailService.SendMail(new MailContext()
-            {
-                To = request.Email,
-                Subject = "Welcome to UGem!",
-                Body = $"Dear {request.FullName} ,\n\n" +
-                       "Thank you for registering as a Customer on UGem."
-            });
+            // await _mailService.SendMail(new MailContext()
+            // {
+            //     To = request.Email,
+            //     Subject = "Welcome to UGem!",
+            //     Body = $"Dear {request.FullName} ,\n\n" +
+            //            "Thank you for registering as a Customer on UGem."
+            // });
             if (customerResult > 0) return "Add Customer successful";
         }
 
