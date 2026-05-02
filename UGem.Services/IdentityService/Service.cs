@@ -34,12 +34,12 @@ public class Service : IService
 
         if (user == null)
         {
-            throw new Exception("User not found");
+            throw new KeyNotFoundException("User not found");
         }
 
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
         {
-            throw new Exception("Invalid password");
+            throw new UnauthorizedAccessException("Invalid password");
         }
 
 
@@ -103,7 +103,7 @@ public class Service : IService
         {
             throw new Exception("Invalid role. Only 'Customer' or 'Merchant' are allowed");
         }
-        
+
         var hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
         var user = new Repositories.Entity.User

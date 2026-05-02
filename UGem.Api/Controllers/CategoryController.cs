@@ -9,12 +9,10 @@ namespace UGem.Api.Controllers;
 [Route("api/v1/categories")]
 public class CategoryController : ControllerBase
 {
-    private readonly AppDbContext _dbContext;
     private readonly IService _categoryService;
 
     public CategoryController(AppDbContext dbContext, IService categoryService)
     {
-        _dbContext = dbContext;
         _categoryService = categoryService;
     }
 
