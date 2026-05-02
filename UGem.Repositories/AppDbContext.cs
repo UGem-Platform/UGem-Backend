@@ -315,6 +315,14 @@ public class AppDbContext : DbContext
             builder.Property(a => a.LogoUrl)
                 .IsRequired()
                 .HasMaxLength(500);
+            
+            builder.Property(a => a.OpeningHours)
+                .IsRequired()
+                .HasMaxLength(200);
+            
+            builder.Property(a => a.Address)
+                .IsRequired()
+                .HasMaxLength(500);
 
             builder.Property(a => a.Latitude)
                 .HasPrecision(9, 6);
@@ -342,6 +350,8 @@ public class AppDbContext : DbContext
                 Email = "lienhe@bunchangotram.vn",
                 Phone = "0911223344",
                 LogoUrl = "logo_buncha.jpg",
+                Address = "Lau 1, 123 Ngo Tram, Q1",
+                OpeningHours = "08:00 - 22:00",
                 Latitude = 21.030500m,
                 Longitude = 105.845600m,
                 CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),

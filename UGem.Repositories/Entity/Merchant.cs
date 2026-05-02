@@ -17,7 +17,7 @@ public class Merchant: BaseEntity<Guid>, IAuditableEntity
     public decimal Rating { get; set; }
     public decimal PlatformFeePercent { get; set; }
     public required string OpeningHours { get; set; }
-    public Point Location { get; set; } = null!;
+    public required Point Location { get; set; }
     
     public required Guid UserId { get; set; }
     public User User { get; set; } = null!;

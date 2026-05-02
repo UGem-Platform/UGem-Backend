@@ -87,6 +87,8 @@ public class Service : IService
             Email = request.Email,
             Phone = request.Phone,
             LogoUrl = request.LogoUrl,
+            OpeningHours = request.OpeningHours,
+            Address = request.Address,
             Longitude = request.Longitude,
             Latitude = request.Latitude,
         };
@@ -231,11 +233,11 @@ public class Service : IService
             Description = application.Description,
             Email = application.Email,
             Phone = application.Phone,
-            Address = "",
+            Address = application.Address,
             LogoUrl = application.LogoUrl ?? "",
             Status = "Active",
             IsActive = true,
-            OpeningHours = "",
+            OpeningHours = application.OpeningHours,
             Location = location,
             CreatedAt = DateTimeOffset.UtcNow,
         };
