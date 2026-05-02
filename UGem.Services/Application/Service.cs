@@ -103,11 +103,6 @@ public class Service : IService
 
         foreach (var menu in request.Menu)
         {
-            string? imageUrl = null;
-            if (menu.ImageUrl != null)
-            {
-                imageUrl = await _mediaService.UploadImageAsync(menu.ImageUrl);
-            }
             applicationMenus.Add(new ApplicationMenu()
             {
                 ApplicationId = application.Id,
@@ -115,7 +110,7 @@ public class Service : IService
                 Description = menu.Description,
                 Price = menu.Price,
                 Category = menu.Category,
-                ImageUrl = imageUrl,
+                ImageUrl = menu.ImageUrl
             });
         }
 
@@ -182,11 +177,6 @@ public class Service : IService
 
         foreach (var menuRequest in request.Menu)
         {
-            string? imageUrl = null;
-            if (menuRequest.ImageUrl != null)
-            {
-                imageUrl = await _mediaService.UploadImageAsync(menuRequest.ImageUrl);
-            }
             var appMenu = new ApplicationMenu
             {
                 ApplicationId = application.Id,
@@ -194,7 +184,7 @@ public class Service : IService
                 Price = menuRequest.Price,
                 Description = menuRequest.Description,
                 Category = menuRequest.Category,
-                ImageUrl = imageUrl,
+                ImageUrl = menuRequest.ImageUrl,
             };
             _dbContext.ApplicationMenus.Add(appMenu);
         }

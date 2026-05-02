@@ -60,21 +60,21 @@ builder.Services.AddScoped<MerchantService.IService, MerchantService.Service>();
 builder.Services.AddScoped<FoodService.IService, FoodService.Service>();
 builder.Services.AddScoped<WishlistService.IService, WishlistService.Service>();
 builder.Services.AddScoped<QRCodeService.IService, QRCodeService.Service>();
-builder.Services.AddQuartz(options =>
-{
-    var jobKey = new JobKey(nameof(ProcessTransactionPendingJob));
-
-    options
-        .AddJob<ProcessTransactionPendingJob>(jobKey)
-        .AddTrigger(trigger =>
-            trigger
-                .ForJob(jobKey)
-                .WithSimpleSchedule(schedule => schedule
-                    .WithIntervalInMinutes(2)
-                    .RepeatForever()
-                )
-        );
-});
+// builder.Services.AddQuartz(options =>
+// {
+//     var jobKey = new JobKey(nameof(ProcessTransactionPendingJob));
+//
+//     options
+//         .AddJob<ProcessTransactionPendingJob>(jobKey)
+//         .AddTrigger(trigger =>
+//             trigger
+//                 .ForJob(jobKey)
+//                 .WithSimpleSchedule(schedule => schedule
+//                     .WithIntervalInMinutes(2)
+//                     .RepeatForever()
+//                 )
+//         );
+// });
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
