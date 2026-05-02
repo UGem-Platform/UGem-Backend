@@ -9,11 +9,14 @@ public class Service : IService
 {
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContext;
+    private readonly MediaService.IService _mediaService;
 
-    public Service(AppDbContext dbContext, IHttpContextAccessor httpContext)
+
+    public Service(AppDbContext dbContext, IHttpContextAccessor httpContext, MediaService.IService mediaService)
     {
         _dbContext = dbContext;
         _httpContext = httpContext;
+        _mediaService = mediaService;
     }
 
     public Task<List<Response.GetApplicationForStaffResponse>> GetMyApplications()
@@ -100,16 +103,22 @@ public class Service : IService
 
         foreach (var menu in request.Menu)
         {
+            string? imageUrl = null;
+            if (menu.ImageUrl != null)
+            {
+                imageUrl = await _mediaService.UploadImageAsync(menu.ImageUrl);
+            }
             applicationMenus.Add(new ApplicationMenu()
             {
                 ApplicationId = application.Id,
                 Name = menu.Name,
                 Description = menu.Description,
                 Price = menu.Price,
-                ImageUrl = menu.ImageUrl,
                 Category = menu.Category,
+                ImageUrl = imageUrl,
             });
         }
+
 
         if (applicationMenus.Any())
         {
@@ -173,6 +182,11 @@ public class Service : IService
 
         foreach (var menuRequest in request.Menu)
         {
+            string? imageUrl = null;
+            if (menuRequest.ImageUrl != null)
+            {
+                imageUrl = await _mediaService.UploadImageAsync(menuRequest.ImageUrl);
+            }
             var appMenu = new ApplicationMenu
             {
                 ApplicationId = application.Id,
@@ -180,7 +194,7 @@ public class Service : IService
                 Price = menuRequest.Price,
                 Description = menuRequest.Description,
                 Category = menuRequest.Category,
-                ImageUrl = menuRequest.ImageUrl,
+                ImageUrl = imageUrl,
             };
             _dbContext.ApplicationMenus.Add(appMenu);
         }
