@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UGem.Api.Extensions;
 using UGem.Services.MerchantService;
 using UGem.Services.Models;
 
@@ -9,10 +11,12 @@ namespace UGem.Api.Controllers;
 public class MerchantController : ControllerBase
 {
     private readonly IService _service;
+    private readonly UGem.Services.QRCodeService.IService _qrCodeService;
 
-    public MerchantController(IService service)
+    public MerchantController(IService service, UGem.Services.QRCodeService.IService qrCodeService)
     {
         _service = service;
+        _qrCodeService = qrCodeService;
     }
 
     [HttpGet("Merchants")]
@@ -48,5 +52,14 @@ public class MerchantController : ControllerBase
         var result = await _service.MapRequest(request);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Merchants for map retrieved",
             HttpContext.TraceIdentifier));
+    }
+
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    [HttpGet("generate-qr/{orderId}")]
+    public IActionResult GenerateQrCode(Guid orderId)
+    {
+        var qrText = "https://www.youtube.com/watch?v=XWt96eZphlU";
+        var qrCodeBytes = _qrCodeService.GenerateQrCode(qrText);
+        return File(qrCodeBytes, "image/png");
     }
 }
