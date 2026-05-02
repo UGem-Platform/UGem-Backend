@@ -60,9 +60,9 @@ public class ApplicationController : ControllerBase
         }
     }
 
-    [HttpPost ("merchant/applications/create")]
+    [HttpPost("merchant/applications/create")]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
-    public async Task<IActionResult> CreateApplicationRequest(Request.ApplicationRequest request)
+    public async Task<IActionResult> CreateApplicationRequest([FromForm] Request.ApplicationRequest request)
     {
         await _applicationService.CreateApplicationRequest(request);
         return Ok();
