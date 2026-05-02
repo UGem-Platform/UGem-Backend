@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text.Json;
 
 namespace UGem.Api.Middlewares;
@@ -6,10 +5,14 @@ namespace UGem.Api.Middlewares;
 public class ExceptionMiddleware
 {
     private readonly RequestDelegate _next;
+    private readonly ILogger<ExceptionMiddleware> _logger;
 
-    public ExceptionMiddleware(RequestDelegate next)
+    public ExceptionMiddleware(
+        RequestDelegate next,
+        ILogger<ExceptionMiddleware> logger)
     {
         _next = next;
+        _logger = logger;
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -20,11 +23,18 @@ public class ExceptionMiddleware
         }
         catch (Exception ex)
         {
+            // LOG FULL ERROR
+            _logger.LogError(ex,
+                "Unhandled Exception. TraceId: {TraceId}",
+                context.TraceIdentifier);
+
             await HandleExceptionAsync(context, ex);
         }
     }
 
-    private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
+    private static async Task HandleExceptionAsync(
+        HttpContext context,
+        Exception exception)
     {
         context.Response.ContentType = "application/json";
 
@@ -34,19 +44,19 @@ public class ExceptionMiddleware
         switch (exception)
         {
             case UnauthorizedAccessException:
-                statusCode = (int)HttpStatusCode.Unauthorized;
+                statusCode = StatusCodes.Status401Unauthorized;
                 break;
 
             case KeyNotFoundException:
-                statusCode = (int)HttpStatusCode.NotFound;
+                statusCode = StatusCodes.Status404NotFound;
                 break;
 
             case InvalidOperationException:
-                statusCode = (int)HttpStatusCode.BadRequest;
+                statusCode = StatusCodes.Status400BadRequest;
                 break;
 
             default:
-                statusCode = (int)HttpStatusCode.InternalServerError;
+                statusCode = StatusCodes.Status500InternalServerError;
                 break;
         }
 
@@ -57,11 +67,14 @@ public class ExceptionMiddleware
             success = false,
             statusCode,
             message,
-            traceId = context.TraceIdentifier
+            traceId = context.TraceIdentifier,
+
+#if DEBUG
+            detail = exception.ToString()
+#endif
         };
 
-        var json = JsonSerializer.Serialize(response);
-
-        await context.Response.WriteAsync(json);
+        await context.Response.WriteAsync(
+            JsonSerializer.Serialize(response));
     }
 }

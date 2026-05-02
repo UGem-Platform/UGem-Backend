@@ -18,30 +18,8 @@ public class IdentityController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] Request.LoginRequest request)
     {
-        // var result = await _identityService.Login(request);
-        // return Ok(ApiResponseFactory.SuccessResponse(result, "Login successful", HttpContext.TraceIdentifier));
-        try
-        {
-            var result = await _identityService.Login(request);
-
-            return Ok(ApiResponseFactory.SuccessResponse(
-                result,
-                "Login successful",
-                HttpContext.TraceIdentifier
-            ));
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine("LOGIN ERROR:");
-            Console.WriteLine(ex.ToString());
-
-            return StatusCode(500,
-                ApiResponseFactory.ErrorResponse(
-                    "Internal server error",
-                    ex.Message,
-                    HttpContext.TraceIdentifier
-                ));
-        }
+        var result = await _identityService.Login(request);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Login successful", HttpContext.TraceIdentifier));
     }
 
     [HttpPost("register")]
