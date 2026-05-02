@@ -76,7 +76,7 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "http://localhost:3001",
                 "https://stimulate-gutter-sliceable.ngrok-free.dev", // your ngrok URL
-                "https://u-gem-frontend-89gd.vercel.app"
+                "https://u-gem-eight.vercel.app" // your production URL
             )
             .AllowAnyHeader()
             .AllowAnyMethod()
@@ -93,11 +93,11 @@ await using (var scope = app.Services.CreateAsyncScope())
 }
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
+
+app.UseHttpsRedirection();
 
 app.UseCors("AllowFrontend");
 app.UseAuthentication();

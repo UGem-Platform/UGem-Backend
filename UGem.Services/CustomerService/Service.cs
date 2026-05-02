@@ -70,7 +70,6 @@ public class Service : IService
             FullName = request.FullName,
             PasswordHash = request.HashedPassword,
             PhoneNumber = request.PhoneNumber,
-            AvatarUrl = request.AvatarUrl,
             Role = request.Role
         };
         _dbContext.Users.Add(user);
