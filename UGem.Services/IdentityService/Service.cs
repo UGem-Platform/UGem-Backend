@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using UGem.Repositories;
 using UGem.Services.JwtService;
+using UGem.Services.MailService;
 
 namespace UGem.Services.IdentityService;
 
@@ -11,11 +12,12 @@ public class Service : IService
     private readonly JwtService.IService _jwtService;
     private readonly AppDbContext _dbContext;
     private readonly JwtOptions _jwtOption = new();
-
-    public Service(IConfiguration configuration, JwtService.IService jwtService, AppDbContext dbContext)
+    private readonly MailService.IService _mailService;
+    public Service(IConfiguration configuration, JwtService.IService jwtService, AppDbContext dbContext, MailService.IService mailService)
     {
         _jwtService = jwtService;
         _dbContext = dbContext;
+        _mailService = mailService;
         configuration.GetSection(nameof(JwtOptions)).Bind(_jwtOption);
     }
 
@@ -81,5 +83,49 @@ public class Service : IService
         };
 
         return result;
+    }
+    public async Task<string> Register(Request.RegisterUserRequest request)
+    {
+        if (!System.Net.Mail.MailAddress.TryCreate(request.Email, out _))
+            throw new Exception("Invalid email format");
+        var isExistUser = await _dbContext.Users.AnyAsync(u => u.Email == request.Email);
+        if (isExistUser)
+        {
+            throw new Exception("User Already Exist with this mail");
+        }
+        var allowedRoles = new[] { "Customer", "Merchant" };
+        if (!allowedRoles.Contains(request.Role))
+        {
+            throw new Exception("Invalid role. Only 'Customer' or 'Merchant' are allowed");
+        }
+
+        var user = new Repositories.Entity.User
+        {
+            Email = request.Email,
+            FullName = request.FullName,
+            PasswordHash = request.HashedPassword,
+            PhoneNumber = request.PhoneNumber,
+            Role = request.Role
+        };
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+        if (request.Role == "Customer")
+        {
+            var customer = new Repositories.Entity.Customer
+            {
+                UserId = user.Id,
+            };
+            _dbContext.Customers.Add(customer);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        await _mailService.SendMail(new MailContext()
+        {
+            To = request.Email,
+            Subject = "Welcome to UGem!",
+            Body = $"Dear {request.FullName} ,\n\n" +
+                   "Thank you for registering as a Customer on UGem."
+        });
+        return "Register Successfully";
     }
 }
