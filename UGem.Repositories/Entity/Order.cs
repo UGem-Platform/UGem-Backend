@@ -8,6 +8,7 @@ public class Order: BaseEntity<Guid>, IAuditableEntity
     public required string Name { get; set; }
     public decimal Discount { get; set; }
     public decimal FinalPrice { get; set; }
+    
     public decimal ReviewerFee { get; set; }
     public decimal PlatformFee { get; set; }
     public string? RejectReason { get; set; }
