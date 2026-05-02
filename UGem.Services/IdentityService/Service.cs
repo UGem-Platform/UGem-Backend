@@ -126,12 +126,22 @@ public class Service : IService
             await _dbContext.SaveChangesAsync();
         }
 
-        await _mailService.SendMail(new MailContext()
+        _ = Task.Run(async () =>
         {
-            To = request.Email,
-            Subject = "Welcome to UGem!",
-            Body = $"Dear {request.FullName} ,\n\n" +
-                   "Thank you for registering as a Customer on UGem."
+            try
+            {
+                await _mailService.SendMail(new MailContext()
+                {
+                    To = request.Email,
+                    Subject = "Welcome to UGem!",
+                    Body = $"Dear {request.FullName},\n\n" +
+                           "Thank you for registering as a Customer on UGem."
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Send mail failed: {ex.Message}");
+            }
         });
         return "Register Successfully";
     }
