@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/v1")]
+[Route("api/v1/food")]
 public class FoodController : ControllerBase
 {
     [HttpPost]

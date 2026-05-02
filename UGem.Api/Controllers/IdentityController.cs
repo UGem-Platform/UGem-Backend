@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using UGem.Services.IdentityService;
+using UGem.Services.Models;
 
 namespace UGem.Api.Controllers;
 
@@ -19,5 +20,11 @@ public class IdentityController : ControllerBase
     {
         var result = await _identityService.Login(email, password);
         return Ok(result);
+    }
+    [HttpPost("register")]
+    public async Task<IActionResult> Register([FromBody] Request.RegisterUserRequest request)
+    {
+        var result = await _identityService.Register(request);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Register success"));
     }
 }

@@ -23,11 +23,6 @@ public class CustomerController : ControllerBase
         var result = await _service.GetProfile();
         return Ok(ApiResponseFactory.SuccessResponse(result, "Get profile success"));
     }
-    [HttpPost("auth/register")]
-    public async Task<IActionResult> Register([FromBody] Request.RegisterCustomerRequest request)
-    {
-        var result = await _service.CreateCustomer(request);
-        return Ok(ApiResponseFactory.SuccessResponse(result, "Register success"));
-    }
+    
 }
 
