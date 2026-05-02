@@ -7,7 +7,7 @@ using UGem.Services.WishlistService;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/wishlists")]
 public class WishlistController : ControllerBase
 {
     private readonly IService _service;

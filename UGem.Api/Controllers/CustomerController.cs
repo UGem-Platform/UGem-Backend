@@ -7,7 +7,7 @@ using UGem.Services.Models;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/customers")]
 public class CustomerController : ControllerBase
 {
     private readonly IService _service;

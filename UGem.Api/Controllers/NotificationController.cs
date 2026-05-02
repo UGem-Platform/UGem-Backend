@@ -6,7 +6,7 @@ using UGem.Services.NotificationService;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/notifications")]
 public class NotificationController : ControllerBase
 {
     private readonly IService _notificationService;

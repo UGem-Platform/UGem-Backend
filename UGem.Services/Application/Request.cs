@@ -2,6 +2,13 @@ namespace UGem.Services.Application;
 
 public class Request
 {
+    public enum ApplicationStatus
+    {
+        Pending,
+        Accepted,
+        Rejected
+    }
+
     public class ApplicationRequest
     {
         public required string Name { get; set; }
@@ -15,6 +22,12 @@ public class Request
         public required decimal Longitude { get; set; } // kinh độ
 
         public required List<FoodService.Request.CreateFoodRequest> Menu { get; set; }
+    }
+
+    public class UpdateApplicationStatusRequest
+    {
+        public required ApplicationStatus Status { get; set; }
+        public string? Note { get; set; }
     }
 
     public class RejectApplicationRequest

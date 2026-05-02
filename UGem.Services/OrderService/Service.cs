@@ -133,12 +133,12 @@ public class Service : IService
             Name = request.Name,
             Notes = request.Notes,
             PaymentMethod = request.PaymentMethod,
-            Status = request.Status,
-            Discount = request.Discount,
+            Status = "Pending",
+            Discount = 0m,
             FinalPrice = totalAmount,
-            ReviewerFee = request.ReviewerFee,
+            ReviewerFee = 0m,
             OrderedAt = DateTimeOffset.UtcNow,
-            PlatformFee = request.PlatformFee,
+            PlatformFee = 0m,
             
         };
 

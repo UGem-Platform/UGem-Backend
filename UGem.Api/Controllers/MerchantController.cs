@@ -7,7 +7,7 @@ using UGem.Services.Models;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/v1/merchants")]
 public class MerchantController : ControllerBase
 {
     private readonly IService _service;
@@ -19,14 +19,14 @@ public class MerchantController : ControllerBase
         _qrCodeService = qrCodeService;
     }
 
-    [HttpGet("Merchants")]
-    public async Task<IActionResult> Search(Request.SearchRequest request)
+    [HttpGet]
+    public async Task<IActionResult> Search([FromQuery] Request.SearchRequest request)
     {
         var result = await _service.Search(request);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Merchants retrieved", HttpContext.TraceIdentifier));
     }
 
-    [HttpGet("Merchants/{id}")]
+    [HttpGet("{id}")]
     public async Task<IActionResult> GetDetail(Guid id)
     {
         var result = await _service.GetDetail(id);
@@ -38,16 +38,16 @@ public class MerchantController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result, "Merchant detail retrieved", HttpContext.TraceIdentifier));
     }
 
-    [HttpGet("Category/Merchants")]
-    public async Task<IActionResult> GetMerchantByCategory(Request.GetByCategoryRequest request)
+    [HttpGet("by-category")]
+    public async Task<IActionResult> GetMerchantByCategory([FromQuery] Request.GetByCategoryRequest request)
     {
         var result = await _service.GetMerchantByCategory(request);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Merchants by category retrieved",
             HttpContext.TraceIdentifier));
     }
     
-    [HttpGet("Map/Merchants")]
-    public async Task<IActionResult> Map(Request.MapRequest request)
+    [HttpGet("map")]
+    public async Task<IActionResult> Map([FromQuery] Request.MapRequest request)
     {
         var result = await _service.MapRequest(request);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Merchants for map retrieved",

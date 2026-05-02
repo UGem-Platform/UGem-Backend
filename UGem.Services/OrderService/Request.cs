@@ -4,21 +4,28 @@ namespace UGem.Services.OrderService;
 
 public class Request
 {
+    public enum OrderStatus
+    {
+        Pending,
+        Accepted,
+        Rejected,
+        Completed,
+        NotReceived
+    }
+
     public class CreateOrderRequest
     {
-        /*public Guid customerId { get; set; }*/
         public required string Name { get; set; }
-        public decimal Discount { get; set; }
-        public decimal FinalPrice { get; set; }
-        public decimal ReviewerFee { get; set; }
-        public decimal PlatformFee { get; set; }
-        public required string Status { get; set; }
         public required string PaymentMethod { get; set; }
-        public DateTimeOffset OrderedAt { get; set; }
         public required string Notes { get; set; }
         public required string DeliveryAddress { get; set; }
-        
-        public List<FoodService.Request.FoodOrderRequest> Foods { get; set; }
+        public required List<FoodService.Request.FoodOrderRequest> Foods { get; set; }
+    }
+
+    public class UpdateOrderStatusRequest
+    {
+        public required OrderStatus Status { get; set; }
+        public string? Reason { get; set; }
     }
 
     public class ReasonRejectRequest
@@ -30,5 +37,4 @@ public class Request
     {
         public Guid OrderId { get; set; }
     }
-
 }
