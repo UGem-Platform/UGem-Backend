@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Quartz;
 using System.Text.Json.Serialization;
 using UGem.Api.Extensions;
+using UGem.Api.Middlewares;
 using UGem.Repositories;
 using UGem.Services.BackGroundJobService;
 using QRCodeService = UGem.Services.QRCodeService;
@@ -104,9 +105,9 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
-app.UseExceptionHandler("/error");
 
 app.UseCors("AllowFrontend");
+app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 
