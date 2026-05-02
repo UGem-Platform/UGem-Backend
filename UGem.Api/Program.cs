@@ -100,6 +100,7 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
+app.UseExceptionHandler("/error");
 
 app.UseCors("AllowFrontend");
 app.UseAuthentication();

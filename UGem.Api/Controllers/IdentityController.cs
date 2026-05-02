@@ -15,10 +15,10 @@ public class IdentityController : ControllerBase
         _identityService = identityService;
     }
 
-    [HttpGet("login")]
-    public async Task<IActionResult> Login(string email, string password)
+    [HttpPost("login")]
+    public async Task<IActionResult> Login([FromBody] Request.LoginRequest request)
     {
-        var result = await _identityService.Login(email, password);
+        var result = await _identityService.Login(request);
         return Ok(result);
     }
     [HttpPost("register")]
