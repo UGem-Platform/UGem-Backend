@@ -211,7 +211,7 @@ private readonly IConfiguration _configuration;
                     Body = $"Dear {user.FullName},\n\nThank you for registering on UGem."
                 });
             }
-            catch (Exception ex) { Console.WriteLine($"Send mail failed: {ex.Message}"); }
+            catch (InvalidOperationException ex) { Console.WriteLine($"Send mail failed: {ex.Message}"); }
         });
     }
 
