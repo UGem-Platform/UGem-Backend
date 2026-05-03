@@ -11,12 +11,10 @@ namespace UGem.Api.Controllers;
 public class MerchantController : ControllerBase
 {
     private readonly IService _service;
-    private readonly UGem.Services.QRCodeService.IService _qrCodeService;
 
-    public MerchantController(IService service, UGem.Services.QRCodeService.IService qrCodeService)
+    public MerchantController(IService service)
     {
         _service = service;
-        _qrCodeService = qrCodeService;
     }
 
     [HttpGet]
@@ -54,12 +52,5 @@ public class MerchantController : ControllerBase
             HttpContext.TraceIdentifier));
     }
 
-    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
-    [HttpGet("generate-qr/{orderId}")]
-    public IActionResult GenerateQrCode(Guid orderId)
-    {
-        var qrText = "https://www.youtube.com/watch?v=XWt96eZphlU";
-        var qrCodeBytes = _qrCodeService.GenerateQrCode(qrText);
-        return File(qrCodeBytes, "image/png");
-    }
+
 }
