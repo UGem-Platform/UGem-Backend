@@ -23,4 +23,10 @@ public class Request
         public required string Email { get; set; }
         public required string Password { get; set; }
     }
+    public class GoogleLoginRequest
+    {
+        public required string IdToken { get; set; }
+        public string? Role { get; set; }
+        
+    }
 }

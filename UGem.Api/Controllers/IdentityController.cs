@@ -28,4 +28,11 @@ public class IdentityController : ControllerBase
         var result = await _identityService.Register(request);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Register successfully", HttpContext.TraceIdentifier));
     }
+
+    [HttpPost("google-login")]
+    public async Task<IActionResult> GoogleLogin([FromBody] Request.GoogleLoginRequest request)
+    {
+        var result = await _identityService.GooleLogin(request);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Google Login success", HttpContext.TraceIdentifier));
+    }
 }
