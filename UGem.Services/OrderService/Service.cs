@@ -9,11 +9,13 @@ public class Service : IService
 {
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContext;
+    private readonly CheckInService.IService _checkInService;
 
-    public Service(AppDbContext dbContext, IHttpContextAccessor httpContext)
+    public Service(AppDbContext dbContext, IHttpContextAccessor httpContext, CheckInService.IService checkInService)
     {
         _dbContext = dbContext;
         _httpContext = httpContext;
+        _checkInService = checkInService;
     }
 
     public async Task<List<Response.GetOrderListResponse>> GetOrdersList()
@@ -81,7 +83,7 @@ public class Service : IService
        order.Status = "Rejected";
        order.UpdatedAt = DateTimeOffset.UtcNow;
        
-       order.RejectReason = request.Reason;
+       order.RejectionReason = request.Reason;
        await _dbContext.SaveChangesAsync();
     }
     
@@ -130,6 +132,7 @@ public class Service : IService
             Id = Guid.NewGuid(),
             CustomerId = cusIdGuid,
             DeliveryAddress = request.DeliveryAddress,
+            RejectionReason = "",
             Name = request.Name,
             Notes = request.Notes,
             PaymentMethod = request.PaymentMethod,
@@ -242,7 +245,18 @@ public class Service : IService
         }
         
         order.Status = "Completed";
-    
+        order.UpdatedAt = DateTimeOffset.UtcNow;
+
+        
+        var merchantId = order.OrderDetails
+            .Select(od => od.Food.MerchantId)
+            .FirstOrDefault();
+        
+        if (merchantId != Guid.Empty)
+        {
+            await _checkInService.CreateCheckIn(cusIdGuid, merchantId);
+        }
+
         
         var userId  = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
         var userIdGuid = Guid.Parse(userId!);

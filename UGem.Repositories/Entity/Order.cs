@@ -11,7 +11,6 @@ public class Order: BaseEntity<Guid>, IAuditableEntity
     
     public decimal ReviewerFee { get; set; }
     public decimal PlatformFee { get; set; }
-    public string? RejectReason { get; set; }
     public required string Status { get; set; }
     public required string PaymentMethod { get; set; }
     
