@@ -23,7 +23,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=UGem;Username=postgres;Password=MyStrongPassword123@
-      GoogleAuth__ClientId: "950114289498-cn0ibl7jdrpfmk0h9sajgnigkl6u8loo.apps.googleusercontent.com"
+      GoogleAuth__ClientId: "911775353738-urtm3lq4v2g7f15e5moakcqu8piuhi9k.apps.googleusercontent.com"
     ports:
       - "8080:8080"
 
