@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -165,9 +166,9 @@ private readonly IConfiguration _configuration;
                 Audience = new[] { clinetId },
             });
     }
-    catch
+    catch (InvalidJwtException ex)
     {
-        throw new UnauthorizedAccessException("Invalid Google token");
+        throw new UnauthorizedAccessException("Invalid Google token", ex);
     }
 
     var email = payload.Email?.Trim().ToLower();
