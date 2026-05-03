@@ -8,4 +8,11 @@ public class Response
     {
         public string AccessToken { get; set; } = null!;
     }
+    public class IdentityResponseGoogle
+    {
+        public string AccessToken { get; set; } = null!;
+        public string FullName { get; set; } = null!;
+        public string Role { get; set; } = null!;
+        public string? AvatarUrl { get; set; } 
+    }
 }
