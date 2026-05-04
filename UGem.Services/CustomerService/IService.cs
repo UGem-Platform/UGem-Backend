@@ -6,6 +6,8 @@ public interface IService
 {
     public Task<Response.GetCustomerDetailsResponse> GetProfile();
     
-    
+    /*
+    public Task UpdateAvatarProfile();
+    */
 
 }
