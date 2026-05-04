@@ -84,12 +84,16 @@ public class Service : IService
             .Take(request.PageSize);
 
         var selectedQuery = query
-            .Select(x => new Response.GetMerchantResponse()
+            .Select(x => new Response.GetMerchantResponse
             {
                 Id = x.Id,
                 Name = x.Name,
                 Rating = x.Rating,
-                Distance = x.Location.Distance(userLocation)
+                Distance = x.Location.Distance(userLocation) / 1000,
+                Address = x.Address,
+                Latitude = x.Location.Y,
+                Longitude = x.Location.X,
+                
             });
 
         var listResult = await selectedQuery
@@ -120,6 +124,8 @@ public class Service : IService
             Phone = x.Phone,
             Address = x.Address,
             LogoUrl = x.LogoUrl,
+            Latitude =  x.Location.Y,
+            Longitude =  x.Location.X,
             Menu = x.Foods.Select(f => new FoodService.Response.Menu()
             {
                 Id = f.Id,
@@ -160,12 +166,15 @@ public class Service : IService
             .Take(request.PageSize);
 
         var selectedQuery = query
-            .Select(x => new Response.GetMerchantResponse()
+            .Select(x => new Response.GetMerchantResponse
             {
                 Id = x.Id,
                 Name = x.Name,
                 Rating = x.Rating,
-                Distance = x.Location.Distance(userLocation)
+                Latitude = x.Location.Y,
+                Longitude = x.Location.X,
+                Distance = x.Location.Distance(userLocation) / 1000,
+                Address = x.Address,
             });
 
         var listResult = await selectedQuery
