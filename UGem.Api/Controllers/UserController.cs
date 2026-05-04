@@ -14,6 +14,12 @@ public class UserController: ControllerBase
     {
         _service = service;
     }
+    [HttpGet("profile")]
+    public async Task<IActionResult> GetProfile()
+    {
+        var result = await _service.GetProfile();
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Get profile success"));
+    }
     [HttpPatch("profile")]
     public async Task<IActionResult> UpdateProfile([FromBody] Request.UpdateProfileRequest request)
     {

@@ -5,6 +5,7 @@ using UGem.Api.Extensions;
 using UGem.Api.Middlewares;
 using UGem.Repositories;
 using UGem.Services.BackGroundJobService;
+using ReviewService = UGem.Services.ReviewService;
 using UserService = UGem.Services.UserService;
 using CheckInService = UGem.Services.CheckInService;
 using WishlistService = UGem.Services.WishlistService;
@@ -62,6 +63,7 @@ builder.Services.AddScoped<FoodService.IService, FoodService.Service>();
 builder.Services.AddScoped<WishlistService.IService, WishlistService.Service>();
 builder.Services.AddScoped<CheckInService.IService, CheckInService.Service>();
 builder.Services.AddScoped<UserService.IService, UserService.Service>();
+builder.Services.AddScoped<ReviewService.IService, ReviewService.Service>();
 
 // builder.Services.AddQuartz(options =>
 // {

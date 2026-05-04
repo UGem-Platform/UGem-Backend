@@ -17,12 +17,7 @@ public class CustomerController : ControllerBase
         _service = service;
     }
 
-    [HttpGet("profile")]
-    public async Task<IActionResult> GetProfile()
-    {
-        var result = await _service.GetProfile();
-        return Ok(ApiResponseFactory.SuccessResponse(result, "Get profile success"));
-    }
+
     
 }
 

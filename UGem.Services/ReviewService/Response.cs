@@ -11,4 +11,11 @@ public class Response
         public string Comment { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
     }
+    
+    public record ReviewsByIdMerchantResponse
+    {
+        public int Rating { get; set; }
+        public string Content { get; set; } = "";
+        public DateTimeOffset CreatedAt { get; set; }
+    }
 }

@@ -1,4 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UGem.Api.Extensions;
+using UGem.Services.Models;
+using UGem.Services.ReviewService;
 
 namespace UGem.Api.Controllers;
 
@@ -6,21 +10,26 @@ namespace UGem.Api.Controllers;
 [Route("api/v1/reviews")]
 public class ReviewController : ControllerBase
 {
-    [HttpPost]
-    public IActionResult Create()
+    private readonly IService _reviewService;
+
+    public ReviewController(IService reviewService)
     {
-        return Ok();
+        _reviewService = reviewService;
     }
 
-    [HttpGet]
-    public IActionResult GetAll()
+    [HttpGet("merchant")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    public async Task<IActionResult> GetReviewByMerchantId([FromQuery] Request.GetReviewByMerchantIdRequest request)
     {
-        return Ok();
+        var result = await _reviewService.GetReviewByMerchantId(request);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Reviews retrieved successfully", HttpContext.TraceIdentifier));
     }
-
-    [HttpGet("{id}")]
-    public IActionResult GetById(int id)
+    
+    [HttpPost("merchant")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    public async Task<IActionResult> ReviewMerchant([FromBody] Request.ReviewByMerchantIdRequest request)
     {
-        return Ok();
+        await _reviewService.ReviewMerchant(request);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Review submitted successfully", HttpContext.TraceIdentifier));
     }
 }
