@@ -12,6 +12,9 @@ public abstract class Response
     public class GetMerchantResponse : BaseResponse
     {
         public double? Distance { get; set; }
+        public required string Address { get; set; } 
+        public double Latitude { get; set; }          
+        public double Longitude { get; set; }
     }
     
     public class MapResponse : BaseResponse
@@ -27,6 +30,8 @@ public abstract class Response
         public required string Phone { get; set; }
         public required string Address { get; set; }
         public required string LogoUrl { get; set; }
+        public double Latitude { get; set; }          
+        public double Longitude { get; set; }
         public required List<FoodService.Response.Menu> Menu { get; set; }
     }
 }
