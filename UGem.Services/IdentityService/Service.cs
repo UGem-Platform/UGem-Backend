@@ -17,7 +17,8 @@ public class Service : IService
     private readonly AppDbContext _dbContext;
     private readonly JwtOptions _jwtOption = new();
     private readonly MailService.IService _mailService;
-private readonly IConfiguration _configuration;
+    private readonly IConfiguration _configuration;
+
     public Service(IConfiguration configuration, JwtService.IService jwtService, AppDbContext dbContext,
         MailService.IService mailService)
     {
@@ -31,10 +32,6 @@ private readonly IConfiguration _configuration;
     public async Task<Response.IdentityResponse> Login(Request.LoginRequest request)
     {
         var user = await _dbContext.Users
-            .Include(x => x.Customer)
-            .Include(x => x.Staff)
-            .Include(x => x.Merchant)
-            .Include(x => x.Admin)
             .FirstOrDefaultAsync(u => u.Email == request.Email);
 
         if (user == null)
@@ -152,79 +149,83 @@ private readonly IConfiguration _configuration;
     }
 
     public async Task<Response.IdentityResponseGoogle> GooleLogin(Request.GoogleLoginRequest request)
-{
-    var clinetId = _configuration["GoogleAuth:ClientId"];
-    if (string.IsNullOrWhiteSpace(clinetId))
-        throw new InvalidAsynchronousStateException("GoogleAuth:ClientId is not configured.");
-
-    GoogleJsonWebSignature.Payload payload;
-    try
     {
-        payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken,
-            new GoogleJsonWebSignature.ValidationSettings
-            {
-                Audience = new[] { clinetId },
-            });
-    }
-    catch (InvalidJwtException ex)
-    {
-        throw new UnauthorizedAccessException("Invalid Google token", ex);
-    }
+        var clinetId = _configuration["GoogleAuth:ClientId"];
+        if (string.IsNullOrWhiteSpace(clinetId))
+            throw new InvalidAsynchronousStateException("GoogleAuth:ClientId is not configured.");
 
-    var email = payload.Email?.Trim().ToLower();
-    if (string.IsNullOrWhiteSpace(email))
-        throw new UnauthorizedAccessException("Google token has no email");
-
-    var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
-
-    if (user == null)
-    {
-        var allowedRoles = new[] { "Customer", "Merchant" };
-        if (string.IsNullOrWhiteSpace(request.Role) || !allowedRoles.Contains(request.Role))
-            throw new Exception("Invalid role. Only 'Customer' or 'Merchant' are allowed");
-
-        user = new User
+        GoogleJsonWebSignature.Payload payload;
+        try
         {
-            Email = email,
-            PasswordHash = "",
-            PhoneNumber = "",
-            FullName = payload.Name,
-            AvatarUrl = payload.Picture,
-            Role = request.Role
-        };
-        _dbContext.Users.Add(user);
-        await _dbContext.SaveChangesAsync();
-
-        if (request.Role == "Customer")
+            payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken,
+                new GoogleJsonWebSignature.ValidationSettings
+                {
+                    Audience = new[] { clinetId },
+                });
+        }
+        catch (InvalidJwtException ex)
         {
-            _dbContext.Customers.Add(new Customer { UserId = user.Id });
-            await _dbContext.SaveChangesAsync();
+            throw new UnauthorizedAccessException("Invalid Google token", ex);
         }
 
-        _ = Task.Run(async () =>
+        var email = payload.Email?.Trim().ToLower();
+        if (string.IsNullOrWhiteSpace(email))
+            throw new UnauthorizedAccessException("Google token has no email");
+
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+        if (user == null)
         {
-            try
+            var allowedRoles = new[] { "Customer", "Merchant" };
+            if (string.IsNullOrWhiteSpace(request.Role) || !allowedRoles.Contains(request.Role))
+                throw new Exception("Invalid role. Only 'Customer' or 'Merchant' are allowed");
+
+            user = new User
             {
-                await _mailService.SendMail(new MailContext()
-                {
-                    To = user.Email,
-                    Subject = "Welcome to UGem!",
-                    Body = $"Dear {user.FullName},\n\nThank you for registering on UGem."
-                });
+                Email = email,
+                PasswordHash = "",
+                PhoneNumber = "",
+                FullName = payload.Name,
+                AvatarUrl = payload.Picture,
+                Role = request.Role
+            };
+            _dbContext.Users.Add(user);
+            await _dbContext.SaveChangesAsync();
+
+            if (request.Role == "Customer")
+            {
+                _dbContext.Customers.Add(new Customer { UserId = user.Id });
+                await _dbContext.SaveChangesAsync();
             }
-            catch (InvalidOperationException ex) { Console.WriteLine($"Send mail failed: {ex.Message}"); }
-        });
+
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await _mailService.SendMail(new MailContext()
+                    {
+                        To = user.Email,
+                        Subject = "Welcome to UGem!",
+                        Body = $"Dear {user.FullName},\n\nThank you for registering on UGem."
+                    });
+                }
+                catch (InvalidOperationException ex)
+                {
+                    Console.WriteLine($"Send mail failed: {ex.Message}");
+                }
+            });
+        }
+
+        var token = await BuildTokenAsync(user);
+        return new Response.IdentityResponseGoogle
+        {
+            AccessToken = token,
+            FullName = user.FullName,
+            Role = user.Role,
+            AvatarUrl = user.AvatarUrl
+        };
     }
 
-    var token = await BuildTokenAsync(user);
-    return new Response.IdentityResponseGoogle
-    {
-        AccessToken = token,
-        FullName = user.FullName,
-        Role = user.Role,
-        AvatarUrl = user.AvatarUrl
-    };
-}
     private async Task<string> BuildTokenAsync(User user)
     {
         var claims = new List<Claim>
@@ -251,6 +252,5 @@ private readonly IConfiguration _configuration;
         if (admin != null) claims.Add(new Claim("AdminId", admin.Id.ToString()));
 
         return _jwtService.GenerateAccessToken(claims);
-    } 
-    
+    }
 }
