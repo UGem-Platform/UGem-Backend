@@ -52,5 +52,14 @@ public class MerchantController : ControllerBase
             HttpContext.TraceIdentifier));
     }
 
+    [HttpPut("")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    public async Task<IActionResult> UpdateMerchant(Request.UpdateMerchantRequest request)
+    {
+        
+        await _service.UpdateMerchant(request);
+        return Ok(ApiResponseFactory.SuccessResponse("Merchant updated successfully", HttpContext.TraceIdentifier));
+    }
+
 
 }
