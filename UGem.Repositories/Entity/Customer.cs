@@ -10,7 +10,8 @@ public class Customer : BaseEntity<Guid>, IAuditableEntity
     public User User { get; set; } = null!;
     
     public Reviewer? Reviewer { get; set; }
-    
+    public ICollection<ReviewerApplication> ReviewerApplications { get; set; } = new List<ReviewerApplication>(); 
+
     public Wishlist? Wishlist { get; set; }
     
     public ICollection<Order> Orders { get; set; } =  new List<Order>();

@@ -34,7 +34,7 @@ public class AppDbContext : DbContext
     private static readonly Guid WishlistId1 = Guid.Parse("16161616-1616-1616-1616-161616161616");
     private static readonly Guid WishlistDetailId1 = Guid.Parse("17171717-1717-1717-1717-171717171717");
     private static readonly Guid CheckInId1 = Guid.Parse("18181818-1818-1818-1818-181818181818");
-    
+    private static readonly Guid ReviewerApplicationId1 = Guid.Parse("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1"); 
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -60,6 +60,7 @@ public class AppDbContext : DbContext
     public DbSet<Order> Orders { get; set; }
     public DbSet<OrderDetail> OrderDetails { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<ReviewerApplication> ReviewerApplications { get; set; } 
     public DbSet<ReviewDetail> ReviewDetails { get; set; }
 
 
@@ -895,6 +896,56 @@ public class AppDbContext : DbContext
            
            
         });
+        
+        modelBuilder.Entity<ReviewerApplication>(builder =>
+        {
+            ConfigureBaseEntity(builder);
+
+            builder.Property(ra => ra.Status)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.Property(ra => ra.Motivation)
+                .IsRequired()
+                .HasMaxLength(2000);
+
+            builder.Property(ra => ra.Experience)
+                .HasMaxLength(2000);
+
+            builder.Property(ra => ra.FacebookUrl)
+                .HasMaxLength(500);
+
+            builder.Property(ra => ra.TiktokUrl)
+                .HasMaxLength(500);
+
+            builder.Property(ra => ra.YoutubeUrl)
+                .HasMaxLength(500);
+
+            builder.Property(ra => ra.OtherSocialUrl)
+                .HasMaxLength(500);
+
+            builder.HasOne(ra => ra.Customer)
+                .WithMany(c => c.ReviewerApplications)
+                .HasForeignKey(ra => ra.CustomerId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ReviewerApplication>().HasData(
+            new ReviewerApplication
+            {
+                Id = ReviewerApplicationId1,
+                CustomerId = ApplicantCustomerId,
+                Status = "Pending",
+                Motivation = "Toi co nieu tu long yeu am thuc duong pho va muon chia se trai nghiem that su den cong dong.",
+                Experience = "2 nam viet blog am thuc ca nhan, 5000+ followers tren Facebook.",
+                FacebookUrl = "https://facebook.com/applicant.reviewer",
+                TiktokUrl = "https://tiktok.com/@applicant.reviewer",
+                YoutubeUrl = null,
+                OtherSocialUrl = null,
+                CreatedAt = new DateTimeOffset(2026, 4, 24, 9, 0, 0, TimeSpan.Zero),
+                IsDeleted = false
+            }
+        );
 
         modelBuilder.Entity<Review>(builder =>
         {
