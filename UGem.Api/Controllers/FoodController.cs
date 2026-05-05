@@ -1,4 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UGem.Api.Extensions;
+using UGem.Services.FoodService;
+using UGem.Services.Models;
+using IService = UGem.Services.FoodService.IService;
 
 namespace UGem.Api.Controllers;
 
@@ -6,10 +11,19 @@ namespace UGem.Api.Controllers;
 [Route("api/v1/foods")]
 public class FoodController : ControllerBase
 {
-    [HttpPost]
-    public IActionResult Create()
+    private readonly IService _foodService;
+
+    public FoodController(IService foodService)
     {
-        return Ok();
+        _foodService = foodService;
+    }
+
+    [HttpPost]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    public async Task< IActionResult> Create( [FromBody]Request.CreateFoodRequest request)
+    {
+        await _foodService.CreateFood(request );
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Add food Successfully", HttpContext.TraceIdentifier));
     }
 
     [HttpGet]

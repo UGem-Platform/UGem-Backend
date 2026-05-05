@@ -190,4 +190,42 @@ public class Service : IService
 
         return result;
     }
+
+    public async Task UpdateMerchant(Request.UpdateMerchantRequest request)
+    {
+        var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
+
+        var userIdGuid = Guid.Parse(userId!);
+
+        var merchant = await _dbContext.Merchants
+            .FirstOrDefaultAsync(m => m.UserId == userIdGuid);
+
+        if (merchant == null)
+            throw new Exception("Merchant not found or not yours");
+        if (!string.IsNullOrWhiteSpace(request.MerchantName))
+        {
+            merchant.Name = request.MerchantName;
+        }
+        if(!string.IsNullOrWhiteSpace(request.MerchantDescription))
+            {
+            merchant.Description = request.MerchantDescription;
+            }
+        if(!string.IsNullOrWhiteSpace(request.Email))
+        {
+            merchant.Email = request.Email;
+        }
+        if(!string.IsNullOrWhiteSpace(request.Phone))
+            {
+            merchant.Phone = request.Phone;
+            }
+        if(!string.IsNullOrWhiteSpace(request.Address))
+        {
+            merchant.Address = request.Address;
+        }
+        if(!string.IsNullOrWhiteSpace(request.OpeningHours))
+        {
+            merchant.OpeningHours = request.OpeningHours;
+        }
+        await _dbContext.SaveChangesAsync();
+    }
 }

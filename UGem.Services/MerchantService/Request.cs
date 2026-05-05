@@ -19,4 +19,16 @@ public class Request
     {
         public Guid CategoryId { get; set; }
     }
+    public class UpdateMerchantRequest
+    {
+       
+        public string? MerchantName { get; set; }
+        public string? MerchantDescription { get; set; }
+        public string? Email { get; set; }
+        public string? Phone { get; set; }
+        public string? Address { get; set; }
+        public string? OpeningHours { get; set; }
+        
+        
+    }
 }
