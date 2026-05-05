@@ -222,12 +222,7 @@ public class Service : IService
         application.ReviewedAt = DateTime.UtcNow;
         application.User.Role = "Merchant";
 
-        var geometryFactory = NetTopologySuite.NtsGeometryServices.Instance
-            .CreateGeometryFactory(srid: 4326);
-        var location = geometryFactory.CreatePoint(
-            new NetTopologySuite.Geometries.Coordinate(
-                (double)application.Longitude,
-                (double)application.Latitude));
+        var location = new NetTopologySuite.Geometries.Point((double)application.Longitude, (double)application.Latitude) { SRID = 4326 };
 
 
         var merchant = new Merchant()
@@ -242,6 +237,8 @@ public class Service : IService
             Status = "Active",
             IsActive = true,
             OpeningHours = application.OpeningHours,
+            Latitude = (double)application.Latitude,
+            Longitude = (double)application.Longitude,
             Location = location,
             CreatedAt = DateTimeOffset.UtcNow,
         };

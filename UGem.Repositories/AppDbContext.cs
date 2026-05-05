@@ -555,9 +555,12 @@ public class AppDbContext : DbContext
 
             builder.Property(m => m.Location)
                 .IsRequired()
-                .HasColumnType("geometry(Point, 4326)");
+                .HasColumnType("geography(Point, 4326)");
 
             builder.HasIndex(m => new { m.Name, m.Description });
+            
+            builder.HasIndex(m => m.Location)
+                .HasMethod("GIST");
         });
 
         modelBuilder.Entity<Merchant>().HasData(
@@ -577,6 +580,8 @@ public class AppDbContext : DbContext
                 Rating = 4.80m,
                 PlatformFeePercent = 5.00m,
                 OpeningHours = "15:00 - 22:00",
+                Latitude = 10.771500,
+                Longitude = 106.703200,
                 Location = new Point(106.703200, 10.771500) { SRID = 4326 },
                 CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 15, 0, TimeSpan.Zero),
                 IsDeleted = false

@@ -19,12 +19,11 @@ public class Service : IService
     {
         var query = _dbContext.Merchants.AsQueryable();
 
-        var geometryFactory = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-        var envelope = new NetTopologySuite.Geometries.Envelope(request.MinLongitude, request.MaxLongitude,
-            request.MinLatitude, request.MaxLatitude);
-        var bbox = geometryFactory.ToGeometry(envelope);
-
-        query = query.Where(m => m.Location.Intersects(bbox));
+        query = query.Where(m =>
+            m.Longitude >= request.MinLongitude &&
+            m.Longitude <= request.MaxLongitude &&
+            m.Latitude >= request.MinLatitude &&
+            m.Latitude <= request.MaxLatitude);
 
         if (request.ZoomLevel < 13)
         {
@@ -36,40 +35,35 @@ public class Service : IService
             query = query.OrderByDescending(m => m.Rating).Take(100);
         }
 
-        var electedQuery = query.Select(m => new Response.MapResponse()
+        var result = await query.Select(m => new Response.MapResponse()
         {
             Id = m.Id,
             Name = m.Name,
             Rating = m.Rating,
-            Latitude = m.Location.Y,
-            Longitude = m.Location.X
-        });
-
-        var result = await electedQuery.ToListAsync();
+            Latitude = m.Latitude,
+            Longitude = m.Longitude
+        }).ToListAsync();
 
         return result;
     }
 
     public async Task<Base.Response.PageResult<Response.GetMerchantResponse>> Search(Request.SearchRequest request)
     {
-        var queryBySearch = _dbContext.Merchants.Where(m => true);
+        var queryBySearch = _dbContext.Merchants.AsQueryable();
 
         if (request.SearchTerm != null)
         {
             queryBySearch = queryBySearch.Where(m =>
-                m.Name.Contains(request.SearchTerm ?? "") ||
-                m.Description.Contains(request.SearchTerm ?? "") ||
+                EF.Functions.ILike(m.Name, $"%{request.SearchTerm}%") ||
+                EF.Functions.ILike(m.Description, $"%{request.SearchTerm}%") ||
                 m.Foods.Any(f =>
-                    f.Name.Contains(request.SearchTerm ?? "") ||
-                    f.Description.Contains(request.SearchTerm ?? "")
+                    EF.Functions.ILike(f.Name, $"%{request.SearchTerm}%") ||
+                    EF.Functions.ILike(f.Description, $"%{request.SearchTerm}%")
                 )
             );
         }
 
-        var geometryFactory = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-        var userLocation =
-            geometryFactory.CreatePoint(
-                new NetTopologySuite.Geometries.Coordinate(request.Longitude, request.Latitude));
+        var userLocation = new NetTopologySuite.Geometries.Point(request.Longitude, request.Latitude) { SRID = 4326 };
 
         var queryByDistance =
             queryBySearch.Where(m => m.Location.IsWithinDistance(userLocation, 15000)); // 15 km radius
@@ -91,9 +85,8 @@ public class Service : IService
                 Rating = x.Rating,
                 Distance = x.Location.Distance(userLocation) / 1000,
                 Address = x.Address,
-                Latitude = x.Location.Y,
-                Longitude = x.Location.X,
-                
+                Latitude = x.Latitude,
+                Longitude = x.Longitude,
             });
 
         var listResult = await selectedQuery
@@ -124,8 +117,8 @@ public class Service : IService
             Phone = x.Phone,
             Address = x.Address,
             LogoUrl = x.LogoUrl,
-            Latitude =  x.Location.Y,
-            Longitude =  x.Location.X,
+            Latitude =  x.Latitude,
+            Longitude =  x.Longitude,
             Menu = x.Foods.Select(f => new FoodService.Response.Menu()
             {
                 Id = f.Id,
@@ -144,14 +137,15 @@ public class Service : IService
 
     public async Task<Base.Response.PageResult<Response.GetMerchantResponse>> GetMerchantByCategory(Request.GetByCategoryRequest request)
     {
-        var queryBySearch = _dbContext.Merchants.Where(m => true);
+        var queryBySearch = _dbContext.Merchants.AsQueryable();
 
-        
+        if (request.CategoryId != Guid.Empty)
+        {
+            queryBySearch = queryBySearch.Where(m =>
+                m.Foods.Any(f => f.CategoryDetails.Any(cd => cd.CategoryId == request.CategoryId)));
+        }
 
-        var geometryFactory = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-        var userLocation =
-            geometryFactory.CreatePoint(
-                new NetTopologySuite.Geometries.Coordinate(request.Longitude, request.Latitude));
+        var userLocation = new NetTopologySuite.Geometries.Point(request.Longitude, request.Latitude) { SRID = 4326 };
 
         var queryByDistance =
             queryBySearch.Where(m => m.Location.IsWithinDistance(userLocation, 15000)); // 15 km radius
@@ -171,10 +165,10 @@ public class Service : IService
                 Id = x.Id,
                 Name = x.Name,
                 Rating = x.Rating,
-                Latitude = x.Location.Y,
-                Longitude = x.Location.X,
                 Distance = x.Location.Distance(userLocation) / 1000,
                 Address = x.Address,
+                Latitude = x.Latitude,
+                Longitude = x.Longitude,
             });
 
         var listResult = await selectedQuery
