@@ -7,5 +7,7 @@ public interface IService
             int pageSize,
             int pageIndex);
         
-        public Task<Response.GetReviewsResponse?> GetReviewById(Guid id);
+        public Task<List<Response.ReviewsByIdMerchantResponse>> GetReviewByMerchantId(Request.GetReviewByMerchantIdRequest request);
+        
+        public Task ReviewMerchant(Request.ReviewByMerchantIdRequest request);
 }
