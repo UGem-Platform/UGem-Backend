@@ -104,7 +104,7 @@ public class Service : IService
                 }
                 if (detail.Rating < 1 || detail.Rating > 5)
                 {
-                    throw new InvalidOperationException("Rating phải từ 1 đến 5");
+                    throw new InvalidOperationException("Rating must be between 1 and 5.");
                 }
                 
                 newReviewDetail.Add(new ReviewDetail()
@@ -122,4 +122,67 @@ public class Service : IService
         }
     }
 
+    public async Task UpdateReviewMerchant(Request.UpdateReviewByMerchantIdRequest request)
+    {
+        var customerId = _httpContext.HttpContext.User.Claims
+            .FirstOrDefault(x => x.Type == "CustomerId")?.Value;
+
+        var customerIdGuid = Guid.Parse(customerId!);
+
+        var review = await _dbContext.Reviews
+            .Include(x => x.Order)
+            .FirstOrDefaultAsync(x => x.Id == request.ReviewId);
+
+        if (review == null)
+        {
+            throw new KeyNotFoundException($"Review with id {request.ReviewId} was not found.");
+        }
+
+        if (review.Order.CustomerId != customerIdGuid)
+        {
+            throw new UnauthorizedAccessException("You do not have permission to update this review.");
+        }
+
+        if (request.Content != null)
+            review.Content = request.Content;
+
+        if (request.Rating.HasValue)
+        {
+            if (request.Rating < 1 || request.Rating > 5)
+                throw new InvalidOperationException("Rating must be between 1 and 5.");
+
+            review.Rating = request.Rating.Value;
+        }
+        
+        if (request.ImageUrl != null)
+            review.ImageUrl = request.ImageUrl;
+        
+
+        if (request.ReviewDetails != null && request.ReviewDetails.Any())
+        {
+            foreach (var detail in request.ReviewDetails)
+            {
+                var reviewDetail = await _dbContext.ReviewDetails.FirstOrDefaultAsync(x => x.Id == detail.ReviewDetailId);
+
+                if (reviewDetail == null)
+                {
+                    throw new InvalidOperationException($"ReviewDetailId {detail.ReviewDetailId} not found");
+                }
+                
+                if (detail.DetailContent != null)
+                    reviewDetail.DetailContent = detail.DetailContent;
+
+                if (detail.Rating.HasValue)
+                {
+                    if (detail.Rating < 1 || detail.Rating > 5)
+                        throw new InvalidOperationException("Rating must be between 1 and 5.");
+
+                    reviewDetail.Rating = detail.Rating.Value;
+                }
+            }
+            
+        }
+        await _dbContext.SaveChangesAsync();
+
+    }
 }
