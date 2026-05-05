@@ -32,4 +32,12 @@ public class ReviewController : ControllerBase
         await _reviewService.ReviewMerchant(request);
         return Ok(ApiResponseFactory.SuccessResponse(null, "Review submitted successfully", HttpContext.TraceIdentifier));
     }
+    
+    [HttpPut("merchant")]
+    public async Task<IActionResult> UpdateReviewMerchant([FromBody] Request.UpdateReviewByMerchantIdRequest request)
+    {
+        await _reviewService.UpdateReviewMerchant(request);
+
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Review updated successfully", HttpContext.TraceIdentifier));
+    }
 }
