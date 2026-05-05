@@ -87,7 +87,7 @@ builder.Services.AddCors(options =>
         policy
             .WithOrigins(
                 "http://localhost:3001",
-                "https://u-gem.vercel.app", // your ngrok URL
+                "https://stimulate-gutter-sliceable.ngrok-free.dev", // your ngrok URL
                 "https://u-gem-eight.vercel.app" // your production URL
             )
             .AllowAnyHeader()
