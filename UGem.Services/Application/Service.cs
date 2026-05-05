@@ -203,20 +203,17 @@ public class Service : IService
         if (application.User == null) throw new InvalidOperationException("Application user not found.");
         if (application.Status != "Pending") throw new InvalidOperationException("The application is not pending.");
 
-        var merchantExistsForUser = await _dbContext.Merchants
-            .AnyAsync(m => m.UserId == application.UserId);
+        if (application.Latitude is < -90 or > 90 || application.Longitude is < -180 or > 180)
+            throw new InvalidOperationException("Application coordinates are invalid.");
 
-        if (merchantExistsForUser)
-            throw new InvalidOperationException("This user already has a merchant profile.");
+        var existingMerchant = await _dbContext.Merchants
+            .FirstOrDefaultAsync(m => m.UserId == application.UserId);
 
         var merchantEmailExists = await _dbContext.Merchants
-            .AnyAsync(m => m.Email == application.Email);
+            .AnyAsync(m => m.Email == application.Email && m.UserId != application.UserId);
 
         if (merchantEmailExists)
             throw new InvalidOperationException("This application email is already used by another merchant.");
-
-        if (application.Latitude is < -90 or > 90 || application.Longitude is < -180 or > 180)
-            throw new InvalidOperationException("Application coordinates are invalid.");
 
         application.Status = "Approved";
         application.ReviewedAt = DateTime.UtcNow;
@@ -224,25 +221,43 @@ public class Service : IService
 
         var location = new NetTopologySuite.Geometries.Point((double)application.Longitude, (double)application.Latitude) { SRID = 4326 };
 
-
-        var merchant = new Merchant()
+        if (existingMerchant != null)
         {
-            UserId = application.UserId,
-            Name = application.Name,
-            Description = application.Description,
-            Email = application.Email,
-            Phone = application.Phone,
-            Address = application.Address,
-            LogoUrl = application.LogoUrl ?? "",
-            Status = "Active",
-            IsActive = true,
-            OpeningHours = application.OpeningHours,
-            Latitude = (double)application.Latitude,
-            Longitude = (double)application.Longitude,
-            Location = location,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
-        _dbContext.Merchants.Add(merchant);
+            existingMerchant.Name = application.Name;
+            existingMerchant.Description = application.Description;
+            existingMerchant.Email = application.Email;
+            existingMerchant.Phone = application.Phone;
+            existingMerchant.Address = application.Address;
+            existingMerchant.LogoUrl = application.LogoUrl ?? string.Empty;
+            existingMerchant.Status = "Active";
+            existingMerchant.IsActive = true;
+            existingMerchant.OpeningHours = application.OpeningHours;
+            existingMerchant.Latitude = (double)application.Latitude;
+            existingMerchant.Longitude = (double)application.Longitude;
+            existingMerchant.Location = location;
+            existingMerchant.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+        else
+        {
+            var merchant = new Merchant()
+            {
+                UserId = application.UserId,
+                Name = application.Name,
+                Description = application.Description,
+                Email = application.Email,
+                Phone = application.Phone,
+                Address = application.Address,
+                LogoUrl = application.LogoUrl ?? string.Empty,
+                Status = "Active",
+                IsActive = true,
+                OpeningHours = application.OpeningHours,
+                Latitude = (double)application.Latitude,
+                Longitude = (double)application.Longitude,
+                Location = location,
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+            _dbContext.Merchants.Add(merchant);
+        }
 
         var notification = new Notification()
         {
