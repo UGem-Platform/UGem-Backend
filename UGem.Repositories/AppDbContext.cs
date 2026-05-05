@@ -554,7 +554,7 @@ public class AppDbContext : DbContext
 
             builder.Property(m => m.Location)
                 .IsRequired()
-                .HasColumnType("geography(Point, 4326)");
+                .HasColumnType("geometry(Point, 4326)");
 
             builder.HasIndex(m => new { m.Name, m.Description });
         });
