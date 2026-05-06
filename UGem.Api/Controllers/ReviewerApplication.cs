@@ -41,4 +41,17 @@ public class ReviewerApplication : ControllerBase
             HttpContext.TraceIdentifier
         ));
     }
+    
+    [HttpGet("")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    public async Task<IActionResult> GetMyReviewerApplication()
+    {
+        var result = await _reviewerService.GetReviewApplicationByCus();
+
+        return Ok(ApiResponseFactory.SuccessResponse(
+            result,
+            "Reviewer application retrieved successfully",
+            HttpContext.TraceIdentifier
+        ));
+    }
 }
