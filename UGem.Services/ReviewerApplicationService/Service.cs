@@ -27,12 +27,20 @@ public class Service : IService
             throw new KeyNotFoundException("CustomerId not found");
         }
         
+        var hasApplication = await _dbContext.ReviewerApplications
+            .AnyAsync(x => x.CustomerId == customerIdGuid);
+
+        if (hasApplication)
+        {
+            throw new ArgumentException("You already submitted an application");
+        }   
+        
         if (string.IsNullOrWhiteSpace(request.FacebookUrl) &&
               string.IsNullOrWhiteSpace(request.TiktokUrl) &&
               string.IsNullOrWhiteSpace(request.YoutubeUrl) &&
               string.IsNullOrWhiteSpace(request.OtherSocialUrl))
         {
-            throw new Exception("At least one social link is required");
+            throw new ArgumentException("At least one social link is required");
         }
         
         var reviewerApplication = new ReviewerApplication()
@@ -102,5 +110,36 @@ public class Service : IService
         application.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<Response.GetReviewApplicationResponse> GetReviewApplicationByCus()
+    {
+        var customerId = _httpContext.HttpContext.User.Claims
+            .FirstOrDefault(x => x.Type == "CustomerId")?.Value;
+
+        if (string.IsNullOrEmpty(customerId))
+            throw new UnauthorizedAccessException("CustomerId not found");
+
+        var customerIdGuid = Guid.Parse(customerId);
+
+        var reviewerApplication = await _dbContext.ReviewerApplications.FirstOrDefaultAsync(
+            x => x.CustomerId == customerIdGuid);
+
+        if (reviewerApplication == null)
+        {
+            throw new KeyNotFoundException("Customer does not have an review application ");
+        }
+
+        var selectReviewApplicationResponse = new Response.GetReviewApplicationResponse()
+        {
+            Motivation = reviewerApplication.Motivation,
+            Experience = reviewerApplication.Experience,
+            FacebookUrl = reviewerApplication.FacebookUrl,
+            TiktokUrl = reviewerApplication.TiktokUrl,
+            YoutubeUrl = reviewerApplication.YoutubeUrl,
+            OtherSocialUrl = reviewerApplication.OtherSocialUrl
+        };
+        
+        return selectReviewApplicationResponse;
     }
 }
