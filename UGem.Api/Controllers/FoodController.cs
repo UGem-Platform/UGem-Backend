@@ -20,7 +20,7 @@ public class FoodController : ControllerBase
 
     [HttpPost]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
-    public async Task< IActionResult> Create( [FromBody]Request.CreateFoodRequest request)
+    public async Task< IActionResult> Create( [FromBody]Request.AddFoodRequest request)
     {
         await _foodService.CreateFood(request );
         return Ok(ApiResponseFactory.SuccessResponse(null, "Add food Successfully", HttpContext.TraceIdentifier));
@@ -36,5 +36,13 @@ public class FoodController : ControllerBase
     public IActionResult GetById(int id)
     {
         return Ok();
+    }
+
+    [HttpDelete("{id}")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    public async Task<IActionResult> DeleteById(Guid id)
+    {
+        await _foodService.DeleteFood(id);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Delete Food Successfully", HttpContext.TraceIdentifier));
     }
 }

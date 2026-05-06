@@ -4,8 +4,9 @@ public class Request
 {
     public class CreateCategoryRequest
     {
-        public required Guid ParentId { get; set; }
+        public Guid? ParentId { get; set; }
         public required string Name { get; set; }
+        public required string Description { get; set; }
         
     }
 
