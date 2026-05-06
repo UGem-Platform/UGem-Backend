@@ -4,7 +4,8 @@ using System.Text.Json.Serialization;
 using UGem.Api.Extensions;
 using UGem.Api.Middlewares;
 using UGem.Repositories;
-using UGem.Services.BackGroundJobService;
+using  UGem.Services.BackGroundJobService;
+using ReviewerApplicationService = UGem.Services.ReviewerApplicationService;
 using ReviewService = UGem.Services.ReviewService;
 using UserService = UGem.Services.UserService;
 using CheckInService = UGem.Services.CheckInService;
@@ -64,6 +65,7 @@ builder.Services.AddScoped<WishlistService.IService, WishlistService.Service>();
 builder.Services.AddScoped<CheckInService.IService, CheckInService.Service>();
 builder.Services.AddScoped<UserService.IService, UserService.Service>();
 builder.Services.AddScoped<ReviewService.IService, ReviewService.Service>();
+builder.Services.AddScoped<ReviewerApplicationService.IService, ReviewerApplicationService.Service>();
 
 // builder.Services.AddQuartz(options =>
 // {

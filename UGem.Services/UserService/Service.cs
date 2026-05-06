@@ -38,6 +38,7 @@ public class Service : IService
             Email = customer.User.Email,
             PhoneNumber = customer.User.PhoneNumber,
             Role = customer.User.Role,
+            AvatarUrl = customer.User.AvatarUrl
         };
 
         return result;

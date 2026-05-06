@@ -9,6 +9,8 @@ public interface IService
         
         public Task<List<Response.ReviewsByIdMerchantResponse>> GetReviewByMerchantId(Request.GetReviewByMerchantIdRequest request);
         
+        Task<List<Response.ReviewDetailResponse>> GetReviewDetailsByMerchant(Request.GetReviewDetailsByMerchantRequest request);
+        
         public Task ReviewMerchant(Request.ReviewByMerchantIdRequest request);
         public Task UpdateReviewMerchant(Request.UpdateReviewByMerchantIdRequest request);
 

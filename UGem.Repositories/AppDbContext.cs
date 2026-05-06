@@ -860,7 +860,6 @@ public class AppDbContext : DbContext
                 .HasMaxLength(500);
             
             builder.Property(o => o.RejectionReason)
-                .IsRequired()
                 .HasMaxLength(500);
 
             builder.HasOne(o => o.Customer)
