@@ -152,7 +152,26 @@ GET /api/v1/merchants/map
   zoomLevel: number;
 }
 ```
+## Update Merchant
+```http
+PUT /api/v1/merchants
+```
+### Request Body
 
+{
+  "merchantName": "string",
+  "merchantDescription": "string",
+  "email": "string",
+  "phone": "string",
+  "address": "string",
+  "openingHours": "string"
+}
+### Response
+{
+"success": true,
+"message": "Merchant updated successfully",
+"data": null
+}
 ---
 
 ## 4. CATEGORIES
@@ -174,6 +193,27 @@ GET /api/v1/categories
 ```http
 GET /api/v1/categories/{parentId}/children
 ```
+### create new categories
+
+```http
+Post /api/v1/categories
+```
+Auth: Staff
+#### Request:
+{
+"parentId": "can be null",
+"name": "string",
+"description": "string"
+}
+#### Response
+{
+"success": true,
+"message": "Category added successfully",
+"data": "1",
+"errors": null,
+"traceId": "string",
+"timestampUtc": "2026-05-06T07:40:00Z"
+}
 
 ---
 
@@ -184,6 +224,18 @@ GET /api/v1/categories/{parentId}/children
 ```http
 POST /api/v1/foods
 ```
+Request:
+{
+"name": "string",
+"description": "string",
+"price": number
+}
+
+Response:
+{
+"success": true,
+"message": "Add food Successfully"
+}
 
 ### Get foods
 
@@ -196,6 +248,21 @@ GET /api/v1/foods
 ```http
 GET /api/v1/foods/{id}
 ```
+### Delete foods
+
+```http
+DELETE /api/v1/foods/{id}
+```
+#### Request: foodId
+#### Response :
+{
+"success": true,
+"message": "Delete Food Successfully",
+"data": null,
+"errors": null,
+"traceId": "string",
+"timestampUtc": "2026-05-06T07:56:00.8414088Z"
+}
 
 ---
 
