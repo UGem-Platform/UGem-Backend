@@ -542,9 +542,76 @@ GET /api/v1/admins/{id}
 ### Staff
 
 ```http
-POST /api/v1/staff
+```
+#### Accept Reviewer Application
+```
+POST /api/v1/staff/accept
+```
+#### Request:
+    id: applicationId
+#### Response:
+    {
+      "success": true,
+      "message": "Approve Successfully",
+      "data": null,
+      "errors": null,
+      "traceId": "0HNLBB7D8SEMU:00000003",
+      "timestampUtc": "2026-05-06T10:26:19.3822403Z"
+    }
+```
+### Get All Reviewer Application
+```
+
 GET /api/v1/staff
+#### Request:
+    searTerm: number,
+    pageSize: number,
+    pageIndex: number
+#### Response:
+    {
+      "success": true,
+      "message": "GetReviewerApplications Successfully",
+      "data": {
+        "items": [
+          {
+            "id": "be6aca0a-ac95-4efd-9f21-b686aa56b193",
+            "status": "Rejected",
+            "motivation": "string",
+            "experience": "string",
+            "facebookUrl": "string",
+            "tiktokUrl": "string",
+            "youtubeUrl": "string",
+            "otherSocialUrl": "string",
+            "rejectionReason": "string",
+            "customerId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "createdAt": "2026-05-06T09:49:21.500452+00:00"
+          }
+        ],
+        "totalItems": number,
+        "pageSize": number,
+        "pageIndex": number
+      },
+      "errors": null,
+      "traceId": "0HNLBB7D8SEN0:00000001",
+      "timestampUtc": "2026-05-06T10:31:49.9234526Z"
+    }
 GET /api/v1/staff/{id}
+```
+#### Reject  Reviewer Application
+```
+POST /api/v1/staff/reject
+#### Request:
+    Id: applicationId,
+    reason: string
+#### Response:
+    {
+    "success": true,
+    "message": "Reject Successfully",
+    "data": null,
+    "errors": null,
+    "traceId": "0HNLBB7D8SEN1:00000001",
+    "timestampUtc": "2026-05-06T10:38:09.3641842Z"
+    }
 ```
 
 ---
