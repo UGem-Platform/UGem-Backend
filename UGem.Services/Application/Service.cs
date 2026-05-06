@@ -277,7 +277,6 @@ public class Service : IService
         var query = _dbContext.Applications
             .Include(a => a.User)
             .Include(a => a.ApplicationMenus)
-            .Where(a => a.Status == "Pending")
             .OrderByDescending(a => a.CreatedAt);
 
         var selectQuery = query.Select(a => new Response.GetApplicationForStaffResponse
