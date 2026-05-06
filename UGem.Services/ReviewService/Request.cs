@@ -7,6 +7,10 @@ public class Request
     {
         public Guid MerchantId { get; set; }
     }
+    public class GetReviewDetailsByMerchantRequest
+    {
+        public Guid ReviewId { get; set; }
+    }
     public class ReviewByMerchantIdRequest
     {
         public Guid MerchantId { get; set; }

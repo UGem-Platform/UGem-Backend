@@ -34,7 +34,8 @@ public class Service : IService
 
         var reviews = _dbContext.Reviews.Where(x => x.MerchantId == request.MerchantId);
 
-        var selectedQuery = reviews.Select(x => new Response.ReviewsByIdMerchantResponse()
+        var selectedQuery = reviews.Select(
+            x => new Response.ReviewsByIdMerchantResponse()
         {
             Content = x.Content,
             Rating =  x.Rating,
@@ -45,6 +46,32 @@ public class Service : IService
         
         return result;
     }
+    public async Task<List<Response.ReviewDetailResponse>> GetReviewDetailsByMerchant(
+        Request.GetReviewDetailsByMerchantRequest request)
+    {
+        var isExists = await _dbContext.Reviews
+            .AnyAsync(x => x.Id == request.ReviewId);
+
+        if (!isExists)
+        {
+            throw new KeyNotFoundException($"Review with id {request.ReviewId} not found");
+        }
+
+        var reviewDetails = await _dbContext.ReviewDetails
+            .Where(x => x.ReviewId == request.ReviewId)
+            .Select(x => new Response.ReviewDetailResponse()
+            {
+                Id = x.Id,
+                ReviewId = x.ReviewId,
+                OrderDetailId = x.OrderDetailId,
+                DetailContent = x.DetailContent,
+                Rating = x.Rating,
+                CreatedAt = x.CreatedAt
+            })
+            .ToListAsync();
+
+        return reviewDetails;
+    }   
 
     public async Task ReviewMerchant(Request.ReviewByMerchantIdRequest request)
     {
@@ -183,6 +210,5 @@ public class Service : IService
             
         }
         await _dbContext.SaveChangesAsync();
-
     }
 }

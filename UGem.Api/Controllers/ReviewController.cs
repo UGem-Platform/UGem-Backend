@@ -24,6 +24,18 @@ public class ReviewController : ControllerBase
         var result = await _reviewService.GetReviewByMerchantId(request);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Reviews retrieved successfully", HttpContext.TraceIdentifier));
     }
+    [HttpGet("merchant/review-details")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    public async Task<IActionResult> GetReviewDetailsByMerchant([FromQuery]Request.GetReviewDetailsByMerchantRequest request)
+    {
+        var result = await _reviewService.GetReviewDetailsByMerchant(request);
+
+        return Ok(ApiResponseFactory.SuccessResponse(
+            result,
+            "Review details retrieved successfully",
+            HttpContext.TraceIdentifier
+        ));
+    }
     
     [HttpPost("merchant")]
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
