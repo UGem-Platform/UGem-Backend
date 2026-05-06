@@ -26,7 +26,5 @@ public class Request
     public class GoogleLoginRequest
     {
         public required string IdToken { get; set; }
-        public string? Role { get; set; }
-        
     }
 }

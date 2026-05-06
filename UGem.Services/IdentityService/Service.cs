@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -89,8 +88,7 @@ public class Service : IService
 
         return result;
     }
-
-    public async Task<string> Register(Request.RegisterUserRequest request)
+public async Task<string> Register(Request.RegisterUserRequest request)
     {
         if (!System.Net.Mail.MailAddress.TryCreate(request.Email, out _))
             throw new Exception("Invalid email format");
@@ -176,27 +174,20 @@ public class Service : IService
 
         if (user == null)
         {
-            var allowedRoles = new[] { "Customer", "Merchant" };
-            if (string.IsNullOrWhiteSpace(request.Role) || !allowedRoles.Contains(request.Role))
-                throw new Exception("Invalid role. Only 'Customer' or 'Merchant' are allowed");
-
-            user = new User
+user = new User
             {
                 Email = email,
                 PasswordHash = "",
                 PhoneNumber = "",
                 FullName = payload.Name,
                 AvatarUrl = payload.Picture,
-                Role = request.Role
+                Role = "Customer"
             };
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
-            if (request.Role == "Customer")
-            {
-                _dbContext.Customers.Add(new Customer { UserId = user.Id });
-                await _dbContext.SaveChangesAsync();
-            }
+            _dbContext.Customers.Add(new Customer { UserId = user.Id });
+            await _dbContext.SaveChangesAsync();
 
             _ = Task.Run(async () =>
             {
