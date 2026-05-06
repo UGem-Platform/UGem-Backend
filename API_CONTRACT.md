@@ -256,8 +256,8 @@ PATCH /api/v1/orders/{id}/status
 
 ```ts
 UpdateOrderStatusRequest {
-  status: "Accepted" | "Rejected" | "Completed" | "NotReceived";
-  reason?: string; // required when status = Rejected
+    status: "Accepted" | "Rejected" | "Completed" | "NotReceived";
+    reason?: string; // required when status = Rejected
 }
 ```
 
@@ -265,25 +265,90 @@ UpdateOrderStatusRequest {
 
 ## 7. REVIEWS
 
-### Create review
+### Review merchant
 
 ```http
-POST /api/v1/reviews
+POST /api/v1/reviewers/merchant
 ```
 
-### Get reviews
+#### Request
+
+```ts
+ReviewMerchantRequest {
+  merchantId: string;
+  orderId: string;
+  rating: number;
+  content: string;
+  imageUrl: string;
+  reviewDetails: ReviewDetailRequest[];
+}
+```
+
+#### ReviewDetailRequest
+
+```ts
+{
+  orderDetailId: string;
+  detailContent: string;
+  rating: number;
+}
+```
+
+### Update review merchant
 
 ```http
-GET /api/v1/reviews
+PUT /api/v1/reviewers/merchant
 ```
 
-### Get review by id
+#### Request
+
+```ts
+UpdateReviewMerchantRequest {
+  reviewId: string;
+  rating: number;
+  content: string;
+  imageUrl: string;
+  reviewDetails: UpdateReviewDetailRequest[];
+}
+```
+
+#### UpdateReviewDetailRequest
+
+```ts
+{
+  reviewDetailId: string;
+  detailContent: string;
+  rating: number;
+}
+```
+
+### Get reviews by merchant
 
 ```http
-GET /api/v1/reviews/{id}
+GET /api/v1/reviewers/merchant
 ```
 
----
+#### Query parameters
+
+```ts
+{
+  merchantId: string;
+}
+```
+
+### Get review details by merchant
+
+```http
+GET /api/v1/reviewers/merchant/review-details
+```
+
+#### Query parameters
+
+```ts
+{
+  reviewId: string;
+}
+```
 
 ## 8. WISHLISTS
 
@@ -445,15 +510,82 @@ GET /api/v1/notifications
 ```
 
 ---
+## 14. REVIEWER APPLICATIONS
+
+### Create reviewer application
+
+```http
+POST /api/v1/reviewer-applications
+```
+
+#### Request
+
+```ts
+CreateReviewerApplicationRequest {
+  motivation: string;
+  experience: string;
+  facebookUrl: string;
+  tiktokUrl: string;
+  youtubeUrl: string;
+  otherSocialUrl: string;
+}
+```
+
+### Update reviewer application
+
+```http
+PATCH /api/v1/reviewer-applications
+```
+
+#### Request
+
+```ts
+UpdateReviewerApplicationRequest {
+  reviewerApplicationId: string;
+  motivation: string;
+  experience: string;
+  facebookUrl: string;
+  tiktokUrl: string;
+  youtubeUrl: string;
+  otherSocialUrl: string;
+}
+```
+
+---
+
+## 15. USERS
+
+### Get profile
+
+```http
+GET /api/v1/user/profile
+```
+
+### Update profile
+
+```http
+PATCH /api/v1/user/profile
+```
+
+#### Request
+
+```ts
+UpdateProfileRequest {
+  fullName: string;
+  avatarUrl: string;
+}
+```
+
+---
 
 ### Axios base client
 
 ```ts
 const api = axios.create({
-  baseURL: "https://ugem-test-backend.onrender.com",
-  headers: {
-    "Content-Type": "application/json",
-  },
+    baseURL: "https://ugem-test-backend.onrender.com",
+    headers: {
+        "Content-Type": "application/json",
+    },
 });
 ```
 
@@ -461,8 +593,8 @@ const api = axios.create({
 
 ```ts
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
-  if (token) config.headers.Authorization = `Bearer ${token}`;
-  return config;
+    const token = localStorage.getItem("token");
+    if (token) config.headers.Authorization = `Bearer ${token}`;
+    return config;
 });
 ```
