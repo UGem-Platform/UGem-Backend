@@ -20,7 +20,7 @@ public class ApplicationController : ControllerBase
     }
 
     [HttpGet("mine")]
-    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    [Authorize(Policy = JwtExtensions.MerchantApplicantPolicy)]
     public async Task<IActionResult> GetMyApplications()
     {
         var data = await _applicationService.GetMyApplications();
@@ -36,7 +36,7 @@ public class ApplicationController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    [Authorize(Policy = JwtExtensions.MerchantApplicantPolicy)]
     public async Task<IActionResult> CreateApplicationRequest([FromForm] Request.ApplicationRequest request)
     {
         await _applicationService.CreateApplicationRequest(request);
@@ -44,7 +44,7 @@ public class ApplicationController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    [Authorize(Policy = JwtExtensions.MerchantApplicantPolicy)]
     public async Task<IActionResult> EditAfterReject(Guid id, Request.UpdateApplicationRequest request)
     {
         request.ApplicationId = id;
@@ -66,7 +66,7 @@ public class ApplicationController : ControllerBase
                 case ApplicationRequest.ApplicationStatus.Rejected:
                     await _applicationService.RejectApplication(new ApplicationRequest.RejectApplicationRequest { ApplicationId = id, Note = request.Note ?? string.Empty });
                     return Ok(ApiResponseFactory.SuccessResponse(null, "Application rejected", HttpContext.TraceIdentifier));
-                default:
+default:
                     return BadRequest(ApiResponseFactory.ErrorResponse($"Unsupported application status '{request.Status}'", traceId: HttpContext.TraceIdentifier));
             }
         }

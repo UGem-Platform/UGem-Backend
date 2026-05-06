@@ -1,5 +1,3 @@
-
-
 namespace UGem.Services.IdentityService;
 
 public class Response
@@ -14,5 +12,6 @@ public class Response
         public string FullName { get; set; } = null!;
         public string Role { get; set; } = null!;
         public string? AvatarUrl { get; set; } 
+        public bool IsNewUser { get; set; }
     }
 }
