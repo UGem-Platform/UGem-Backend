@@ -22,7 +22,7 @@ using IdentityService = UGem.Services.IdentityService;
 using JwtService = UGem.Services.JwtService;
 using CustomerService = UGem.Services.CustomerService;
 using MerchantService = UGem.Services.MerchantService;
-
+using StaffService = UGem.Services.StaffService;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -66,7 +66,7 @@ builder.Services.AddScoped<CheckInService.IService, CheckInService.Service>();
 builder.Services.AddScoped<UserService.IService, UserService.Service>();
 builder.Services.AddScoped<ReviewService.IService, ReviewService.Service>();
 builder.Services.AddScoped<ReviewerApplicationService.IService, ReviewerApplicationService.Service>();
-
+builder.Services.AddScoped<StaffService.IService, StaffService.Service>();
 // builder.Services.AddQuartz(options =>
 // {
 //     var jobKey = new JobKey(nameof(ProcessTransactionPendingJob));
