@@ -29,4 +29,16 @@ public class ReviewerApplication : ControllerBase
             HttpContext.TraceIdentifier
         ));
     }
+    [HttpPatch("reviewer-application")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    public async Task<IActionResult> UpdateReviewerApplication([FromBody]Request.UpdateReviewerApplicationRequest request)
+    {
+        await _reviewerService.UpdateReviewerApplication(request);
+
+        return Ok(ApiResponseFactory.SuccessResponse(
+            null,
+            "Reviewer application updated successfully",
+            HttpContext.TraceIdentifier
+        ));
+    }
 }
