@@ -7,7 +7,7 @@ using UGem.Services.ReviewerApplicationService;
 namespace UGem.Api.Controllers;
 
 [ApiController]
-[Route("api/v1/reviewers")]
+[Route("api/v1/reviewer-application")]
 public class ReviewerApplication : ControllerBase
 {
     private readonly IService _reviewerService;
@@ -17,7 +17,7 @@ public class ReviewerApplication : ControllerBase
         _reviewerService = service; 
     }
 
-    [HttpPost("reviewer-application")]
+    [HttpPost("")]
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     public async Task<IActionResult> CreateReviewerApplication([FromBody] Request.ReviewerApplicationRequest request)
     {
@@ -29,7 +29,7 @@ public class ReviewerApplication : ControllerBase
             HttpContext.TraceIdentifier
         ));
     }
-    [HttpPatch("reviewer-application")]
+    [HttpPatch("")]
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     public async Task<IActionResult> UpdateReviewerApplication([FromBody]Request.UpdateReviewerApplicationRequest request)
     {
