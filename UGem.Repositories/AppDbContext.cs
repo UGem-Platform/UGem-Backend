@@ -594,7 +594,7 @@ public class AppDbContext : DbContext
                 IsActive = true,
                 LogoUrl = "logo_che.png",
                 Status = "Active",
-                UnderratedScore = 4.90,
+                UnderratedScore = 4.90m,
                 Rating = 4.80m,
                 PlatformFeePercent = 5.00m,
                 OpeningHours = "15:00 - 22:00",

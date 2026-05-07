@@ -16,7 +16,7 @@ public class Merchant: BaseEntity<Guid>, IAuditableEntity
     public bool IsActive { get; set; }
     public required string LogoUrl { get; set; }
     public required string Status {get; set;}
-    public double UnderratedScore { get; set; }
+    public decimal UnderratedScore { get; set; }
     public decimal Rating { get; set; }
     public decimal PlatformFeePercent { get; set; }
     public required string OpeningHours { get; set; }

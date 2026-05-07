@@ -67,21 +67,30 @@ builder.Services.AddScoped<UserService.IService, UserService.Service>();
 builder.Services.AddScoped<ReviewService.IService, ReviewService.Service>();
 builder.Services.AddScoped<ReviewerApplicationService.IService, ReviewerApplicationService.Service>();
 builder.Services.AddScoped<StaffService.IService, StaffService.Service>();
-// builder.Services.AddQuartz(options =>
-// {
-//     var jobKey = new JobKey(nameof(ProcessTransactionPendingJob));
-//
-//     options
-//         .AddJob<ProcessTransactionPendingJob>(jobKey)
-//         .AddTrigger(trigger =>
-//             trigger
-//                 .ForJob(jobKey)
-//                 .WithSimpleSchedule(schedule => schedule
-//                     .WithIntervalInMinutes(2)
-//                     .RepeatForever()
-//                 )
-//         );
-// });
+builder.Services.AddScoped<RebalancingJob>();
+builder.Services.AddQuartz(options =>
+{
+    // var jobKey = new JobKey(nameof(ProcessTransactionPendingJob));
+    //
+    // options
+    //     .AddJob<ProcessTransactionPendingJob>(jobKey)
+    //     .AddTrigger(trigger =>
+    //         trigger
+    //             .ForJob(jobKey)
+    //             .WithSimpleSchedule(schedule => schedule
+    //                 .WithIntervalInMinutes(2)
+    //                 .RepeatForever()
+    //             )
+    //     );
+    var rebalancingJobKey = new JobKey(nameof(RebalancingJob));
+    options.AddJob<RebalancingJob>(rebalancingJobKey)
+        .AddTrigger(trigger => trigger
+            .ForJob(rebalancingJobKey)
+            .WithSimpleSchedule(schedule => schedule
+                .WithIntervalInHours(24*14)
+                .RepeatForever())
+            .StartNow()); 
+});
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
