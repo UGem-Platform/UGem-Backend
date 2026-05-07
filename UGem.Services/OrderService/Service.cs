@@ -184,7 +184,7 @@ public class Service : IService
             await _dbContext.SaveChangesAsync();
         }
         
-        string description = $"UG-{order.Id}";
+        string description = $"UGem-{order.Id}";
 
         var response = new Response.CreateOrderResponse()
         {
@@ -193,7 +193,6 @@ public class Service : IService
             BankName = "MBBank",
             BankAccount = "VQRQAIDAX4356",
             Description = description,
-            Code = description,
             QRCode = ""
         };
 
@@ -210,16 +209,26 @@ public class Service : IService
     
      public async Task SepayWebhookHandler(Request.SepayWebhookRequest request)
     {
-        var description = request.Code; // ORDERID
+        var content = request.Content!
+            .Replace(" ", "")
+            .Replace("\n", "")
+            .Replace("\r", "");
 
-        //UGem9303606db5c84287a771b24738009e4a
-        var raw = description.Replace("UG", "").Trim();
+        var startIndex = content.IndexOf("UGem");
+
+        if (startIndex == -1)
+        {
+            throw new Exception("UG code not found");
+        }
+
+        var description = content.Substring(startIndex, 36);
+
+        var raw = description.Replace("UGem", "");
 
         Guid? orderId = null;
 
         if (raw.Length == 32)
-            // Mặc định 1 Guid có 32 kía tự nesuieu bklhongo có dauyas gác nổi,
-        //
+
         {
             var formatted = $"{raw.Substring(startIndex: 0, length: 8)}-" +
                                    $"{raw.Substring(startIndex: 8, length: 4)}-" +
