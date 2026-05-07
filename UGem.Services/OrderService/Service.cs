@@ -280,15 +280,9 @@ public class Service : IService
 
         var order = _dbContext.Orders.Where(x => x.CustomerId == cusIdGuid);
 
-        var isExist = await order.AnyAsync();
-
-        if (!isExist)
-        {
-            throw new Exception("No orders");
-        }
-
         var selectOrder = order.Select(x => new Response.OrderResponse()
         {
+            OrderId = x.Id,
             Name = x.Name,
             DeliveryAddress = x.DeliveryAddress,
             Notes = x.Notes,
@@ -306,13 +300,6 @@ public class Service : IService
     public async Task<List<Response.GetOrderDetailResponse>> GetOrderDetail(Guid orderId)
     {
         var orderDetail = _dbContext.OrderDetails.Where(x => x.OrderId == orderId);
-
-        var isExist = await orderDetail.AnyAsync();
-
-        if (!isExist)
-        {
-            throw new Exception("No orders");
-        }
 
         var selectOrder = orderDetail.Select(x => new Response.GetOrderDetailResponse()
         {
