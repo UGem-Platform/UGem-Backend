@@ -184,7 +184,7 @@ public class Service : IService
             await _dbContext.SaveChangesAsync();
         }
         
-        string description = $"UGem-{order.Id}";
+        string description = $"UG-{order.Id}";
 
         var response = new Response.CreateOrderResponse()
         {
@@ -212,7 +212,7 @@ public class Service : IService
         var description = request.Code; // ORDERID
 
         //UGem9303606db5c84287a771b24738009e4a
-        var raw = description.Replace("UGem", "");
+        var raw = description.Replace("UG", "");
 
         Guid? orderId = null;
 
