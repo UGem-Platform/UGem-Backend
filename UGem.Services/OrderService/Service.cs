@@ -103,7 +103,7 @@ public class Service : IService
     }
     
 
-    public async Task CreateOrder(Request.CreateOrderRequest request)
+    public async Task<Response.CreateOrderResponse> CreateOrder(Request.CreateOrderRequest request)
     {
         var cusId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
 
@@ -183,6 +183,82 @@ public class Service : IService
             _dbContext.AddRange(orderDetails);
             await _dbContext.SaveChangesAsync();
         }
+        
+        string description = $"UGem-{order.Id}";
+
+        var response = new Response.CreateOrderResponse()
+        {
+            OrderId = order.Id,
+            TotalAmount = order.FinalPrice,
+            BankName = "MBBank",
+            BankAccount = "VQRQAIDAX4356",
+            Description = description,
+            QRCode = ""
+        };
+
+        string qrCode = $"https://qr.sepay.vn/img?" +
+                        $"acc={response.BankAccount}&" +
+                        $"bank={response.BankName}&" +
+                        $"amount={(int)totalAmount}&" +
+                        $"des={description}&" +
+                        $"template=qronly";
+        
+        response.QRCode = qrCode;
+        return response;
+    }
+    
+     public async Task SepayWebhookHandler(Request.SepayWebhookRequest request)
+    {
+        var description = request.Code; // ORDERID
+
+        var raw = description.Replace("TETPEE", "");
+
+        Guid? orderId = null;
+
+        if (raw.Length == 32)
+            // Mặc định 1 Guid có 32 kía tự nesuieu bklhongo có dauyas gác nổi,
+        //
+        {
+            var formatted = $"{raw.Substring(startIndex: 0, length: 8)}-" +
+                                   $"{raw.Substring(startIndex: 8, length: 4)}-" +
+                                   $"{raw.Substring(startIndex: 12, length: 4)}-" +
+                                   $"{raw.Substring(startIndex: 16, length: 4)}-" +
+                                   $"{raw.Substring(startIndex: 20, length: 12)}";
+
+            if (Guid.TryParse(formatted, out var guid))
+            {
+                orderId = guid;
+            }
+        }
+        else
+        {
+            throw new Exception("Invalid description format");
+        }
+
+        var query = _dbContext.Orders
+            .Where(x => x.Id == orderId)
+            .Include(x => x.OrderDetails);
+
+        var order = await query.FirstOrDefaultAsync();
+
+        if(order == null)
+        {
+            throw new Exception("Order not found");
+        }
+
+        if(order.Status != "Pending")
+        {
+            throw new Exception("Order already processed");
+        }
+
+        if(order.FinalPrice != request.TransferAmount)
+        {
+            throw new Exception("Invalid transfer amount");
+        }
+
+        order.Status = "Completed";
+        _dbContext.Update(order);
+        await _dbContext.SaveChangesAsync();
     }
 
     public async Task<List<Response.OrderResponse>> GetOrderListFromCustomerId()
