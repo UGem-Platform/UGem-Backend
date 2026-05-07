@@ -71,7 +71,8 @@ public class Service : IService
         var totalItems = await queryByDistance.CountAsync();
 
         var queryOrder = queryByDistance
-            .OrderBy(m => m.Location.Distance(userLocation));
+            .OrderByDescending(m => m.UnderratedScore)
+            .ThenBy(m => m.Location.Distance(userLocation));
 
         var query = queryOrder
             .Skip((request.PageIndex - 1) * request.PageSize)
