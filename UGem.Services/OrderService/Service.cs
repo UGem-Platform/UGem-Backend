@@ -43,48 +43,63 @@ public class Service : IService
     public async Task AcceptOrder(Guid orderId)
     {
         var userId = _httpContext.HttpContext.User
-            .Claims.First(x => x.Type == "UserId").Value;
+            .Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
 
+        if (string.IsNullOrEmpty(userId))
+        {
+            throw new Exception("Unauthorized");
+        }
         var userIdGuid = Guid.Parse(userId);
 
         var order = await _dbContext.Orders
             .Include(x => x.OrderDetails)
             .ThenInclude(od => od.Food)
             .ThenInclude(f => f.Merchant)
-            .FirstOrDefaultAsync(x => x.Id == orderId 
+            .FirstOrDefaultAsync(x => x.Id == orderId
                                       && x.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
+
         if (order == null)
-            throw new Exception("Order not found");
-        if (order.Status != "Pending")
-            throw new Exception("Order is not eligible for rejection");
-        order.Status = "Accepted";
+        {
+            throw new Exception("Order not found or not yours");
+        }
+
+        if (order.Status != Request.OrderStatus.Pending.ToString())
+        {
+            throw new Exception("Order is not in Pending state");
+        }
+
+        order.Status = Request.OrderStatus.Accepted.ToString();
         order.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _dbContext.SaveChangesAsync();
     }
-    
 
     public async Task RejectOrder(Request.ReasonRejectRequest request)
     {
-       var  userId = _httpContext.HttpContext.User.Claims.First(x => x.Type == "UserId").Value;
-       var userIdGuid = Guid.Parse(userId);
-       var order = await _dbContext.Orders
-           .Include(x => x.OrderDetails)
-           .ThenInclude(od => od.Food)
-           .ThenInclude(f => f.Merchant)
-           .FirstOrDefaultAsync(x => x.Id == request.OrderId 
-                                     && x.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
-       if(order == null)
-           throw new Exception("Order not found");
-       if (order.OrderedAt.AddMinutes(30) > DateTimeOffset.UtcNow)
-           throw new Exception("The delivery deadline hasn't passed yet");
-       if (order.Status != "Pending")
-           throw new Exception("Order is not eligible for rejection");
-       order.Status = "Rejected";
-       order.UpdatedAt = DateTimeOffset.UtcNow;
-       
-       order.RejectionReason = request.Reason;
-       await _dbContext.SaveChangesAsync();
+        var userId = _httpContext.HttpContext.User
+            .Claims.First(x => x.Type == "UserId").Value;
+
+        var userIdGuid = Guid.Parse(userId);
+
+        var order = await _dbContext.Orders
+            .FirstOrDefaultAsync(x => x.Id == request.OrderId
+                                      && x.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
+
+        if (order == null)
+        {
+            throw new Exception("Order not found or not yours");
+        }
+
+        if (order.Status != Request.OrderStatus.Pending.ToString())
+        {
+            throw new Exception("Order is not in Pending state");
+        }
+
+        order.Status = Request.OrderStatus.Rejected.ToString();
+        order.RejectionReason = request.Reason;
+        order.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
     }
     
 
