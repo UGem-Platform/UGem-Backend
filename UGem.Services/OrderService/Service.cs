@@ -193,6 +193,7 @@ public class Service : IService
             BankName = "MBBank",
             BankAccount = "VQRQAIDAX4356",
             Description = description,
+            Code = description,
             QRCode = ""
         };
 
@@ -212,7 +213,7 @@ public class Service : IService
         var description = request.Code; // ORDERID
 
         //UGem9303606db5c84287a771b24738009e4a
-        var raw = description.Replace("UG", "");
+        var raw = description.Replace("UG", "").Trim();
 
         Guid? orderId = null;
 
