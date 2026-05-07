@@ -6,6 +6,11 @@ public class Customer : BaseEntity<Guid>, IAuditableEntity
 {
     public int TotalCheckIns { get; set; }
     
+    public string Province { get; set; } = "";
+    public string District { get; set; } = "";
+    public string Ward { get; set; } = "";
+
+    public string AddressDetail { get; set; } = "";
     public required Guid UserId { get; set; }
     public User User { get; set; } = null!;
     
