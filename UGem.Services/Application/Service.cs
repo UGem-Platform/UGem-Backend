@@ -87,7 +87,7 @@ public class Service : IService
             ReviewedAt = DateTime.UtcNow,
             Name = request.Name,
             Description = request.Description,
-            Email = request.Email,
+Email = request.Email,
             Phone = request.Phone,
             LogoUrl = request.LogoUrl,
             OpeningHours = request.OpeningHours,
@@ -155,6 +155,9 @@ public class Service : IService
 
     public async Task<string> EditApplicationAfterReject(Request.UpdateApplicationRequest request)
     {
+        var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
+        var userIdGuid = Guid.Parse(userId!);
+
         var application = await _dbContext.Applications
             .Include(x => x.ApplicationMenus)
             .Include(x => x.User)
@@ -163,6 +166,9 @@ public class Service : IService
         if (application == null)
             throw new Exception("Application not found");
 
+        if (application.UserId != userIdGuid)
+            throw new UnauthorizedAccessException("Cannot edit another user's application.");
+
         if (application.Status != "Rejected")
             throw new Exception("Just edit when application reject");
 
@@ -170,7 +176,7 @@ public class Service : IService
         application.Type = request.Type;
         application.Note = request.Note;
         application.Status = "Pending";
-        application.ReviewedAt = default;
+application.ReviewedAt = default;
         application.UpdatedAt = DateTimeOffset.UtcNow;
 
         _dbContext.ApplicationMenus.RemoveRange(application.ApplicationMenus);
@@ -237,7 +243,7 @@ public class Service : IService
             existingMerchant.Location = location;
             existingMerchant.UpdatedAt = DateTimeOffset.UtcNow;
         }
-        else
+else
         {
             var merchant = new Merchant()
             {
