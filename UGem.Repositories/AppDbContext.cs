@@ -305,6 +305,15 @@ public class AppDbContext : DbContext
                 .IsRequired()
                 .HasMaxLength(2000);
 
+            builder.Property(a => a.RestaurantType)
+                .HasMaxLength(200);
+
+            builder.Property(a => a.MainDishType)
+                .HasMaxLength(200);
+
+            builder.Property(a => a.PriceRange)
+                .HasMaxLength(200);
+
             builder.Property(a => a.Email)
                 .IsRequired()
                 .HasMaxLength(255);
@@ -513,6 +522,15 @@ public class AppDbContext : DbContext
             builder.Property(m => m.Description)
                 .IsRequired()
                 .HasMaxLength(2000);
+
+            builder.Property(m => m.RestaurantType)
+                .HasMaxLength(200);
+
+            builder.Property(m => m.MainDishType)
+                .HasMaxLength(200);
+
+            builder.Property(m => m.PriceRange)
+                .HasMaxLength(200);
 
             builder.Property(m => m.Email)
                 .IsRequired()

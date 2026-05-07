@@ -113,10 +113,52 @@ GET /api/v1/merchants
 }
 ```
 
+#### Response item shape
+
+```ts
+MerchantSummaryResponse {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  logoUrl: string;
+  rating: number;
+  reviewCount: number;
+  restaurantType?: string;
+  mainDishType?: string;
+  priceRange?: string;
+  distance?: number;
+  latitude?: number;
+  longitude?: number;
+}
+```
+
 ### Get merchant by id
 
 ```http
 GET /api/v1/merchants/{id}
+```
+
+#### Response shape
+
+```ts
+MerchantDetailResponse {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  logoUrl: string;
+  rating: number;
+  reviewCount: number;
+  restaurantType?: string;
+  mainDishType?: string;
+  priceRange?: string;
+  email: string;
+  phone: string;
+  latitude: number;
+  longitude: number;
+  menu: Food[];
+}
 ```
 
 ### Get merchants by category
@@ -152,6 +194,25 @@ GET /api/v1/merchants/map
   zoomLevel: number;
 }
 ```
+
+#### Response item shape
+
+```ts
+MerchantMapResponse {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  logoUrl: string;
+  rating: number;
+  reviewCount: number;
+  restaurantType?: string;
+  mainDishType?: string;
+  priceRange?: string;
+  latitude: number;
+  longitude: number;
+}
+```
 ## Update Merchant
 ```http
 PUT /api/v1/merchants
@@ -161,6 +222,9 @@ PUT /api/v1/merchants
 {
   "merchantName": "string",
   "merchantDescription": "string",
+  "restaurantType": "string",
+  "mainDishType": "string",
+  "priceRange": "string",
   "email": "string",
   "phone": "string",
   "address": "string",
@@ -332,10 +396,32 @@ UpdateOrderStatusRequest {
 
 ## 7. REVIEWS
 
+### Get merchant reviews
+
+```http
+GET /api/v1/reviews/merchant?merchantId={merchantId}
+```
+
+#### Response item shape
+
+```ts
+MerchantReviewResponse {
+  id: string;
+  merchantId: string;
+  orderId: string;
+  rating: number;
+  content: string;
+  imageUrl?: string;
+  createdAt: string;
+  customerName?: string;
+  customerAvatarUrl?: string;
+}
+```
+
 ### Review merchant
 
 ```http
-POST /api/v1/reviewers/merchant
+POST /api/v1/reviews/merchant
 ```
 
 #### Request
@@ -364,7 +450,7 @@ ReviewMerchantRequest {
 ### Update review merchant
 
 ```http
-PUT /api/v1/reviewers/merchant
+PUT /api/v1/reviews/merchant
 ```
 
 #### Request
@@ -392,7 +478,7 @@ UpdateReviewMerchantRequest {
 ### Get reviews by merchant
 
 ```http
-GET /api/v1/reviewers/merchant
+GET /api/v1/reviews/merchant
 ```
 
 #### Query parameters
@@ -406,7 +492,7 @@ GET /api/v1/reviewers/merchant
 ### Get review details by merchant
 
 ```http
-GET /api/v1/reviewers/merchant/review-details
+GET /api/v1/reviews/merchant/review-details
 ```
 
 #### Query parameters
@@ -461,6 +547,9 @@ POST /api/v1/applications
 ApplicationRequest {
   name: string;
   description: string;
+  restaurantType?: string;
+  mainDishType?: string;
+  priceRange?: string;
   email: string;
   phone: string;
   logoUrl: string;

@@ -14,12 +14,15 @@ public class Response
     
     public class ReviewsByIdMerchantResponse
     {
+        public Guid Id { get; set; }
+        public Guid MerchantId { get; set; }
+        public Guid OrderId { get; set; }
         public int Rating { get; set; }
         public string Content { get; set; } = "";
+        public string? ImageUrl { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
-        
-        public List<ReviewDetailsResponse>? ReviewDetails { get; set; } 
-
+        public string? CustomerName { get; set; }
+        public string? CustomerAvatarUrl { get; set; }
     }
     
     public class ReviewDetailsResponse

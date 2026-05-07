@@ -27,19 +27,26 @@ public class Service : IService
 
         if (request.ZoomLevel < 13)
         {
-            query = query.Where(m => m.Rating >= 4.5m);
-            query = query.OrderByDescending(m => m.Rating).Take(50);
+            query = query.Where(m => (m.Reviews.Average(r => (decimal?)r.Rating) ?? 0m) >= 4.5m);
+            query = query.OrderByDescending(m => m.Reviews.Average(r => (decimal?)r.Rating) ?? 0m).Take(50);
         }
         else
         {
-            query = query.OrderByDescending(m => m.Rating).Take(100);
+            query = query.OrderByDescending(m => m.Reviews.Average(r => (decimal?)r.Rating) ?? 0m).Take(100);
         }
 
         var result = await query.Select(m => new Response.MapResponse()
         {
             Id = m.Id,
             Name = m.Name,
-            Rating = m.Rating,
+            Description = m.Description,
+            Address = m.Address,
+            LogoUrl = m.LogoUrl,
+            Rating = m.Reviews.Average(r => (decimal?)r.Rating) ?? 0m,
+            ReviewCount = m.Reviews.Count(),
+            RestaurantType = m.RestaurantType,
+            MainDishType = m.MainDishType,
+            PriceRange = m.PriceRange,
             Latitude = m.Latitude,
             Longitude = m.Longitude
         }).ToListAsync();
@@ -82,9 +89,15 @@ public class Service : IService
             {
                 Id = x.Id,
                 Name = x.Name,
-                Rating = x.Rating,
-                Distance = x.Location.Distance(userLocation) / 1000,
+                Description = x.Description,
                 Address = x.Address,
+                LogoUrl = x.LogoUrl,
+                Rating = x.Reviews.Average(r => (decimal?)r.Rating) ?? 0m,
+                ReviewCount = x.Reviews.Count(),
+                RestaurantType = x.RestaurantType,
+                MainDishType = x.MainDishType,
+                PriceRange = x.PriceRange,
+                Distance = x.Location.Distance(userLocation) / 1000,
                 Latitude = x.Latitude,
                 Longitude = x.Longitude,
             });
@@ -111,12 +124,16 @@ public class Service : IService
         {
             Id = x.Id,
             Name = x.Name,
-            Rating = x.Rating,
             Description = x.Description,
-            Email = x.Email,
-            Phone = x.Phone,
             Address = x.Address,
             LogoUrl = x.LogoUrl,
+            Rating = x.Reviews.Average(r => (decimal?)r.Rating) ?? 0m,
+            ReviewCount = x.Reviews.Count(),
+            RestaurantType = x.RestaurantType,
+            MainDishType = x.MainDishType,
+            PriceRange = x.PriceRange,
+            Email = x.Email,
+            Phone = x.Phone,
             Latitude =  x.Latitude,
             Longitude =  x.Longitude,
             Menu = x.Foods.Select(f => new FoodService.Response.Menu()
@@ -164,9 +181,15 @@ public class Service : IService
             {
                 Id = x.Id,
                 Name = x.Name,
-                Rating = x.Rating,
-                Distance = x.Location.Distance(userLocation) / 1000,
+                Description = x.Description,
                 Address = x.Address,
+                LogoUrl = x.LogoUrl,
+                Rating = x.Reviews.Average(r => (decimal?)r.Rating) ?? 0m,
+                ReviewCount = x.Reviews.Count(),
+                RestaurantType = x.RestaurantType,
+                MainDishType = x.MainDishType,
+                PriceRange = x.PriceRange,
+                Distance = x.Location.Distance(userLocation) / 1000,
                 Latitude = x.Latitude,
                 Longitude = x.Longitude,
             });
@@ -201,17 +224,29 @@ public class Service : IService
             merchant.Name = request.MerchantName;
         }
         if(!string.IsNullOrWhiteSpace(request.MerchantDescription))
-            {
+        {
             merchant.Description = request.MerchantDescription;
-            }
+        }
+        if (!string.IsNullOrWhiteSpace(request.RestaurantType))
+        {
+            merchant.RestaurantType = request.RestaurantType;
+        }
+        if (!string.IsNullOrWhiteSpace(request.MainDishType))
+        {
+            merchant.MainDishType = request.MainDishType;
+        }
+        if (!string.IsNullOrWhiteSpace(request.PriceRange))
+        {
+            merchant.PriceRange = request.PriceRange;
+        }
         if(!string.IsNullOrWhiteSpace(request.Email))
         {
             merchant.Email = request.Email;
         }
         if(!string.IsNullOrWhiteSpace(request.Phone))
-            {
+        {
             merchant.Phone = request.Phone;
-            }
+        }
         if(!string.IsNullOrWhiteSpace(request.Address))
         {
             merchant.Address = request.Address;

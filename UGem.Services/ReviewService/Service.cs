@@ -37,12 +37,20 @@ public class Service : IService
         var selectedQuery = reviews.Select(
             x => new Response.ReviewsByIdMerchantResponse()
         {
+            Id = x.Id,
+            MerchantId = x.MerchantId,
+            OrderId = x.OrderId,
             Content = x.Content,
             Rating =  x.Rating,
-            CreatedAt = x.CreatedAt
+            ImageUrl = x.ImageUrl,
+            CreatedAt = x.CreatedAt,
+            CustomerName = x.Order.Customer.User.FullName,
+            CustomerAvatarUrl = x.Order.Customer.User.AvatarUrl
         });
         
-        var result = await selectedQuery.ToListAsync();
+        var result = await selectedQuery
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync();
         
         return result;
     }
@@ -90,7 +98,20 @@ public class Service : IService
 
         if (order.Status != "Completed")
         {
-            throw new InvalidOperationException("Order already completed");
+            throw new InvalidOperationException("Order must be completed before review.");
+        }
+
+        var merchantMatchesOrder = await _dbContext.OrderDetails
+            .AnyAsync(x => x.OrderId == request.OrderId && x.Food.MerchantId == request.MerchantId);
+
+        if (!merchantMatchesOrder)
+        {
+            throw new InvalidOperationException("Merchant does not match the order.");
+        }
+
+        if (request.Rating is < 1 or > 5)
+        {
+            throw new InvalidOperationException("Rating must be between 1 and 5.");
         }
         
         var existedReview = await _dbContext.Reviews
@@ -147,6 +168,8 @@ public class Service : IService
             _dbContext.AddRange(newReviewDetail);
             await _dbContext.SaveChangesAsync();
         }
+
+        await RefreshMerchantRatingAsync(newReview.MerchantId);
     }
 
     public async Task UpdateReviewMerchant(Request.UpdateReviewByMerchantIdRequest request)
@@ -207,8 +230,26 @@ public class Service : IService
                     reviewDetail.Rating = detail.Rating.Value;
                 }
             }
-            
+        
         }
+        await _dbContext.SaveChangesAsync();
+        await RefreshMerchantRatingAsync(review.MerchantId);
+    }
+
+    private async Task RefreshMerchantRatingAsync(Guid merchantId)
+    {
+        var merchant = await _dbContext.Merchants.FirstOrDefaultAsync(x => x.Id == merchantId);
+
+        if (merchant == null)
+        {
+            return;
+        }
+
+        merchant.Rating = await _dbContext.Reviews
+            .Where(x => x.MerchantId == merchantId)
+            .AverageAsync(x => (decimal?)x.Rating) ?? 0m;
+
+        merchant.UpdatedAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync();
     }
 }

@@ -24,6 +24,9 @@ public class Request
        
         public string? MerchantName { get; set; }
         public string? MerchantDescription { get; set; }
+        public string? RestaurantType { get; set; }
+        public string? MainDishType { get; set; }
+        public string? PriceRange { get; set; }
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public string? Address { get; set; }

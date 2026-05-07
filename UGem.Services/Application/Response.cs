@@ -34,5 +34,8 @@ public class Response
         public List<ApplicationMenuResponse> ApplicationMenus { get; set; } = new();
         public required string Name { get; set; }
         public required string Description { get; set; }
+        public string? RestaurantType { get; set; }
+        public string? MainDishType { get; set; }
+        public string? PriceRange { get; set; }
     }
 }

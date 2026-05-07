@@ -40,6 +40,9 @@ public class Service : IService
             Id = a.Id,
             Name = a.Name,
             Description = a.Description,
+            RestaurantType = a.RestaurantType,
+            MainDishType = a.MainDishType,
+            PriceRange = a.PriceRange,
             Type = a.Type,
             Status = a.Status,
             CreatedAt = a.CreatedAt,
@@ -87,7 +90,10 @@ public class Service : IService
             ReviewedAt = DateTime.UtcNow,
             Name = request.Name,
             Description = request.Description,
-Email = request.Email,
+            RestaurantType = request.RestaurantType,
+            MainDishType = request.MainDishType,
+            PriceRange = request.PriceRange,
+            Email = request.Email,
             Phone = request.Phone,
             LogoUrl = request.LogoUrl,
             OpeningHours = request.OpeningHours,
@@ -174,9 +180,21 @@ Email = request.Email,
 
 
         application.Type = request.Type;
+        application.Name = request.Name;
+        application.Description = request.Description;
+        application.RestaurantType = request.RestaurantType;
+        application.MainDishType = request.MainDishType;
+        application.PriceRange = request.PriceRange;
+        application.Email = request.Email;
+        application.Phone = request.Phone;
+        application.LogoUrl = request.LogoUrl;
+        application.OpeningHours = request.OpeningHours;
+        application.Address = request.Address;
+        application.Latitude = request.Latitude;
+        application.Longitude = request.Longitude;
         application.Note = request.Note;
         application.Status = "Pending";
-application.ReviewedAt = default;
+        application.ReviewedAt = default;
         application.UpdatedAt = DateTimeOffset.UtcNow;
 
         _dbContext.ApplicationMenus.RemoveRange(application.ApplicationMenus);
@@ -202,7 +220,11 @@ application.ReviewedAt = default;
 
     public async Task AcceptApplication(Guid id)
     {
-        var application = await _dbContext.Applications.Include(application => application.User)
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+        var application = await _dbContext.Applications
+            .Include(x => x.User)
+            .Include(x => x.ApplicationMenus)
             .FirstOrDefaultAsync(a => a.Id == id);
 
         if (application == null) throw new KeyNotFoundException("Application not found.");
@@ -213,6 +235,7 @@ application.ReviewedAt = default;
             throw new InvalidOperationException("Application coordinates are invalid.");
 
         var existingMerchant = await _dbContext.Merchants
+            .Include(x => x.Foods)
             .FirstOrDefaultAsync(m => m.UserId == application.UserId);
 
         var merchantEmailExists = await _dbContext.Merchants
@@ -231,6 +254,9 @@ application.ReviewedAt = default;
         {
             existingMerchant.Name = application.Name;
             existingMerchant.Description = application.Description;
+            existingMerchant.RestaurantType = application.RestaurantType;
+            existingMerchant.MainDishType = application.MainDishType;
+            existingMerchant.PriceRange = application.PriceRange;
             existingMerchant.Email = application.Email;
             existingMerchant.Phone = application.Phone;
             existingMerchant.Address = application.Address;
@@ -242,14 +268,19 @@ application.ReviewedAt = default;
             existingMerchant.Longitude = (double)application.Longitude;
             existingMerchant.Location = location;
             existingMerchant.UpdatedAt = DateTimeOffset.UtcNow;
+
+            SyncMerchantMenu(existingMerchant, application.ApplicationMenus);
         }
-else
+        else
         {
             var merchant = new Merchant()
             {
                 UserId = application.UserId,
                 Name = application.Name,
                 Description = application.Description,
+                RestaurantType = application.RestaurantType,
+                MainDishType = application.MainDishType,
+                PriceRange = application.PriceRange,
                 Email = application.Email,
                 Phone = application.Phone,
                 Address = application.Address,
@@ -263,6 +294,9 @@ else
                 CreatedAt = DateTimeOffset.UtcNow,
             };
             _dbContext.Merchants.Add(merchant);
+            await _dbContext.SaveChangesAsync();
+
+            SyncMerchantMenu(merchant, application.ApplicationMenus);
         }
 
         var notification = new Notification()
@@ -276,6 +310,29 @@ else
         };
         _dbContext.Notifications.Add(notification);
         await _dbContext.SaveChangesAsync();
+        await transaction.CommitAsync();
+    }
+
+    private void SyncMerchantMenu(Merchant merchant, IEnumerable<ApplicationMenu> applicationMenus)
+    {
+        if (merchant.Foods.Any())
+        {
+            _dbContext.Foods.RemoveRange(merchant.Foods);
+        }
+
+        var foods = applicationMenus.Select(menu => new Food
+        {
+            Id = Guid.NewGuid(),
+            MerchantId = merchant.Id,
+            Name = menu.Name,
+            Description = menu.Description,
+            Price = menu.Price,
+            ImageUrl = menu.ImageUrl,
+            IsAvailable = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+
+        _dbContext.Foods.AddRange(foods);
     }
 
     public async Task<List<Response.GetApplicationForStaffResponse>> GetApplications()
@@ -290,6 +347,9 @@ else
             Id = a.Id,
             Name = a.Name,
             Description = a.Description,
+            RestaurantType = a.RestaurantType,
+            MainDishType = a.MainDishType,
+            PriceRange = a.PriceRange,
             Type = a.Type,
             Status = a.Status,
             CreatedAt = a.CreatedAt,
