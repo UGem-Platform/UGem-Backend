@@ -211,7 +211,7 @@ public class Service : IService
     {
         var description = request.Code; // ORDERID
 
-        var raw = description.Replace("TETPEE", "");
+        var raw = description.Replace("UGem", "");
 
         Guid? orderId = null;
 
