@@ -49,7 +49,7 @@ public class OrderController : ControllerBase
         var result = await _orderService.GetOrderDetail(id);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Order detail retrieved", HttpContext.TraceIdentifier));
     }
-    
+
     [HttpPatch("{id}/status")]
     [Authorize]
     public async Task<IActionResult> UpdateOrderStatus(Guid id, OrderRequest.UpdateOrderStatusRequest request)
@@ -64,24 +64,55 @@ public class OrderController : ControllerBase
                 case OrderRequest.OrderStatus.Rejected:
                     if (string.IsNullOrWhiteSpace(request.Reason))
                     {
-                        return BadRequest(ApiResponseFactory.ErrorResponse("Reason is required for rejecting an order", traceId: HttpContext.TraceIdentifier));
+                        return BadRequest(ApiResponseFactory.ErrorResponse("Reason is required for rejecting an order",
+                            traceId: HttpContext.TraceIdentifier));
                     }
 
-                    await _orderService.RejectOrder(new OrderRequest.ReasonRejectRequest { OrderId = id, Reason = request.Reason });
+                    await _orderService.RejectOrder(new OrderRequest.ReasonRejectRequest
+                        { OrderId = id, Reason = request.Reason });
                     return Ok(ApiResponseFactory.SuccessResponse(null, "Order rejected", HttpContext.TraceIdentifier));
                 case OrderRequest.OrderStatus.Completed:
                     await _orderService.ConfirmOrderReceived(new OrderRequest.ConfirmOrderRequest { OrderId = id });
-                    return Ok(ApiResponseFactory.SuccessResponse(null, "Order marked as completed", HttpContext.TraceIdentifier));
+                    return Ok(ApiResponseFactory.SuccessResponse(null, "Order marked as completed",
+                        HttpContext.TraceIdentifier));
                 case OrderRequest.OrderStatus.NotReceived:
                     await _orderService.ConfirmOrderNotReceived(new OrderRequest.ConfirmOrderRequest { OrderId = id });
-                    return Ok(ApiResponseFactory.SuccessResponse(null, "Order marked as not received", HttpContext.TraceIdentifier));
+                    return Ok(ApiResponseFactory.SuccessResponse(null, "Order marked as not received",
+                        HttpContext.TraceIdentifier));
                 default:
-                    return BadRequest(ApiResponseFactory.ErrorResponse($"Unsupported status '{request.Status}'", traceId: HttpContext.TraceIdentifier));
+                    return BadRequest(ApiResponseFactory.ErrorResponse($"Unsupported status '{request.Status}'",
+                        traceId: HttpContext.TraceIdentifier));
             }
         }
         catch (Exception ex)
         {
             return BadRequest(ApiResponseFactory.ErrorResponse(ex.Message, traceId: HttpContext.TraceIdentifier));
         }
+    }
+
+    [HttpPost("{orderId}/accept")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    public async Task<IActionResult> AcceptOrder([FromRoute] Guid orderId)
+    {
+        await _orderService.AcceptOrder(orderId);
+
+        return Ok(ApiResponseFactory.SuccessResponse(
+            null,
+            "Order accepted successfully",
+            HttpContext.TraceIdentifier
+        ));
+    }
+
+    [HttpPost("reject")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    public async Task<IActionResult> RejectOrder(Request.ReasonRejectRequest request)
+    {
+        await _orderService.RejectOrder(request);
+
+        return Ok(ApiResponseFactory.SuccessResponse(
+            null,
+            "Order rejected successfully",
+            HttpContext.TraceIdentifier
+        ));
     }
 }
