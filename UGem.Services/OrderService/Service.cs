@@ -283,6 +283,7 @@ public class Service : IService
         var selectOrder = order.Select(x => new Response.OrderResponse()
         {
             OrderId = x.Id,
+            Id = x.Id,
             Name = x.Name,
             DeliveryAddress = x.DeliveryAddress,
             Notes = x.Notes,

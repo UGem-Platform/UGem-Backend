@@ -17,6 +17,7 @@ public class Response
     public class OrderResponse
     {
         public required Guid OrderId { get; set; }
+        public required Guid Id { get; set; }
         public required string Name { get; set; }
         public decimal Discount { get; set; }
         public decimal FinalPrice { get; set; }
