@@ -26,12 +26,19 @@ public class OrderController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result, "Orders retrieved", HttpContext.TraceIdentifier));
     }
 
-    [HttpPost]
+    [HttpPost("")]
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     public async Task<IActionResult> CreateOrder(OrderRequest.CreateOrderRequest request)
     {
-        await _orderService.CreateOrder(request);
-        return Ok(ApiResponseFactory.SuccessResponse(null, "Order created successfully", HttpContext.TraceIdentifier));
+        var results =  await _orderService.CreateOrder(request);
+        return Ok(ApiResponseFactory.SuccessResponse(results, "Order created successfully", HttpContext.TraceIdentifier));
+    }
+    
+    [HttpPost(template: "sepay/webhook")]
+    public async Task<IActionResult> SepayWebhook(Request.SepayWebhookRequest request)
+    {
+        await _orderService.SepayWebhookHandler(request);
+        return Ok(ApiResponseFactory.SuccessResponse("", "Webhook response", HttpContext.TraceIdentifier));
     }
 
     [HttpGet("mine")]
