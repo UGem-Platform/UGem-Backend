@@ -24,6 +24,13 @@ public class MerchantController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result, "Merchants retrieved", HttpContext.TraceIdentifier));
     }
 
+    [HttpGet("filter-by-price")]
+    public async Task<IActionResult> FilterByPrice([FromQuery] Request.GetOrderListMaxMinRequest request)
+    {
+        var result = await _service.FilterOrdersByPrice(request);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Merchants filtered by price", HttpContext.TraceIdentifier));
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetDetail(Guid id)
     {

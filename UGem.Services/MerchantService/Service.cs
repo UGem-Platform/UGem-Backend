@@ -236,9 +236,9 @@ public class Service : IService
         {
             merchant.MainDishType = request.MainDishType;
         }
-        if (!string.IsNullOrWhiteSpace(request.PriceRange))
+        if (request.PriceRange.HasValue)
         {
-            merchant.PriceRange = request.PriceRange;
+            merchant.PriceRange = request.PriceRange.Value;
         }
         if(!string.IsNullOrWhiteSpace(request.Email))
         {
@@ -257,5 +257,51 @@ public class Service : IService
             merchant.OpeningHours = request.OpeningHours;
         }
         await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<List<Response.BaseResponse>> FilterOrdersByPrice(
+        Request.GetOrderListMaxMinRequest request)
+    {
+        if (request.MinPrice.HasValue &&
+            request.MaxPrice.HasValue &&
+            request.MinPrice > request.MaxPrice)
+        {
+            throw new Exception(
+                "Min price must be less than or equal to max price");
+        }
+
+        var query = _dbContext.Merchants.AsQueryable();
+        
+        if (request.MinPrice.HasValue)
+        {
+            query = query.Where(m =>
+                m.PriceRange >= request.MinPrice.Value);
+        }
+
+        if (request.MaxPrice.HasValue)
+        {
+            query = query.Where(m =>
+                m.PriceRange <= request.MaxPrice.Value);
+        }
+
+        var selectedQuery = query
+            .OrderByDescending(m =>
+                m.Reviews.Average(r => (decimal?)r.Rating) ?? 0m)
+            .Select(m => new Response.BaseResponse
+            {
+                Id = m.Id,
+                Name = m.Name,
+                Description = m.Description,
+                Address = m.Address,
+                LogoUrl = m.LogoUrl,
+                Rating = m.Reviews.Average(r =>
+                    (decimal?)r.Rating) ?? 0m,
+                ReviewCount = m.Reviews.Count(),
+                RestaurantType = m.RestaurantType,
+                MainDishType = m.MainDishType,
+                PriceRange = m.PriceRange,
+            });
+
+        return await selectedQuery.ToListAsync();
     }
 }

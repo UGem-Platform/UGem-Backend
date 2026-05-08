@@ -39,6 +39,7 @@ public class Service : IService
         var listOrder = await selectQuery.ToListAsync();
         return listOrder;
     }
+    
 
     public async Task AcceptOrder(Guid orderId)
     {
@@ -264,6 +265,11 @@ public class Service : IService
 
         if(order.FinalPrice != request.TransferAmount)
         {
+            order.Status = "Failed";
+
+            _dbContext.Update(order);
+            await _dbContext.SaveChangesAsync();
+
             throw new Exception("Invalid transfer amount");
         }
 

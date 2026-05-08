@@ -602,7 +602,8 @@ public class AppDbContext : DbContext
                 Longitude = 106.703200,
                 Location = new Point(106.703200, 10.771500) { SRID = 4326 },
                 CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 15, 0, TimeSpan.Zero),
-                IsDeleted = false
+                IsDeleted = false,
+                PriceRange = 5000
             }
         );
 

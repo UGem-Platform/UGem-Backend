@@ -36,6 +36,6 @@ public class Response
         public required string Description { get; set; }
         public string? RestaurantType { get; set; }
         public string? MainDishType { get; set; }
-        public string? PriceRange { get; set; }
+        public decimal? PriceRange { get; set; }
     }
 }

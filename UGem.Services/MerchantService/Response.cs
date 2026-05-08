@@ -13,7 +13,7 @@ public abstract class Response
         public int ReviewCount { get; set; }
         public string? RestaurantType { get; set; }
         public string? MainDishType { get; set; }
-        public string? PriceRange { get; set; }
+        public  decimal? PriceRange { get; set; }
     }
 
     public class GetMerchantResponse : BaseResponse

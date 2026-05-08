@@ -45,7 +45,6 @@ public class Response
         public string BankAccount { get; set; }
         public string Description { get; set; }
         
-        public string Code { get; set; }
         public string QRCode { get; set; }
     }
 
