@@ -359,6 +359,32 @@ CreateOrderRequest {
 }
 ```
 
+#### Response shape
+
+```ts
+CreateOrderResponse {
+  orderId: string;
+  totalAmount: number;
+  bankName: string;
+  bankAccount: string;
+  description: string;
+  code: string;
+  qrCode: string;
+}
+```
+
+### SePay webhook
+
+```http
+POST /api/v1/orders/sepay/webhook
+```
+
+#### Notes
+
+- This route is used by the SePay integration.
+- No custom verification header is currently required because the active SePay integration model does not support it.
+- The backend still rejects malformed order references, invalid amounts, unknown orders, duplicate completion, and invalid order states.
+
 ### Get merchant orders
 
 ```http
@@ -375,6 +401,24 @@ GET /api/v1/orders/mine
 
 ```http
 GET /api/v1/orders/{id}
+```
+
+#### Notes
+
+- Auth: `Customer`
+- The backend only returns details for orders owned by the authenticated customer.
+
+#### Response item shape
+
+```ts
+GetOrderDetailResponse {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  notes?: string;
+  foodId: string;
+  orderId: string;
+}
 ```
 
 ### Update order status
@@ -715,7 +759,33 @@ GET /api/v1/notifications
 
 ---
 
-## 13. FRONTEND ARCHITECTURE SUGGESTION
+## 13. MEDIA
+
+### Upload image
+
+```http
+POST /api/v1/media/images
+```
+
+#### Notes
+
+- Auth: `Bearer token required`
+- Content type: `multipart/form-data`
+- Form field: `file`
+- Max request size: `5 MB`
+- Accepted image types: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`
+
+#### Response shape
+
+```ts
+{
+  url: string;
+}
+```
+
+---
+
+## 14. FRONTEND ARCHITECTURE SUGGESTION
 
 ### API layer structure
 
@@ -733,7 +803,7 @@ GET /api/v1/notifications
 ```
 
 ---
-## 14. REVIEWER APPLICATIONS
+## 15. REVIEWER APPLICATIONS
 
 ### Create reviewer application
 
@@ -776,7 +846,7 @@ UpdateReviewerApplicationRequest {
 
 ---
 
-## 15. USERS
+## 16. USERS
 
 ### Get profile
 

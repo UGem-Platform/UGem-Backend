@@ -183,17 +183,6 @@ static void ConfigureValidatedOptions(IServiceCollection services, IConfiguratio
                 && HasConfiguredValue(options.ApiSecret),
             "CloudinaryOptions must be configured with secure non-placeholder values.")
         .ValidateOnStart();
-
-    services.AddOptions<MailServiceOptions>()
-        .ValidateDataAnnotations()
-        .Validate(options =>
-                HasConfiguredValue(options.Mail)
-                && HasConfiguredValue(options.DisplayName)
-                && HasConfiguredValue(options.Password)
-                && HasConfiguredValue(options.Host)
-                && options.Port > 0,
-            "MailOptions must be configured with secure non-placeholder values.")
-        .ValidateOnStart();
 }
 
 static bool HasConfiguredValue(string? value)
