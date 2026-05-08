@@ -1,23 +1,26 @@
-﻿using CloudinaryDotNet;
+using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using UGem.Services.MediaService;
 
 namespace UGem.Services.CloudinaryService;
 
 public class Service : IService
 {
-    private readonly Cloudinary _cloudinary;
-    private readonly CloudinaryOptions _cloudinaryOptions = new();
+    private const long MaxFileSizeInBytes = 5 * 1024 * 1024;
+    private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
+    private static readonly string[] AllowedContentTypes = ["image/jpeg", "image/png", "image/gif", "image/webp"];
 
-    public Service(IConfiguration configuration)
+    private readonly Cloudinary _cloudinary;
+
+    public Service(IOptions<CloudinaryOptions> cloudinaryOptions)
     {
-        configuration.GetSection(nameof(CloudinaryOptions)).Bind(_cloudinaryOptions);
+        var options = cloudinaryOptions.Value;
         _cloudinary = new Cloudinary(new Account(
-            _cloudinaryOptions.CloudName,
-            _cloudinaryOptions.ApiKey,
-            _cloudinaryOptions.ApiSecret));
+            options.CloudName,
+            options.ApiKey,
+            options.ApiSecret));
     }
 
     public async Task<string> UploadImageAsync(IFormFile file)
@@ -26,25 +29,39 @@ public class Service : IService
         {
             throw new ArgumentException("File is empty or null.", nameof(file));
         }
+
         if (!IsImageFile(file))
         {
             throw new ArgumentException("File is not a valid image.", nameof(file));
         }
-        
+
+        if (file.Length > MaxFileSizeInBytes)
+        {
+            throw new InvalidOperationException("Image size must not exceed 5 MB.");
+        }
+
         await using var stream = file.OpenReadStream();
-        var uploadParams = new ImageUploadParams()
+        var uploadParams = new ImageUploadParams
         {
             File = new FileDescription(file.FileName, stream)
         };
+
         var uploadResult = await _cloudinary.UploadAsync(uploadParams);
+        if (uploadResult.Error != null || uploadResult.SecureUrl == null)
+        {
+            throw new InvalidOperationException("Image upload failed.");
+        }
+
         return uploadResult.SecureUrl.ToString();
     }
-    
-    private bool IsImageFile(IFormFile file)
+
+    private static bool IsImageFile(IFormFile file)
     {
-        // This is a basic check. For more robust validation, consider using a library like MimeDetective
-        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".gif",".webp" };
         var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
-        return allowedExtensions.Contains(fileExtension);
+        var contentType = file.ContentType?.ToLowerInvariant();
+
+        return AllowedExtensions.Contains(fileExtension)
+               && !string.IsNullOrWhiteSpace(contentType)
+               && AllowedContentTypes.Contains(contentType);
     }
 }

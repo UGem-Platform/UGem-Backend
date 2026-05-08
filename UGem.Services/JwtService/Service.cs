@@ -1,18 +1,18 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace UGem.Services.JwtService;
 
 public class Service : IService
 {
-    private readonly JwtOptions _jwtOption = new();
+    private readonly JwtOptions _jwtOption;
 
-    public Service(IConfiguration configuration)
+    public Service(IOptions<JwtOptions> jwtOptions)
     {
-        configuration.GetSection(nameof(JwtOptions)).Bind(_jwtOption);
+        _jwtOption = jwtOptions.Value;
     }
 
     public string GenerateAccessToken(IEnumerable<Claim> claims)
@@ -31,13 +31,13 @@ public class Service : IService
 
         return tokenString;
     }
-    
-    public ClaimsPrincipal ValidateToken(string token)
+
+    public ClaimsPrincipal? ValidateToken(string token)
     {
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var key = Encoding.UTF8.GetBytes(_jwtOption.SecretKey); // Sử dụng _jwtOption 
+            var key = Encoding.UTF8.GetBytes(_jwtOption.SecretKey);
 
             var validationParameters = new TokenValidationParameters
             {

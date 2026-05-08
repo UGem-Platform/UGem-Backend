@@ -1,4 +1,5 @@
 using System.Text.Json;
+using UGem.Services.Models;
 
 namespace UGem.Api.Middlewares;
 
@@ -62,19 +63,28 @@ public class ExceptionMiddleware
 
         context.Response.StatusCode = statusCode;
 
-        var response = new
+        var errorCode = statusCode switch
         {
-            success = false,
-            statusCode,
-            message,
-            traceId = context.TraceIdentifier,
-
-#if DEBUG
-            detail = exception.ToString()
-#endif
+            StatusCodes.Status400BadRequest => "bad_request",
+            StatusCodes.Status401Unauthorized => "unauthorized",
+            StatusCodes.Status404NotFound => "not_found",
+            _ => "internal_server_error"
         };
 
-        await context.Response.WriteAsync(
-            JsonSerializer.Serialize(response));
+        object? details = null;
+#if DEBUG
+        details = exception.ToString();
+#endif
+
+        var response = ApiResponseFactory.ErrorResponse(
+            message,
+            new
+            {
+                code = errorCode,
+                details
+            },
+            context.TraceIdentifier);
+
+        await context.Response.WriteAsync(JsonSerializer.Serialize(response));
     }
 }

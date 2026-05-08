@@ -41,12 +41,12 @@ public class Response
     {
         public Guid OrderId { get; set; }
         public decimal TotalAmount{ get; set; }
-        public string BankName { get; set; }
-        public string BankAccount { get; set; }
-        public string Description { get; set; }
+        public string BankName { get; set; } = string.Empty;
+        public string BankAccount { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         
-        public string Code { get; set; }
-        public string QRCode { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string QRCode { get; set; } = string.Empty;
     }
 
 }

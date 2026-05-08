@@ -21,7 +21,9 @@ public class Service : IService
         
         var userIdGuid = Guid.Parse(userId!);
         
-        var query = _dbContext.Notifications.Where(x => x.UserId == userIdGuid);
+        var query = _dbContext.Notifications
+            .AsNoTracking()
+            .Where(x => x.UserId == userIdGuid);
 
         var notificationResponse = query.Select(x => new Response.NotificationResponse()
         {

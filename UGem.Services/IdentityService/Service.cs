@@ -1,12 +1,13 @@
 using System.ComponentModel;
 using System.Security.Claims;
+using Google.Apis.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using UGem.Repositories;
+using UGem.Repositories.Entity;
 using UGem.Services.JwtService;
 using UGem.Services.MailService;
-using Google.Apis.Auth;
-using UGem.Repositories.Entity;
 
 namespace UGem.Services.IdentityService;
 
@@ -14,18 +15,22 @@ public class Service : IService
 {
     private readonly JwtService.IService _jwtService;
     private readonly AppDbContext _dbContext;
-    private readonly JwtOptions _jwtOption = new();
+    private readonly JwtOptions _jwtOption;
     private readonly MailService.IService _mailService;
     private readonly IConfiguration _configuration;
 
-    public Service(IConfiguration configuration, JwtService.IService jwtService, AppDbContext dbContext,
+    public Service(
+        IConfiguration configuration,
+        IOptions<JwtOptions> jwtOptions,
+        JwtService.IService jwtService,
+        AppDbContext dbContext,
         MailService.IService mailService)
     {
         _configuration = configuration;
+        _jwtOption = jwtOptions.Value;
         _jwtService = jwtService;
         _dbContext = dbContext;
         _mailService = mailService;
-        configuration.GetSection(nameof(JwtOptions)).Bind(_jwtOption);
     }
 
     public async Task<Response.IdentityResponse> Login(Request.LoginRequest request)
@@ -43,16 +48,14 @@ public class Service : IService
             throw new UnauthorizedAccessException("Invalid password");
         }
 
-
         var claims = new List<Claim>
         {
-            new Claim("UserId", user.Id.ToString()),
-            new Claim("Email", user.Email),
+            new("UserId", user.Id.ToString()),
+            new("Email", user.Email),
             new Claim(type: "Name", user.FullName),
-            new Claim("Role", user.Role),
-            new Claim(ClaimTypes.Role, user.Role),
-            new Claim(ClaimTypes.Expired,
-                DateTimeOffset.UtcNow.AddMinutes(_jwtOption.ExpireMinutes).ToString()),
+            new("Role", user.Role),
+            new(ClaimTypes.Role, user.Role),
+            new(ClaimTypes.Expired, DateTimeOffset.UtcNow.AddMinutes(_jwtOption.ExpireMinutes).ToString()),
         };
 
         var customer = await _dbContext.Customers.FirstOrDefaultAsync(u => u.UserId == user.Id);
@@ -80,18 +83,19 @@ public class Service : IService
         }
 
         var token = _jwtService.GenerateAccessToken(claims);
-
-        var result = new Response.IdentityResponse()
+        return new Response.IdentityResponse
         {
             AccessToken = token
         };
-
-        return result;
     }
-public async Task<string> Register(Request.RegisterUserRequest request)
+
+    public async Task<string> Register(Request.RegisterUserRequest request)
     {
         if (!System.Net.Mail.MailAddress.TryCreate(request.Email, out _))
+        {
             throw new Exception("Invalid email format");
+        }
+
         var isExistUser = await _dbContext.Users.AnyAsync(u => u.Email == request.Email);
         if (isExistUser)
         {
@@ -114,8 +118,10 @@ public async Task<string> Register(Request.RegisterUserRequest request)
             PhoneNumber = request.PhoneNumber,
             Role = request.Role
         };
+
         _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync();
+
         if (request.Role == "Customer")
         {
             var customer = new Customer
@@ -130,12 +136,11 @@ public async Task<string> Register(Request.RegisterUserRequest request)
         {
             try
             {
-                await _mailService.SendMail(new MailContext()
+                await _mailService.SendMail(new MailContext
                 {
                     To = request.Email,
                     Subject = "Welcome to UGem!",
-                    Body = $"Dear {request.FullName},\n\n" +
-                           "Thank you for registering as a Customer on UGem."
+                    Body = $"Dear {request.FullName},\n\nThank you for registering as a Customer on UGem."
                 });
             }
             catch (Exception ex)
@@ -143,6 +148,7 @@ public async Task<string> Register(Request.RegisterUserRequest request)
                 Console.WriteLine($"Send mail failed: {ex.Message}");
             }
         });
+
         return "Register Successfully";
     }
 
@@ -150,7 +156,9 @@ public async Task<string> Register(Request.RegisterUserRequest request)
     {
         var clinetId = _configuration["GoogleAuth:ClientId"];
         if (string.IsNullOrWhiteSpace(clinetId))
+        {
             throw new InvalidAsynchronousStateException("GoogleAuth:ClientId is not configured.");
+        }
 
         GoogleJsonWebSignature.Payload payload;
         try
@@ -158,7 +166,7 @@ public async Task<string> Register(Request.RegisterUserRequest request)
             payload = await GoogleJsonWebSignature.ValidateAsync(request.IdToken,
                 new GoogleJsonWebSignature.ValidationSettings
                 {
-                    Audience = new[] { clinetId },
+                    Audience = [clinetId],
                 });
         }
         catch (InvalidJwtException ex)
@@ -168,17 +176,19 @@ public async Task<string> Register(Request.RegisterUserRequest request)
 
         var email = payload.Email?.Trim().ToLower();
         if (string.IsNullOrWhiteSpace(email))
+        {
             throw new UnauthorizedAccessException("Google token has no email");
+        }
 
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == email);
 
         if (user == null)
         {
-user = new User
+            user = new User
             {
                 Email = email,
-                PasswordHash = "",
-                PhoneNumber = "",
+                PasswordHash = string.Empty,
+                PhoneNumber = string.Empty,
                 FullName = payload.Name,
                 AvatarUrl = payload.Picture,
                 Role = "Customer"
@@ -193,7 +203,7 @@ user = new User
             {
                 try
                 {
-                    await _mailService.SendMail(new MailContext()
+                    await _mailService.SendMail(new MailContext
                     {
                         To = user.Email,
                         Subject = "Welcome to UGem!",
@@ -221,26 +231,37 @@ user = new User
     {
         var claims = new List<Claim>
         {
-            new Claim("UserId", user.Id.ToString()),
-            new Claim("Email", user.Email),
-            new Claim("Name", user.FullName),
-            new Claim("Role", user.Role),
-            new Claim(ClaimTypes.Role, user.Role),
-            new Claim(ClaimTypes.Expired,
-                DateTimeOffset.UtcNow.AddMinutes(_jwtOption.ExpireMinutes).ToString()),
+            new("UserId", user.Id.ToString()),
+            new("Email", user.Email),
+            new("Name", user.FullName),
+            new("Role", user.Role),
+            new(ClaimTypes.Role, user.Role),
+            new(ClaimTypes.Expired, DateTimeOffset.UtcNow.AddMinutes(_jwtOption.ExpireMinutes).ToString()),
         };
 
         var customer = await _dbContext.Customers.FirstOrDefaultAsync(u => u.UserId == user.Id);
-        if (customer != null) claims.Add(new Claim("CustomerId", customer.Id.ToString()));
+        if (customer != null)
+        {
+            claims.Add(new Claim("CustomerId", customer.Id.ToString()));
+        }
 
         var merchant = await _dbContext.Merchants.FirstOrDefaultAsync(u => u.UserId == user.Id);
-        if (merchant != null) claims.Add(new Claim("MerchantId", merchant.Id.ToString()));
+        if (merchant != null)
+        {
+            claims.Add(new Claim("MerchantId", merchant.Id.ToString()));
+        }
 
         var staff = await _dbContext.Staffs.FirstOrDefaultAsync(u => u.UserId == user.Id);
-        if (staff != null) claims.Add(new Claim("StaffId", staff.Id.ToString()));
+        if (staff != null)
+        {
+            claims.Add(new Claim("StaffId", staff.Id.ToString()));
+        }
 
         var admin = await _dbContext.Admins.FirstOrDefaultAsync(u => u.UserId == user.Id);
-        if (admin != null) claims.Add(new Claim("AdminId", admin.Id.ToString()));
+        if (admin != null)
+        {
+            claims.Add(new Claim("AdminId", admin.Id.ToString()));
+        }
 
         return _jwtService.GenerateAccessToken(claims);
     }

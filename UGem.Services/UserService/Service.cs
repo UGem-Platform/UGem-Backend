@@ -22,24 +22,24 @@ public class Service : IService
         
         var userIdGuid = Guid.Parse(userId!);
         
-        var customer = await _dbContext.Customers
-            .Include(customer => customer.User)
-            .FirstOrDefaultAsync(x => x.UserId == userIdGuid);
-        
-        if (customer == null)
+        var result = await _dbContext.Customers
+            .AsNoTracking()
+            .Where(x => x.UserId == userIdGuid)
+            .Select(customer => new Response.GetCustomerDetailsResponse
+            {
+                Id = customer.UserId,
+                Name = customer.User!.FullName,
+                Email = customer.User.Email,
+                PhoneNumber = customer.User.PhoneNumber,
+                Role = customer.User.Role,
+                AvatarUrl = customer.User.AvatarUrl
+            })
+            .FirstOrDefaultAsync();
+
+        if (result == null)
         {
             throw new Exception("Customer not found");
         }
-        
-        var result = new Response.GetCustomerDetailsResponse()
-        {
-            Id = customer.UserId,
-            Name = customer.User.FullName,
-            Email = customer.User.Email,
-            PhoneNumber = customer.User.PhoneNumber,
-            Role = customer.User.Role,
-            AvatarUrl = customer.User.AvatarUrl
-        };
 
         return result;
     }

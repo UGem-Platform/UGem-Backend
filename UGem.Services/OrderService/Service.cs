@@ -1,5 +1,9 @@
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using UGem.Repositories;
 using UGem.Repositories.Entity;
 
@@ -7,65 +11,63 @@ namespace UGem.Services.OrderService;
 
 public class Service : IService
 {
+    private static readonly Regex OrderReferenceRegex =
+        new(@"UGem-?(?<orderId>[A-Fa-f0-9]{32}|[A-Fa-f0-9\-]{36})", RegexOptions.Compiled);
+
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContext;
     private readonly CheckInService.IService _checkInService;
+    private readonly SepayWebhookOptions _webhookOptions;
 
-    public Service(AppDbContext dbContext, IHttpContextAccessor httpContext, CheckInService.IService checkInService)
+    public Service(
+        AppDbContext dbContext,
+        IHttpContextAccessor httpContext,
+        CheckInService.IService checkInService,
+        IOptions<SepayWebhookOptions> webhookOptions)
     {
         _dbContext = dbContext;
         _httpContext = httpContext;
         _checkInService = checkInService;
+        _webhookOptions = webhookOptions.Value;
     }
 
     public async Task<List<Response.GetOrderListResponse>> GetOrdersList()
     {
-        var userId = _httpContext.HttpContext.User.Claims.First(x => x.Type == "UserId").Value; 
-        var userIdGuid = Guid.Parse(userId);
-        var query = _dbContext.Orders
-            .Where(o => o.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
-        query = query.OrderByDescending(o => o.CreatedAt);
-        
-        var selectQuery = query.Select(x => new Response.GetOrderListResponse()
-        {
-            OrderId = x.Id,
-            DeliveryAddress = x.DeliveryAddress,
-            PaymentMethod = x.PaymentMethod,
-            Status = x.Status,
-            FinalPrice =  x.FinalPrice,
-            CustomerName = x.Customer.User.FullName,
-            CreatedAt = x.CreatedAt,
-        });
-        var listOrder = await selectQuery.ToListAsync();
-        return listOrder;
+        var userIdGuid = GetRequiredGuidClaim("UserId");
+
+        return await _dbContext.Orders
+            .AsNoTracking()
+            .Where(o => o.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid))
+            .OrderByDescending(o => o.CreatedAt)
+            .Select(x => new Response.GetOrderListResponse
+            {
+                OrderId = x.Id,
+                DeliveryAddress = x.DeliveryAddress,
+                PaymentMethod = x.PaymentMethod,
+                Status = x.Status,
+                FinalPrice = x.FinalPrice,
+                CustomerName = x.Customer.User.FullName,
+                CreatedAt = x.CreatedAt,
+            })
+            .ToListAsync();
     }
 
     public async Task AcceptOrder(Guid orderId)
     {
-        var userId = _httpContext.HttpContext.User
-            .Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
-
-        if (string.IsNullOrEmpty(userId))
-        {
-            throw new Exception("Unauthorized");
-        }
-        var userIdGuid = Guid.Parse(userId);
+        var userIdGuid = GetRequiredGuidClaim("UserId");
 
         var order = await _dbContext.Orders
-            .Include(x => x.OrderDetails)
-            .ThenInclude(od => od.Food)
-            .ThenInclude(f => f.Merchant)
             .FirstOrDefaultAsync(x => x.Id == orderId
                                       && x.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
 
         if (order == null)
         {
-            throw new Exception("Order not found or not yours");
+            throw new KeyNotFoundException("Order not found or not yours");
         }
 
         if (order.Status != Request.OrderStatus.Pending.ToString())
         {
-            throw new Exception("Order is not in Pending state");
+            throw new InvalidOperationException("Order is not in Pending state");
         }
 
         order.Status = Request.OrderStatus.Accepted.ToString();
@@ -76,10 +78,7 @@ public class Service : IService
 
     public async Task RejectOrder(Request.ReasonRejectRequest request)
     {
-        var userId = _httpContext.HttpContext.User
-            .Claims.First(x => x.Type == "UserId").Value;
-
-        var userIdGuid = Guid.Parse(userId);
+        var userIdGuid = GetRequiredGuidClaim("UserId");
 
         var order = await _dbContext.Orders
             .FirstOrDefaultAsync(x => x.Id == request.OrderId
@@ -87,12 +86,12 @@ public class Service : IService
 
         if (order == null)
         {
-            throw new Exception("Order not found or not yours");
+            throw new KeyNotFoundException("Order not found or not yours");
         }
 
         if (order.Status != Request.OrderStatus.Pending.ToString())
         {
-            throw new Exception("Order is not in Pending state");
+            throw new InvalidOperationException("Order is not in Pending state");
         }
 
         order.Status = Request.OrderStatus.Rejected.ToString();
@@ -101,265 +100,217 @@ public class Service : IService
 
         await _dbContext.SaveChangesAsync();
     }
-    
 
     public async Task<Response.CreateOrderResponse> CreateOrder(Request.CreateOrderRequest request)
     {
-        var cusId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
+        var customerId = GetRequiredGuidClaim("CustomerId");
 
-        var cusIdGuid = Guid.Parse(cusId!);
-
-        var foodIdList = request.Foods.Select(x => x.FoodId).Distinct().ToList();
-
-        var query = _dbContext.Foods.Where(x => foodIdList.Contains(x.Id));
-
-        var foodCount = await query.CountAsync();
-
-        if (foodCount != foodIdList.Count)
+        if (request.Foods == null || request.Foods.Count == 0)
         {
-            throw new Exception("Some food not found");
+            throw new InvalidOperationException("At least one food item is required");
         }
 
-        var result = await query.ToListAsync();
+        var requestedItems = request.Foods
+            .GroupBy(x => x.FoodId)
+            .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
 
-        decimal totalAmount = 0;
-
-        foreach (var food in result)
+        if (requestedItems.Values.Any(quantity => quantity <= 0))
         {
-            var quality = request.Foods.First(x => x.FoodId == food.Id).Quantity;
+            throw new InvalidOperationException("Food quantity must be greater than 0");
+        }
 
-            if (quality <= 0)
+        var foods = await _dbContext.Foods
+            .AsNoTracking()
+            .Where(x => requestedItems.Keys.Contains(x.Id))
+            .Select(x => new
             {
-                throw new Exception($"Quantity of product {food.Id} must be greater than 0");
-            }
+                x.Id,
+                x.Name,
+                x.Price
+            })
+            .ToListAsync();
 
-            totalAmount += quality * food.Price;
+        if (foods.Count != requestedItems.Count)
+        {
+            throw new KeyNotFoundException("Some food not found");
         }
 
-
+        var totalAmount = foods.Sum(food => requestedItems[food.Id] * food.Price);
         if (totalAmount <= 0)
         {
-            throw new Exception("total amount must be greater than 0");
+            throw new InvalidOperationException("Total amount must be greater than 0");
         }
 
-        var order = new Order()
+        var orderId = Guid.NewGuid();
+        var description = $"UGem-{orderId:N}";
+
+        var order = new Order
         {
-            Id = Guid.NewGuid(),
-            CustomerId = cusIdGuid,
+            Id = orderId,
+            CustomerId = customerId,
             DeliveryAddress = request.DeliveryAddress,
             Name = request.Name,
             Notes = request.Notes,
             PaymentMethod = request.PaymentMethod,
-            Status = "Pending",
+            Status = Request.OrderStatus.Pending.ToString(),
             Discount = 0m,
             FinalPrice = totalAmount,
             ReviewerFee = 0m,
             OrderedAt = DateTimeOffset.UtcNow,
             PlatformFee = 0m,
-            
-        };
-
-        _dbContext.Orders.Add(order);
-
-        List<OrderDetail> orderDetails = new List<OrderDetail>();
-        foreach (var food in result)
-        {
-            var quality = request.Foods.First(x => x.FoodId == food.Id).Quantity;
-
-            var orderdt = new OrderDetail()
+            OrderDetails = foods.Select(food => new OrderDetail
             {
                 Id = Guid.NewGuid(),
                 Name = food.Name,
-                OrderId = order.Id,
+                OrderId = orderId,
                 FoodId = food.Id,
-                Quantity = quality,
+                Quantity = requestedItems[food.Id],
                 UnitPrice = food.Price,
-            };
-            orderDetails.Add(orderdt);
-        }
+            }).ToList()
+        };
 
-        if (orderDetails.Any())
-        {
-            _dbContext.AddRange(orderDetails);
-            await _dbContext.SaveChangesAsync();
-        }
-        
-        string description = $"UGem-{order.Id}";
+        _dbContext.Orders.Add(order);
+        await _dbContext.SaveChangesAsync();
 
-        var response = new Response.CreateOrderResponse()
+        return new Response.CreateOrderResponse
         {
             OrderId = order.Id,
             TotalAmount = order.FinalPrice,
             BankName = "MBBank",
             BankAccount = "VQRQAIDAX4356",
             Description = description,
-            QRCode = ""
+            Code = order.Id.ToString("N"),
+            QRCode = $"https://qr.sepay.vn/img?acc=VQRQAIDAX4356&bank=MBBank&amount={(int)totalAmount}&des={description}&template=qronly"
         };
-
-        string qrCode = $"https://qr.sepay.vn/img?" +
-                        $"acc={response.BankAccount}&" +
-                        $"bank={response.BankName}&" +
-                        $"amount={(int)totalAmount}&" +
-                        $"des={description}&" +
-                        $"template=qronly";
-        
-        response.QRCode = qrCode;
-        return response;
     }
-    
-     public async Task SepayWebhookHandler(Request.SepayWebhookRequest request)
+
+    public async Task SepayWebhookHandler(Request.SepayWebhookRequest request)
     {
-        var content = request.Content!
-            .Replace(" ", "")
-            .Replace("\n", "")
-            .Replace("\r", "");
+        ValidateWebhookSecret();
 
-        var startIndex = content.IndexOf("UGem");
-
-        if (startIndex == -1)
+        if (request.TransferAmount <= 0)
         {
-            throw new Exception("UG code not found");
+            throw new InvalidOperationException("Transfer amount must be greater than 0");
         }
 
-        var description = content.Substring(startIndex, 36);
+        var orderId = ExtractOrderId(request.Content);
+        var order = await _dbContext.Orders.FirstOrDefaultAsync(x => x.Id == orderId);
 
-        var raw = description.Replace("UGem", "");
-
-        Guid? orderId = null;
-
-        if (raw.Length == 32)
-
+        if (order == null)
         {
-            var formatted = $"{raw.Substring(startIndex: 0, length: 8)}-" +
-                                   $"{raw.Substring(startIndex: 8, length: 4)}-" +
-                                   $"{raw.Substring(startIndex: 12, length: 4)}-" +
-                                   $"{raw.Substring(startIndex: 16, length: 4)}-" +
-                                   $"{raw.Substring(startIndex: 20, length: 12)}";
+            throw new KeyNotFoundException("Order not found");
+        }
 
-            if (Guid.TryParse(formatted, out var guid))
+        if (order.FinalPrice != request.TransferAmount)
+        {
+            if (order.Status != "Failed")
             {
-                orderId = guid;
+                order.Status = "Failed";
+                order.UpdatedAt = DateTimeOffset.UtcNow;
+                await _dbContext.SaveChangesAsync();
             }
+
+            throw new InvalidOperationException("Invalid transfer amount");
         }
-        else
+
+        if (order.Status == Request.OrderStatus.Completed.ToString())
         {
-            throw new Exception("Invalid description format");
+            return;
         }
 
-        var query = _dbContext.Orders
-            .Where(x => x.Id == orderId)
-            .Include(x => x.OrderDetails);
-
-        var order = await query.FirstOrDefaultAsync();
-
-        if(order == null)
+        if (order.Status != Request.OrderStatus.Pending.ToString())
         {
-            throw new Exception("Order not found");
+            throw new InvalidOperationException("Order already processed");
         }
 
-        if(order.Status != "Pending")
-        {
-            throw new Exception("Order already processed");
-        }
-
-        if(order.FinalPrice != request.TransferAmount)
-        {
-            order.Status = "Failed";
-
-            _dbContext.Update(order);
-            await _dbContext.SaveChangesAsync();
-
-            throw new Exception("Invalid transfer amount");
-        }
-
-        order.Status = "Completed";
-        _dbContext.Update(order);
+        order.Status = Request.OrderStatus.Completed.ToString();
+        order.UpdatedAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync();
     }
 
     public async Task<List<Response.OrderResponse>> GetOrderListFromCustomerId()
     {
-        var cusId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
+        var customerId = GetRequiredGuidClaim("CustomerId");
 
-        var cusIdGuid = Guid.Parse(cusId!);
-
-        var order = _dbContext.Orders.Where(x => x.CustomerId == cusIdGuid);
-
-        var selectOrder = order.Select(x => new Response.OrderResponse()
-        {
-            OrderId = x.Id,
-            Id = x.Id,
-            Name = x.Name,
-            DeliveryAddress = x.DeliveryAddress,
-            Notes = x.Notes,
-            Status = x.Status,
-            Discount = x.Discount,
-            FinalPrice = x.FinalPrice,
-            OrderedAt = x.OrderedAt,
-        });
-
-        var listOrder = await selectOrder.ToListAsync();
-
-        return listOrder;
+        return await _dbContext.Orders
+            .AsNoTracking()
+            .Where(x => x.CustomerId == customerId)
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new Response.OrderResponse
+            {
+                OrderId = x.Id,
+                Id = x.Id,
+                Name = x.Name,
+                DeliveryAddress = x.DeliveryAddress,
+                Notes = x.Notes,
+                Status = x.Status,
+                Discount = x.Discount,
+                FinalPrice = x.FinalPrice,
+                OrderedAt = x.OrderedAt,
+            })
+            .ToListAsync();
     }
 
     public async Task<List<Response.GetOrderDetailResponse>> GetOrderDetail(Guid orderId)
     {
-        var orderDetail = _dbContext.OrderDetails.Where(x => x.OrderId == orderId);
+        var customerId = GetRequiredGuidClaim("CustomerId");
 
-        var selectOrder = orderDetail.Select(x => new Response.GetOrderDetailResponse()
-        {
-            Name = x.Name,
-            Quantity = x.Quantity,
-            UnitPrice = x.UnitPrice,
-            Notes = x.Notes,
-            OrderId = x.OrderId,
-            FoodId = x.FoodId,
-        });
-
-        var listOrder = await selectOrder.ToListAsync();
-
-        return listOrder;
+        return await _dbContext.OrderDetails
+            .AsNoTracking()
+            .Where(x => x.OrderId == orderId && x.Order.CustomerId == customerId)
+            .Select(x => new Response.GetOrderDetailResponse
+            {
+                Name = x.Name,
+                Quantity = x.Quantity,
+                UnitPrice = x.UnitPrice,
+                Notes = x.Notes,
+                OrderId = x.OrderId,
+                FoodId = x.FoodId,
+            })
+            .ToListAsync();
     }
-        public async Task ConfirmOrderReceived(Request.ConfirmOrderRequest request)
-    {
-        var customerId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
 
-        var cusIdGuid = Guid.Parse(customerId!);
-        
+    public async Task ConfirmOrderReceived(Request.ConfirmOrderRequest request)
+    {
+        var customerId = GetRequiredGuidClaim("CustomerId");
+
         var order = await _dbContext.Orders
             .Include(x => x.OrderDetails)
-                .ThenInclude(x => x.Food)
-                    .ThenInclude(x => x.Merchant)
-            .FirstOrDefaultAsync(x => x.Id == request.OrderId && x.CustomerId == cusIdGuid);
+            .ThenInclude(x => x.Food)
+            .ThenInclude(x => x.Merchant)
+            .FirstOrDefaultAsync(x => x.Id == request.OrderId && x.CustomerId == customerId);
 
         if (order == null)
         {
-            throw new  Exception("Order not found");
+            throw new KeyNotFoundException("Order not found");
         }
-        
-        order.Status = "Completed";
+
+        if (order.Status == Request.OrderStatus.NotReceived.ToString()
+            || order.Status == Request.OrderStatus.Rejected.ToString())
+        {
+            throw new InvalidOperationException("Order cannot be confirmed in its current state");
+        }
+
+        order.Status = Request.OrderStatus.Completed.ToString();
         order.UpdatedAt = DateTimeOffset.UtcNow;
 
-    
         var merchantId = order.OrderDetails
             .Select(od => od.Food.MerchantId)
             .FirstOrDefault();
-        
+
         if (merchantId != Guid.Empty)
         {
-            await _checkInService.CreateCheckIn(cusIdGuid, merchantId);
+            await _checkInService.CreateCheckIn(customerId, merchantId);
         }
-        
-        var userId  = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
-        var userIdGuid = Guid.Parse(userId!);
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userIdGuid);
-        
+
+        var userId = GetRequiredGuidClaim("UserId");
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+
         var merchant = order.OrderDetails
             .Select(x => x.Food.Merchant)
             .FirstOrDefault();
 
-        var notificationMerchant = new Notification()
+        var notificationMerchant = new Notification
         {
             UserId = merchant!.UserId,
             Title = "Order completed",
@@ -370,38 +321,40 @@ public class Service : IService
         };
         _dbContext.Notifications.Add(notificationMerchant);
         await _dbContext.SaveChangesAsync();
-
     }
 
     public async Task ConfirmOrderNotReceived(Request.ConfirmOrderRequest request)
     {
-        var customerId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
+        var customerId = GetRequiredGuidClaim("CustomerId");
 
-        var cusIdGuid = Guid.Parse(customerId!);
-        
         var order = await _dbContext.Orders
             .Include(x => x.OrderDetails)
             .ThenInclude(x => x.Food)
             .ThenInclude(x => x.Merchant)
-            .FirstOrDefaultAsync(x => x.Id == request.OrderId && x.CustomerId == cusIdGuid);
+            .FirstOrDefaultAsync(x => x.Id == request.OrderId && x.CustomerId == customerId);
 
         if (order == null)
         {
-            throw new  Exception("Order not found");
+            throw new KeyNotFoundException("Order not found");
         }
-        
-        order.Status = "NotReceived";
-    
-        
-        var userId  = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
-        var userIdGuid = Guid.Parse(userId!);
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userIdGuid);
-        
+
+        if (order.Status == Request.OrderStatus.NotReceived.ToString()
+            || order.Status == Request.OrderStatus.Rejected.ToString())
+        {
+            throw new InvalidOperationException("Order cannot be marked as not received in its current state");
+        }
+
+        order.Status = Request.OrderStatus.NotReceived.ToString();
+        order.UpdatedAt = DateTimeOffset.UtcNow;
+
+        var userId = GetRequiredGuidClaim("UserId");
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+
         var merchant = order.OrderDetails
             .Select(x => x.Food.Merchant)
             .FirstOrDefault();
 
-        var notificationMerchant = new Notification()
+        var notificationMerchant = new Notification
         {
             UserId = merchant!.UserId,
             Title = "Order issue",
@@ -412,5 +365,77 @@ public class Service : IService
         };
         _dbContext.Notifications.Add(notificationMerchant);
         await _dbContext.SaveChangesAsync();
+    }
+
+    private void ValidateWebhookSecret()
+    {
+        var request = _httpContext.HttpContext?.Request
+                      ?? throw new UnauthorizedAccessException("Webhook request context is unavailable");
+
+        if (!request.Headers.TryGetValue(_webhookOptions.HeaderName, out var providedSecret))
+        {
+            throw new UnauthorizedAccessException("Webhook signature is missing");
+        }
+
+        if (!FixedTimeEquals(providedSecret.ToString(), _webhookOptions.SharedSecret))
+        {
+            throw new UnauthorizedAccessException("Webhook signature is invalid");
+        }
+    }
+
+    private static bool FixedTimeEquals(string left, string right)
+    {
+        var leftBytes = Encoding.UTF8.GetBytes(left);
+        var rightBytes = Encoding.UTF8.GetBytes(right);
+
+        return leftBytes.Length == rightBytes.Length
+               && CryptographicOperations.FixedTimeEquals(leftBytes, rightBytes);
+    }
+
+    private static Guid ExtractOrderId(string? content)
+    {
+        if (string.IsNullOrWhiteSpace(content))
+        {
+            throw new InvalidOperationException("Order reference is missing from webhook content");
+        }
+
+        var normalizedContent = content
+            .Replace(" ", string.Empty)
+            .Replace("\n", string.Empty)
+            .Replace("\r", string.Empty);
+
+        var match = OrderReferenceRegex.Match(normalizedContent);
+        if (!match.Success)
+        {
+            throw new InvalidOperationException("UGem order reference was not found");
+        }
+
+        var rawOrderId = match.Groups["orderId"].Value;
+        if (Guid.TryParse(rawOrderId, out var guid))
+        {
+            return guid;
+        }
+
+        if (rawOrderId.Length == 32)
+        {
+            var formatted = $"{rawOrderId[..8]}-{rawOrderId.Substring(8, 4)}-{rawOrderId.Substring(12, 4)}-{rawOrderId.Substring(16, 4)}-{rawOrderId.Substring(20, 12)}";
+            if (Guid.TryParse(formatted, out guid))
+            {
+                return guid;
+            }
+        }
+
+        throw new InvalidOperationException("Webhook order reference format is invalid");
+    }
+
+    private Guid GetRequiredGuidClaim(string claimType)
+    {
+        var rawValue = _httpContext.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == claimType)?.Value;
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            throw new UnauthorizedAccessException($"{claimType} claim is missing");
+        }
+
+        return Guid.Parse(rawValue);
     }
 }

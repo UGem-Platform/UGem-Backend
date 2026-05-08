@@ -1,46 +1,57 @@
-
 using Microsoft.EntityFrameworkCore;
 using UGem.Repositories;
 using UGem.Repositories.Entity;
 
 namespace UGem.Services.StaffService;
 
-public class Service: IService
+public class Service : IService
 {
+    private const int DefaultPageSize = 10;
+    private const int MaxPageSize = 50;
+
     private readonly AppDbContext _dbContext;
-   
+
     public Service(AppDbContext dbContext)
     {
         _dbContext = dbContext;
     }
+
     public async Task ApproveApplication(Request.ApproveReviewerApplicationRequest request)
     {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
         var app = await _dbContext.ReviewerApplications
             .FirstOrDefaultAsync(x => x.Id == request.ApplicationId);
 
         if (app == null)
+        {
             throw new KeyNotFoundException("Application not found");
+        }
 
         if (app.Status != "Pending")
+        {
             throw new InvalidOperationException("Only pending application can be approved");
-        app.Status = "Accept";
-        app.UpdatedAt = DateTimeOffset.UtcNow;
+        }
+
         var existReviewer = await _dbContext.Reviewers.AnyAsync(x => x.CustomerId == app.CustomerId);
         if (existReviewer)
         {
             throw new InvalidOperationException("Application already approved");
         }
 
-        var reviewer = new Reviewer
+        app.Status = "Accept";
+        app.UpdatedAt = DateTimeOffset.UtcNow;
+
+        _dbContext.Reviewers.Add(new Reviewer
         {
             CustomerId = app.CustomerId,
             Points = 0,
             Rank = "Bronze",
             CommissionRate = 0.05m
+        });
 
-        };
-        _dbContext.Reviewers.Add(reviewer);
         await _dbContext.SaveChangesAsync();
+        await transaction.CommitAsync();
     }
 
     public async Task RejectApplication(Request.RejectReviewerApplicationRequest request)
@@ -49,13 +60,19 @@ public class Service: IService
             .FirstOrDefaultAsync(x => x.Id == request.ApplicationId);
 
         if (app == null)
+        {
             throw new KeyNotFoundException("Application not found");
+        }
 
         if (app.Status != "Pending")
+        {
             throw new InvalidOperationException("Only pending application can be rejected");
+        }
 
         if (string.IsNullOrWhiteSpace(request.Reason))
+        {
             throw new ArgumentException("Rejection reason is required");
+        }
 
         app.Status = "Rejected";
         app.RejectionReason = request.Reason;
@@ -66,44 +83,54 @@ public class Service: IService
 
     public async Task<Base.Response.PageResult<Response.ReviewerApplicationResponse>> GetReviewerApplications(string? searchTerm, int pageSize, int pageIndex)
     {
-        var query = _dbContext.ReviewerApplications.Where(x => true);
-        if (searchTerm != null)
+        var (normalizedPageIndex, normalizedPageSize) = NormalizePagination(pageIndex, pageSize);
+        var query = _dbContext.ReviewerApplications.AsNoTracking().AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             query = query.Where(x =>
                 x.Motivation.Contains(searchTerm) ||
                 (x.Experience != null && x.Experience.Contains(searchTerm)) ||
                 (x.FacebookUrl != null && x.FacebookUrl.Contains(searchTerm)) ||
                 (x.TiktokUrl != null && x.TiktokUrl.Contains(searchTerm)) ||
-                (x.YoutubeUrl != null && x.YoutubeUrl.Contains(searchTerm))
-            );
+                (x.YoutubeUrl != null && x.YoutubeUrl.Contains(searchTerm)));
         }
-        query = query.OrderByDescending(x => x.CreatedAt);
-        query = query.Skip((pageIndex - 1) * pageSize)
-            .Take(pageSize);
-        var selectQuery = query.Select(x => new Response.ReviewerApplicationResponse()
-        {
-            Id = x.Id,
-            Status = x.Status,
-            Motivation = x.Motivation,
-            Experience = x.Experience,
-            FacebookUrl = x.FacebookUrl,
-            TiktokUrl = x.TiktokUrl,
-            YoutubeUrl = x.YoutubeUrl,
-            OtherSocialUrl = x.OtherSocialUrl,
-            RejectionReason = x.RejectionReason,
-            CustomerId = x.CustomerId,
-            CreatedAt = x.CreatedAt
-        });
-        var listResult = await selectQuery.ToListAsync();
-        var totalItems = listResult.Count();
-        var result = new Base.Response.PageResult<Response.ReviewerApplicationResponse>()
+
+        var totalItems = await query.CountAsync();
+
+        var listResult = await query
+            .OrderByDescending(x => x.CreatedAt)
+            .Skip((normalizedPageIndex - 1) * normalizedPageSize)
+            .Take(normalizedPageSize)
+            .Select(x => new Response.ReviewerApplicationResponse
+            {
+                Id = x.Id,
+                Status = x.Status,
+                Motivation = x.Motivation,
+                Experience = x.Experience,
+                FacebookUrl = x.FacebookUrl,
+                TiktokUrl = x.TiktokUrl,
+                YoutubeUrl = x.YoutubeUrl,
+                OtherSocialUrl = x.OtherSocialUrl,
+                RejectionReason = x.RejectionReason,
+                CustomerId = x.CustomerId,
+                CreatedAt = x.CreatedAt
+            })
+            .ToListAsync();
+
+        return new Base.Response.PageResult<Response.ReviewerApplicationResponse>
         {
             Items = listResult,
-            PageSize = pageSize,
-            PageIndex = pageIndex,
+            PageSize = normalizedPageSize,
+            PageIndex = normalizedPageIndex,
             TotalItems = totalItems
         };
-        return result;
+    }
 
+    private static (int PageIndex, int PageSize) NormalizePagination(int pageIndex, int pageSize)
+    {
+        var normalizedPageIndex = pageIndex <= 0 ? 1 : pageIndex;
+        var normalizedPageSize = pageSize <= 0 ? DefaultPageSize : Math.Min(pageSize, MaxPageSize);
+        return (normalizedPageIndex, normalizedPageSize);
     }
 }

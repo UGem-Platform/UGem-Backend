@@ -41,7 +41,6 @@ public class Service : IService
             };
 
             _dbContext.Wishlists.Add(wishlist);
-            await _dbContext.SaveChangesAsync();
         }
         
         var isExist = await _dbContext.WishlistDetails
@@ -71,6 +70,7 @@ public class Service : IService
         var customerIdGuid = Guid.Parse(customerId!);
 
         var wishlist = await _dbContext.Wishlists
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.CustomerId == customerIdGuid);
 
         if (wishlist == null)
@@ -79,6 +79,7 @@ public class Service : IService
         }
 
         var result = await _dbContext.WishlistDetails
+            .AsNoTracking()
             .Where(x => x.WishlistId == wishlist.Id)
             .Select(x => new Response.WishlistItemResponse
             {
@@ -99,6 +100,7 @@ public class Service : IService
         var customerIdGuid = Guid.Parse(customerId!);
 
         var wishlist = await _dbContext.Wishlists
+            .AsNoTracking()
             .FirstOrDefaultAsync(x => x.CustomerId == customerIdGuid);
 
         if (wishlist == null)

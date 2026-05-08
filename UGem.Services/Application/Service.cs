@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 using UGem.Repositories;
 using UGem.Repositories.Entity;
 
@@ -11,7 +12,6 @@ public class Service : IService
     private readonly IHttpContextAccessor _httpContext;
     private readonly MediaService.IService _mediaService;
 
-
     public Service(AppDbContext dbContext, IHttpContextAccessor httpContext, MediaService.IService mediaService)
     {
         _dbContext = dbContext;
@@ -19,71 +19,65 @@ public class Service : IService
         _mediaService = mediaService;
     }
 
-    public Task<List<Response.GetApplicationForStaffResponse>> GetMyApplications()
+    public async Task<List<Response.GetApplicationForStaffResponse>> GetMyApplications()
     {
-        var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
+        var userIdGuid = GetRequiredGuidClaim("UserId");
 
-        var userIdGuid = Guid.Parse(userId!);
-
-        var query = _dbContext.Applications
-            .Include(a => a.ApplicationMenus)
+        return await _dbContext.Applications
+            .AsNoTracking()
             .Where(a => a.UserId == userIdGuid)
-            .OrderByDescending(a => a.CreatedAt);
-
-        if (query == null)
-        {
-            throw new Exception("Cannot found application");
-        }
-
-        var selectQuery = query.Select(a => new Response.GetApplicationForStaffResponse
-        {
-            Id = a.Id,
-            Name = a.Name,
-            Description = a.Description,
-            RestaurantType = a.RestaurantType,
-            MainDishType = a.MainDishType,
-            PriceRange = a.PriceRange,
-            Type = a.Type,
-            Status = a.Status,
-            CreatedAt = a.CreatedAt,
-            ReviewedAt = a.ReviewedAt,
-            UpdatedAt = a.UpdatedAt,
-
-            ApplicationMenus = a.ApplicationMenus.Select(m => new Response.ApplicationMenuResponse
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new Response.GetApplicationForStaffResponse
             {
-                Id = m.Id,
-                Name = m.Name,
-                Description = m.Description,
-                Price = m.Price,
-                ImageUrl = m.ImageUrl,
-                Category = m.Category,
-            }).ToList(),
-        });
-
-        var listResult = selectQuery.ToList();
-        return Task.FromResult(listResult);
+                Id = a.Id,
+                Name = a.Name,
+                Description = a.Description,
+                RestaurantType = a.RestaurantType,
+                MainDishType = a.MainDishType,
+                PriceRange = a.PriceRange,
+                Type = a.Type,
+                Status = a.Status,
+                CreatedAt = a.CreatedAt,
+                ReviewedAt = a.ReviewedAt,
+                UpdatedAt = a.UpdatedAt,
+                ApplicationMenus = a.ApplicationMenus.Select(m => new Response.ApplicationMenuResponse
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Description = m.Description,
+                    Price = m.Price,
+                    ImageUrl = m.ImageUrl,
+                    Category = m.Category,
+                }).ToList(),
+            })
+            .ToListAsync();
     }
 
     public async Task<string> CreateApplicationRequest(Request.ApplicationRequest request)
     {
-        var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
-
-        var userIdGuid = Guid.Parse(userId!);
+        var userIdGuid = GetRequiredGuidClaim("UserId");
 
         var merchantExistsForUser = await _dbContext.Merchants
             .AnyAsync(m => m.UserId == userIdGuid);
 
         if (merchantExistsForUser)
+        {
             throw new InvalidOperationException("This user already has a merchant profile.");
+        }
 
         var applicationExistsForUser = await _dbContext.Applications
             .AnyAsync(m => m.UserId == userIdGuid);
 
         if (applicationExistsForUser)
-            throw new InvalidOperationException("This user already has an application.");
-
-        var application = new Repositories.Entity.Application()
         {
+            throw new InvalidOperationException("This user already has an application.");
+        }
+
+        var applicationId = Guid.NewGuid();
+
+        var application = new Repositories.Entity.Application
+        {
+            Id = applicationId,
             UserId = userIdGuid,
             Type = "Merchant",
             Status = "Pending",
@@ -100,32 +94,20 @@ public class Service : IService
             Address = request.Address,
             Longitude = request.Longitude,
             Latitude = request.Latitude,
-        };
-
-        _dbContext.Add(application);
-        await _dbContext.SaveChangesAsync();
-
-        List<ApplicationMenu> applicationMenus = new List<ApplicationMenu>();
-
-        foreach (var menu in request.Menu)
-        {
-            applicationMenus.Add(new ApplicationMenu()
+            ApplicationMenus = request.Menu.Select(menu => new ApplicationMenu
             {
-                ApplicationId = application.Id,
+                Id = Guid.NewGuid(),
+                ApplicationId = applicationId,
                 Name = menu.Name,
                 Description = menu.Description,
                 Price = menu.Price,
                 Category = menu.Category,
                 ImageUrl = menu.ImageUrl
-            });
-        }
+            }).ToList()
+        };
 
-
-        if (applicationMenus.Any())
-        {
-            _dbContext.AddRange(applicationMenus);
-            await _dbContext.SaveChangesAsync();
-        }
+        _dbContext.Applications.Add(application);
+        await _dbContext.SaveChangesAsync();
 
         return "Application send successfully";
     }
@@ -135,25 +117,28 @@ public class Service : IService
         var application = await _dbContext.Applications.FirstOrDefaultAsync(x => x.Id == request.ApplicationId);
 
         if (application == null)
-            throw new Exception("Application not found");
+        {
+            throw new KeyNotFoundException("Application not found");
+        }
 
         if (application.Status != "Pending")
-            throw new Exception("Application already processed");
+        {
+            throw new InvalidOperationException("Application already processed");
+        }
 
         application.Status = "Rejected";
         application.Note = request.Note;
         application.ReviewedAt = DateTime.UtcNow;
 
-        var notification = new Notification()
+        _dbContext.Notifications.Add(new Notification
         {
             UserId = application.UserId,
             Title = "Your application has been reject",
-            Message = $"{application.Note}",
+            Message = application.Note ?? string.Empty,
             Type = "Reject",
             IsRead = false,
             CreatedAt = DateTimeOffset.UtcNow,
-        };
-        _dbContext.Notifications.Add(notification);
+        });
 
         await _dbContext.SaveChangesAsync();
         return "Reject success";
@@ -161,23 +146,26 @@ public class Service : IService
 
     public async Task<string> EditApplicationAfterReject(Request.UpdateApplicationRequest request)
     {
-        var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
-        var userIdGuid = Guid.Parse(userId!);
+        var userIdGuid = GetRequiredGuidClaim("UserId");
 
         var application = await _dbContext.Applications
             .Include(x => x.ApplicationMenus)
-            .Include(x => x.User)
             .FirstOrDefaultAsync(x => x.Id == request.ApplicationId);
 
         if (application == null)
-            throw new Exception("Application not found");
+        {
+            throw new KeyNotFoundException("Application not found");
+        }
 
         if (application.UserId != userIdGuid)
+        {
             throw new UnauthorizedAccessException("Cannot edit another user's application.");
+        }
 
         if (application.Status != "Rejected")
-            throw new Exception("Just edit when application reject");
-
+        {
+            throw new InvalidOperationException("Just edit when application reject");
+        }
 
         application.Type = request.Type;
         application.Name = request.Name;
@@ -198,10 +186,9 @@ public class Service : IService
         application.UpdatedAt = DateTimeOffset.UtcNow;
 
         _dbContext.ApplicationMenus.RemoveRange(application.ApplicationMenus);
-
         foreach (var menuRequest in request.Menu)
         {
-            var appMenu = new ApplicationMenu
+            _dbContext.ApplicationMenus.Add(new ApplicationMenu
             {
                 ApplicationId = application.Id,
                 Name = menuRequest.Name,
@@ -209,12 +196,10 @@ public class Service : IService
                 Description = menuRequest.Description,
                 Category = menuRequest.Category,
                 ImageUrl = menuRequest.ImageUrl,
-            };
-            _dbContext.ApplicationMenus.Add(appMenu);
+            });
         }
 
         await _dbContext.SaveChangesAsync();
-
         return "update success";
     }
 
@@ -227,28 +212,42 @@ public class Service : IService
             .Include(x => x.ApplicationMenus)
             .FirstOrDefaultAsync(a => a.Id == id);
 
-        if (application == null) throw new KeyNotFoundException("Application not found.");
-        if (application.User == null) throw new InvalidOperationException("Application user not found.");
-        if (application.Status != "Pending") throw new InvalidOperationException("The application is not pending.");
+        if (application == null)
+        {
+            throw new KeyNotFoundException("Application not found.");
+        }
+
+        if (application.User == null)
+        {
+            throw new InvalidOperationException("Application user not found.");
+        }
+
+        if (application.Status != "Pending")
+        {
+            throw new InvalidOperationException("The application is not pending.");
+        }
 
         if (application.Latitude is < -90 or > 90 || application.Longitude is < -180 or > 180)
+        {
             throw new InvalidOperationException("Application coordinates are invalid.");
+        }
 
         var existingMerchant = await _dbContext.Merchants
-            .Include(x => x.Foods)
             .FirstOrDefaultAsync(m => m.UserId == application.UserId);
 
         var merchantEmailExists = await _dbContext.Merchants
             .AnyAsync(m => m.Email == application.Email && m.UserId != application.UserId);
 
         if (merchantEmailExists)
+        {
             throw new InvalidOperationException("This application email is already used by another merchant.");
+        }
 
         application.Status = "Approved";
         application.ReviewedAt = DateTime.UtcNow;
         application.User.Role = "Merchant";
 
-        var location = new NetTopologySuite.Geometries.Point((double)application.Longitude, (double)application.Latitude) { SRID = 4326 };
+        var location = new Point((double)application.Longitude, (double)application.Latitude) { SRID = 4326 };
 
         if (existingMerchant != null)
         {
@@ -269,12 +268,14 @@ public class Service : IService
             existingMerchant.Location = location;
             existingMerchant.UpdatedAt = DateTimeOffset.UtcNow;
 
-            SyncMerchantMenu(existingMerchant, application.ApplicationMenus);
+            SyncMerchantMenu(existingMerchant.Id, application.ApplicationMenus);
         }
         else
         {
-            var merchant = new Merchant()
+            var merchantId = Guid.NewGuid();
+            var merchant = new Merchant
             {
+                Id = merchantId,
                 UserId = application.UserId,
                 Name = application.Name,
                 Description = application.Description,
@@ -294,12 +295,10 @@ public class Service : IService
                 CreatedAt = DateTimeOffset.UtcNow,
             };
             _dbContext.Merchants.Add(merchant);
-            await _dbContext.SaveChangesAsync();
-
-            SyncMerchantMenu(merchant, application.ApplicationMenus);
+            SyncMerchantMenu(merchantId, application.ApplicationMenus);
         }
 
-        var notification = new Notification()
+        _dbContext.Notifications.Add(new Notification
         {
             UserId = application.UserId,
             Title = "Your application has been approved",
@@ -307,23 +306,60 @@ public class Service : IService
             Type = "Application",
             IsRead = false,
             CreatedAt = DateTimeOffset.UtcNow,
-        };
-        _dbContext.Notifications.Add(notification);
+        });
+
         await _dbContext.SaveChangesAsync();
         await transaction.CommitAsync();
     }
 
-    private void SyncMerchantMenu(Merchant merchant, IEnumerable<ApplicationMenu> applicationMenus)
+    public async Task<List<Response.GetApplicationForStaffResponse>> GetApplications()
     {
-        if (merchant.Foods.Any())
-        {
-            _dbContext.Foods.RemoveRange(merchant.Foods);
-        }
+        return await _dbContext.Applications
+            .AsNoTracking()
+            .OrderByDescending(a => a.CreatedAt)
+            .Select(a => new Response.GetApplicationForStaffResponse
+            {
+                Id = a.Id,
+                Name = a.Name,
+                Description = a.Description,
+                RestaurantType = a.RestaurantType,
+                MainDishType = a.MainDishType,
+                PriceRange = a.PriceRange,
+                Type = a.Type,
+                Status = a.Status,
+                CreatedAt = a.CreatedAt,
+                ReviewedAt = a.ReviewedAt,
+                UpdatedAt = a.UpdatedAt,
+                Applicant = new Response.ApplicantInfoResponse
+                {
+                    UserId = a.UserId,
+                    FullName = a.User!.FullName,
+                    Email = a.User.Email,
+                    PhoneNumber = a.User.PhoneNumber,
+                    AvatarUrl = a.User.AvatarUrl,
+                },
+                ApplicationMenus = a.ApplicationMenus.Select(m => new Response.ApplicationMenuResponse
+                {
+                    Id = m.Id,
+                    Name = m.Name,
+                    Description = m.Description,
+                    Price = m.Price,
+                    ImageUrl = m.ImageUrl,
+                    Category = m.Category,
+                }).ToList(),
+            })
+            .ToListAsync();
+    }
+
+    private void SyncMerchantMenu(Guid merchantId, IEnumerable<ApplicationMenu> applicationMenus)
+    {
+        var existingFoods = _dbContext.Foods.Where(f => f.MerchantId == merchantId);
+        _dbContext.Foods.RemoveRange(existingFoods);
 
         var foods = applicationMenus.Select(menu => new Food
         {
             Id = Guid.NewGuid(),
-            MerchantId = merchant.Id,
+            MerchantId = merchantId,
             Name = menu.Name,
             Description = menu.Description,
             Price = menu.Price,
@@ -335,48 +371,14 @@ public class Service : IService
         _dbContext.Foods.AddRange(foods);
     }
 
-    public async Task<List<Response.GetApplicationForStaffResponse>> GetApplications()
+    private Guid GetRequiredGuidClaim(string claimType)
     {
-        var query = _dbContext.Applications
-            .Include(a => a.User)
-            .Include(a => a.ApplicationMenus)
-            .OrderByDescending(a => a.CreatedAt);
-
-        var selectQuery = query.Select(a => new Response.GetApplicationForStaffResponse
+        var rawValue = _httpContext.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == claimType)?.Value;
+        if (string.IsNullOrWhiteSpace(rawValue))
         {
-            Id = a.Id,
-            Name = a.Name,
-            Description = a.Description,
-            RestaurantType = a.RestaurantType,
-            MainDishType = a.MainDishType,
-            PriceRange = a.PriceRange,
-            Type = a.Type,
-            Status = a.Status,
-            CreatedAt = a.CreatedAt,
-            ReviewedAt = a.ReviewedAt,
-            UpdatedAt = a.UpdatedAt,
+            throw new UnauthorizedAccessException($"{claimType} claim is missing");
+        }
 
-            Applicant = new Response.ApplicantInfoResponse
-            {
-                UserId = a.UserId,
-                FullName = a.User!.FullName,
-                Email = a.User.Email,
-                PhoneNumber = a.User.PhoneNumber,
-                AvatarUrl = a.User.AvatarUrl,
-            },
-
-            ApplicationMenus = a.ApplicationMenus.Select(m => new Response.ApplicationMenuResponse
-            {
-                Id = m.Id,
-                Name = m.Name,
-                Description = m.Description,
-                Price = m.Price,
-                ImageUrl = m.ImageUrl,
-                Category = m.Category,
-            }).ToList(),
-        });
-
-        var listResult = await selectQuery.ToListAsync();
-        return listResult;
+        return Guid.Parse(rawValue);
     }
 }

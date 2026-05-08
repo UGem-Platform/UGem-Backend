@@ -3,6 +3,7 @@ using Quartz;
 using System.Text.Json.Serialization;
 using UGem.Api.Extensions;
 using UGem.Api.Middlewares;
+using UGem.Api.Options;
 using UGem.Repositories;
 using  UGem.Services.BackGroundJobService;
 using ReviewerApplicationService = UGem.Services.ReviewerApplicationService;
@@ -23,6 +24,7 @@ using JwtService = UGem.Services.JwtService;
 using CustomerService = UGem.Services.CustomerService;
 using MerchantService = UGem.Services.MerchantService;
 using StaffService = UGem.Services.StaffService;
+using MailServiceOptions = UGem.Services.MailService.MailOption.MailOptions;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -36,9 +38,16 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+ConfigureValidatedOptions(builder.Services, builder.Configuration, builder.Environment);
+
 var connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
     ?? builder.Configuration["DATABASE_URL"];
+
+if (!builder.Environment.IsDevelopment() && HasPlaceholder(connectionString))
+{
+    throw new InvalidOperationException("A secure database connection string must be configured before startup.");
+}
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseNpgsql(
@@ -93,17 +102,22 @@ builder.Services.AddQuartz(options =>
 });
 builder.Services.AddCors(options =>
 {
+    var corsOptions = builder.Configuration
+        .GetSection(CorsOptions.SectionName)
+        .Get<CorsOptions>() ?? new CorsOptions();
+
     options.AddPolicy("AllowFrontend", policy =>
     {
+        if (corsOptions.AllowedOrigins.Length == 0)
+        {
+            return;
+        }
+
         policy
-            .WithOrigins(
-                "http://localhost:3001",
-                "https://stimulate-gutter-sliceable.ngrok-free.dev", // your ngrok URL
-                "https://u-gem-eight.vercel.app" // your production URL
-            )
+            .WithOrigins(corsOptions.AllowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials(); // IMPORTANT for SignalR
+            .AllowCredentials();
     });
 });
 builder.Services.AddQuartzHostedService(options => { options.WaitForJobsToComplete = true; });
@@ -117,8 +131,14 @@ await using (var scope = app.Services.CreateAsyncScope())
 
 // Configure the HTTP request pipeline.
 
-app.UseSwagger();
-app.UseSwaggerUI();
+var enableSwagger = builder.Configuration.GetValue<bool?>("Features:EnableSwagger")
+    ?? builder.Environment.IsDevelopment();
+
+if (enableSwagger)
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
 
 app.UseCors("AllowFrontend");
 app.UseMiddleware<ExceptionMiddleware>();
@@ -128,3 +148,78 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+static void ConfigureValidatedOptions(IServiceCollection services, IConfiguration configuration, IHostEnvironment environment)
+{
+    services.AddOptions<JwtService.JwtOptions>()
+        .Bind(configuration.GetSection(nameof(JwtService.JwtOptions)));
+
+    services.AddOptions<CloudinaryService.CloudinaryOptions>()
+        .Bind(configuration.GetSection(nameof(CloudinaryService.CloudinaryOptions)));
+
+    services.AddOptions<MailServiceOptions>()
+        .Bind(configuration.GetSection(nameof(MailServiceOptions)));
+
+    services.AddOptions<UGem.Services.OrderService.SepayWebhookOptions>()
+        .Bind(configuration.GetSection(UGem.Services.OrderService.SepayWebhookOptions.SectionName));
+
+    if (environment.IsDevelopment())
+    {
+        return;
+    }
+
+    services.AddOptions<JwtService.JwtOptions>()
+        .ValidateDataAnnotations()
+        .Validate(options =>
+                HasConfiguredValue(options.SecretKey)
+                && HasConfiguredValue(options.Issuer)
+                && HasConfiguredValue(options.Audience)
+                && options.ExpireMinutes > 0,
+            "JwtOptions must be configured with secure non-placeholder values.")
+        .ValidateOnStart();
+
+    services.AddOptions<CloudinaryService.CloudinaryOptions>()
+        .ValidateDataAnnotations()
+        .Validate(options =>
+                HasConfiguredValue(options.CloudName)
+                && HasConfiguredValue(options.ApiKey)
+                && HasConfiguredValue(options.ApiSecret),
+            "CloudinaryOptions must be configured with secure non-placeholder values.")
+        .ValidateOnStart();
+
+    services.AddOptions<MailServiceOptions>()
+        .ValidateDataAnnotations()
+        .Validate(options =>
+                HasConfiguredValue(options.Mail)
+                && HasConfiguredValue(options.DisplayName)
+                && HasConfiguredValue(options.Password)
+                && HasConfiguredValue(options.Host)
+                && options.Port > 0,
+            "MailOptions must be configured with secure non-placeholder values.")
+        .ValidateOnStart();
+
+    services.AddOptions<UGem.Services.OrderService.SepayWebhookOptions>()
+        .ValidateDataAnnotations()
+        .Validate(options =>
+                HasConfiguredValue(options.HeaderName)
+                && HasConfiguredValue(options.SharedSecret),
+            "PaymentWebhook settings must be configured with secure non-placeholder values.")
+        .ValidateOnStart();
+}
+
+static bool HasConfiguredValue(string? value)
+{
+    return !string.IsNullOrWhiteSpace(value) && !HasPlaceholder(value);
+}
+
+static bool HasPlaceholder(string? value)
+{
+    if (string.IsNullOrWhiteSpace(value))
+    {
+        return true;
+    }
+
+    return value.Contains("__SET", StringComparison.OrdinalIgnoreCase)
+           || value.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase)
+           || value.Contains("PLACEHOLDER", StringComparison.OrdinalIgnoreCase);
+}

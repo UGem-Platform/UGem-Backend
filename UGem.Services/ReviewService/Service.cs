@@ -32,28 +32,25 @@ public class Service : IService
             throw new KeyNotFoundException($"Merchant with id {request.MerchantId} not found");
         }
 
-        var reviews = _dbContext.Reviews.Where(x => x.MerchantId == request.MerchantId);
-
-        var selectedQuery = reviews.Select(
-            x => new Response.ReviewsByIdMerchantResponse()
-        {
-            Id = x.Id,
-            MerchantId = x.MerchantId,
-            OrderId = x.OrderId,
-            Content = x.Content,
-            Rating =  x.Rating,
-            ImageUrl = x.ImageUrl,
-            CreatedAt = x.CreatedAt,
-            CustomerName = x.Order.Customer.User.FullName,
-            CustomerAvatarUrl = x.Order.Customer.User.AvatarUrl
-        });
-        
-        var result = await selectedQuery
+        return await _dbContext.Reviews
+            .AsNoTracking()
+            .Where(x => x.MerchantId == request.MerchantId)
             .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new Response.ReviewsByIdMerchantResponse
+            {
+                Id = x.Id,
+                MerchantId = x.MerchantId,
+                OrderId = x.OrderId,
+                Content = x.Content,
+                Rating = x.Rating,
+                ImageUrl = x.ImageUrl,
+                CreatedAt = x.CreatedAt,
+                CustomerName = x.Order.Customer.User.FullName,
+                CustomerAvatarUrl = x.Order.Customer.User.AvatarUrl
+            })
             .ToListAsync();
-        
-        return result;
     }
+
     public async Task<List<Response.ReviewDetailResponse>> GetReviewDetailsByMerchant(
         Request.GetReviewDetailsByMerchantRequest request)
     {
@@ -65,9 +62,10 @@ public class Service : IService
             throw new KeyNotFoundException($"Review with id {request.ReviewId} not found");
         }
 
-        var reviewDetails = await _dbContext.ReviewDetails
+        return await _dbContext.ReviewDetails
+            .AsNoTracking()
             .Where(x => x.ReviewId == request.ReviewId)
-            .Select(x => new Response.ReviewDetailResponse()
+            .Select(x => new Response.ReviewDetailResponse
             {
                 Id = x.Id,
                 ReviewId = x.ReviewId,
@@ -77,20 +75,15 @@ public class Service : IService
                 CreatedAt = x.CreatedAt
             })
             .ToListAsync();
-
-        return reviewDetails;
-    }   
+    }
 
     public async Task ReviewMerchant(Request.ReviewByMerchantIdRequest request)
     {
-        var customerId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
-        
-        var customerIdGuid = Guid.Parse(customerId!);
+        var customerIdGuid = GetRequiredGuidClaim("CustomerId");
 
         var order = await _dbContext.Orders.FirstOrDefaultAsync(x => x.CustomerId == customerIdGuid
                                                                      && x.Id == request.OrderId);
-        
-        
+
         if (order == null)
         {
             throw new KeyNotFoundException($"Order with id {request.OrderId} not found");
@@ -99,6 +92,12 @@ public class Service : IService
         if (order.Status != "Completed")
         {
             throw new InvalidOperationException("Order must be completed before review.");
+        }
+
+        var merchant = await _dbContext.Merchants.FirstOrDefaultAsync(x => x.Id == request.MerchantId);
+        if (merchant == null)
+        {
+            throw new KeyNotFoundException($"Merchant with id {request.MerchantId} not found");
         }
 
         var merchantMatchesOrder = await _dbContext.OrderDetails
@@ -113,71 +112,73 @@ public class Service : IService
         {
             throw new InvalidOperationException("Rating must be between 1 and 5.");
         }
-        
-        var existedReview = await _dbContext.Reviews
-            .FirstOrDefaultAsync(x => x.OrderId == request.OrderId);
 
-        if (existedReview != null)
+        var existedReview = await _dbContext.Reviews
+            .AnyAsync(x => x.OrderId == request.OrderId);
+
+        if (existedReview)
         {
             throw new InvalidOperationException("Order has been reviewed.");
         }
 
-        var newReview = new Review()
+        var requestedDetails = request.ReviewDetails?.ToList() ?? [];
+        ValidateRequestedRatings(requestedDetails.Select(detail => detail.Rating));
+
+        var validOrderDetailIds = requestedDetails.Count == 0
+            ? new HashSet<Guid>()
+            : (await _dbContext.OrderDetails
+                .AsNoTracking()
+                .Where(x => x.OrderId == request.OrderId)
+                .Select(x => x.Id)
+                .ToListAsync()).ToHashSet();
+
+        foreach (var detail in requestedDetails)
         {
-            Id = Guid.NewGuid(),
+            if (!validOrderDetailIds.Contains(detail.OrderDetailId))
+            {
+                throw new InvalidOperationException($"OrderDetailId {detail.OrderDetailId} unValid");
+            }
+        }
+
+        var existingRatings = await _dbContext.Reviews
+            .AsNoTracking()
+            .Where(x => x.MerchantId == request.MerchantId)
+            .Select(x => x.Rating)
+            .ToListAsync();
+
+        var reviewId = Guid.NewGuid();
+        _dbContext.Reviews.Add(new Review
+        {
+            Id = reviewId,
             MerchantId = request.MerchantId,
             OrderId = request.OrderId,
             Content = request.Content,
             Rating = request.Rating,
             ImageUrl = request.ImageUrl,
             CreatedAt = DateTimeOffset.UtcNow,
-        };
-        
-        _dbContext.Add(newReview);
-        var result = await _dbContext.SaveChangesAsync();
+        });
 
-        if (result > 0 && request.ReviewDetails != null && request.ReviewDetails.Any())
+        if (requestedDetails.Count > 0)
         {
-            List<ReviewDetail> newReviewDetail = new List<ReviewDetail>();
-
-            foreach (var detail in request.ReviewDetails)
-            {    
-                var isValid = await _dbContext.OrderDetails
-                    .AnyAsync(x => x.Id == detail.OrderDetailId 
-                                   && x.OrderId == request.OrderId);
-
-                if (!isValid)
-                {
-                    throw new InvalidOperationException($"OrderDetailId {detail.OrderDetailId} unValid");
-                }
-                if (detail.Rating < 1 || detail.Rating > 5)
-                {
-                    throw new InvalidOperationException("Rating must be between 1 and 5.");
-                }
-                
-                newReviewDetail.Add(new ReviewDetail()
-                {
-                    Id = Guid.NewGuid(),
-                    ReviewId = newReview.Id,
-                    OrderDetailId = detail.OrderDetailId,
-                    DetailContent = detail.DetailContent,
-                    Rating = detail.Rating,
-                });
-            }
-
-            _dbContext.AddRange(newReviewDetail);
-            await _dbContext.SaveChangesAsync();
+            _dbContext.ReviewDetails.AddRange(requestedDetails.Select(detail => new ReviewDetail
+            {
+                Id = Guid.NewGuid(),
+                ReviewId = reviewId,
+                OrderDetailId = detail.OrderDetailId,
+                DetailContent = detail.DetailContent,
+                Rating = detail.Rating,
+            }));
         }
 
-        await RefreshMerchantRatingAsync(newReview.MerchantId);
+        merchant.Rating = CalculateAverageRating(existingRatings, request.Rating);
+        merchant.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
     }
 
     public async Task UpdateReviewMerchant(Request.UpdateReviewByMerchantIdRequest request)
     {
-        var customerId = _httpContext.HttpContext.User.Claims
-            .FirstOrDefault(x => x.Type == "CustomerId")?.Value;
-
-        var customerIdGuid = Guid.Parse(customerId!);
+        var customerIdGuid = GetRequiredGuidClaim("CustomerId");
 
         var review = await _dbContext.Reviews
             .Include(x => x.Order)
@@ -194,62 +195,102 @@ public class Service : IService
         }
 
         if (request.Content != null)
+        {
             review.Content = request.Content;
+        }
 
         if (request.Rating.HasValue)
         {
             if (request.Rating < 1 || request.Rating > 5)
+            {
                 throw new InvalidOperationException("Rating must be between 1 and 5.");
+            }
 
             review.Rating = request.Rating.Value;
         }
-        
+
         if (request.ImageUrl != null)
-            review.ImageUrl = request.ImageUrl;
-        
-
-        if (request.ReviewDetails != null && request.ReviewDetails.Any())
         {
-            foreach (var detail in request.ReviewDetails)
-            {
-                var reviewDetail = await _dbContext.ReviewDetails.FirstOrDefaultAsync(x => x.Id == detail.ReviewDetailId);
+            review.ImageUrl = request.ImageUrl;
+        }
 
-                if (reviewDetail == null)
+        var requestedDetails = request.ReviewDetails?.ToList() ?? [];
+        ValidateRequestedRatings(requestedDetails.Where(detail => detail.Rating.HasValue).Select(detail => detail.Rating!.Value));
+
+        if (requestedDetails.Count > 0)
+        {
+            var reviewDetailIds = requestedDetails.Select(detail => detail.ReviewDetailId).ToHashSet();
+            var existingReviewDetails = await _dbContext.ReviewDetails
+                .Where(x => x.ReviewId == review.Id && reviewDetailIds.Contains(x.Id))
+                .ToDictionaryAsync(x => x.Id);
+
+            foreach (var detail in requestedDetails)
+            {
+                if (!existingReviewDetails.TryGetValue(detail.ReviewDetailId, out var reviewDetail))
                 {
                     throw new InvalidOperationException($"ReviewDetailId {detail.ReviewDetailId} not found");
                 }
-                
+
                 if (detail.DetailContent != null)
+                {
                     reviewDetail.DetailContent = detail.DetailContent;
+                }
 
                 if (detail.Rating.HasValue)
                 {
-                    if (detail.Rating < 1 || detail.Rating > 5)
-                        throw new InvalidOperationException("Rating must be between 1 and 5.");
-
                     reviewDetail.Rating = detail.Rating.Value;
                 }
             }
-        
         }
-        await _dbContext.SaveChangesAsync();
-        await RefreshMerchantRatingAsync(review.MerchantId);
-    }
 
-    private async Task RefreshMerchantRatingAsync(Guid merchantId)
-    {
-        var merchant = await _dbContext.Merchants.FirstOrDefaultAsync(x => x.Id == merchantId);
-
+        var merchant = await _dbContext.Merchants.FirstOrDefaultAsync(x => x.Id == review.MerchantId);
         if (merchant == null)
         {
-            return;
+            throw new KeyNotFoundException("Merchant not found");
         }
 
-        merchant.Rating = await _dbContext.Reviews
-            .Where(x => x.MerchantId == merchantId)
-            .AverageAsync(x => (decimal?)x.Rating) ?? 0m;
+        var otherRatings = await _dbContext.Reviews
+            .AsNoTracking()
+            .Where(x => x.MerchantId == review.MerchantId && x.Id != review.Id)
+            .Select(x => x.Rating)
+            .ToListAsync();
 
+        merchant.Rating = CalculateAverageRating(otherRatings, review.Rating);
         merchant.UpdatedAt = DateTimeOffset.UtcNow;
+
         await _dbContext.SaveChangesAsync();
+    }
+
+    private Guid GetRequiredGuidClaim(string claimType)
+    {
+        var rawValue = _httpContext.HttpContext?.User.Claims.FirstOrDefault(x => x.Type == claimType)?.Value;
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            throw new UnauthorizedAccessException($"{claimType} claim is missing");
+        }
+
+        return Guid.Parse(rawValue);
+    }
+
+    private static void ValidateRequestedRatings(IEnumerable<int> ratings)
+    {
+        foreach (var rating in ratings)
+        {
+            if (rating is < 1 or > 5)
+            {
+                throw new InvalidOperationException("Rating must be between 1 and 5.");
+            }
+        }
+    }
+
+    private static decimal CalculateAverageRating(IEnumerable<int> existingRatings, int newRating)
+    {
+        var ratings = existingRatings.ToList();
+        if (ratings.Count == 0)
+        {
+            return newRating;
+        }
+
+        return (ratings.Sum() + newRating) / (decimal)(ratings.Count + 1);
     }
 }
