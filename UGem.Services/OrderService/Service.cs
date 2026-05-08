@@ -1,9 +1,7 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Logging;
 using UGem.Repositories;
 using UGem.Repositories.Entity;
 
@@ -17,18 +15,18 @@ public class Service : IService
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContext;
     private readonly CheckInService.IService _checkInService;
-    private readonly SepayWebhookOptions _webhookOptions;
+    private readonly ILogger<Service> _logger;
 
     public Service(
         AppDbContext dbContext,
         IHttpContextAccessor httpContext,
         CheckInService.IService checkInService,
-        IOptions<SepayWebhookOptions> webhookOptions)
+        ILogger<Service> logger)
     {
         _dbContext = dbContext;
         _httpContext = httpContext;
         _checkInService = checkInService;
-        _webhookOptions = webhookOptions.Value;
+        _logger = logger;
     }
 
     public async Task<List<Response.GetOrderListResponse>> GetOrdersList()
@@ -186,10 +184,12 @@ public class Service : IService
 
     public async Task SepayWebhookHandler(Request.SepayWebhookRequest request)
     {
-        ValidateWebhookSecret();
-
         if (request.TransferAmount <= 0)
         {
+            _logger.LogWarning(
+                "Rejected SePay webhook with non-positive amount. ReferenceCode={ReferenceCode}, TransferAmount={TransferAmount}",
+                request.ReferenceCode,
+                request.TransferAmount);
             throw new InvalidOperationException("Transfer amount must be greater than 0");
         }
 
@@ -198,6 +198,10 @@ public class Service : IService
 
         if (order == null)
         {
+            _logger.LogWarning(
+                "Rejected SePay webhook because order was not found. ParsedOrderId={OrderId}, ReferenceCode={ReferenceCode}",
+                orderId,
+                request.ReferenceCode);
             throw new KeyNotFoundException("Order not found");
         }
 
@@ -210,16 +214,28 @@ public class Service : IService
                 await _dbContext.SaveChangesAsync();
             }
 
+            _logger.LogWarning(
+                "Rejected SePay webhook due to amount mismatch. OrderId={OrderId}, ExpectedAmount={ExpectedAmount}, ActualAmount={ActualAmount}",
+                order.Id,
+                order.FinalPrice,
+                request.TransferAmount);
             throw new InvalidOperationException("Invalid transfer amount");
         }
 
         if (order.Status == Request.OrderStatus.Completed.ToString())
         {
+            _logger.LogInformation(
+                "Ignored duplicate SePay webhook for completed order. OrderId={OrderId}",
+                order.Id);
             return;
         }
 
         if (order.Status != Request.OrderStatus.Pending.ToString())
         {
+            _logger.LogWarning(
+                "Rejected SePay webhook because order is already in state {OrderStatus}. OrderId={OrderId}",
+                order.Status,
+                order.Id);
             throw new InvalidOperationException("Order already processed");
         }
 
@@ -365,31 +381,6 @@ public class Service : IService
         };
         _dbContext.Notifications.Add(notificationMerchant);
         await _dbContext.SaveChangesAsync();
-    }
-
-    private void ValidateWebhookSecret()
-    {
-        var request = _httpContext.HttpContext?.Request
-                      ?? throw new UnauthorizedAccessException("Webhook request context is unavailable");
-
-        if (!request.Headers.TryGetValue(_webhookOptions.HeaderName, out var providedSecret))
-        {
-            throw new UnauthorizedAccessException("Webhook signature is missing");
-        }
-
-        if (!FixedTimeEquals(providedSecret.ToString(), _webhookOptions.SharedSecret))
-        {
-            throw new UnauthorizedAccessException("Webhook signature is invalid");
-        }
-    }
-
-    private static bool FixedTimeEquals(string left, string right)
-    {
-        var leftBytes = Encoding.UTF8.GetBytes(left);
-        var rightBytes = Encoding.UTF8.GetBytes(right);
-
-        return leftBytes.Length == rightBytes.Length
-               && CryptographicOperations.FixedTimeEquals(leftBytes, rightBytes);
     }
 
     private static Guid ExtractOrderId(string? content)

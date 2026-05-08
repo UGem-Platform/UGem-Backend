@@ -160,9 +160,6 @@ static void ConfigureValidatedOptions(IServiceCollection services, IConfiguratio
     services.AddOptions<MailServiceOptions>()
         .Bind(configuration.GetSection(nameof(MailServiceOptions)));
 
-    services.AddOptions<UGem.Services.OrderService.SepayWebhookOptions>()
-        .Bind(configuration.GetSection(UGem.Services.OrderService.SepayWebhookOptions.SectionName));
-
     if (environment.IsDevelopment())
     {
         return;
@@ -196,14 +193,6 @@ static void ConfigureValidatedOptions(IServiceCollection services, IConfiguratio
                 && HasConfiguredValue(options.Host)
                 && options.Port > 0,
             "MailOptions must be configured with secure non-placeholder values.")
-        .ValidateOnStart();
-
-    services.AddOptions<UGem.Services.OrderService.SepayWebhookOptions>()
-        .ValidateDataAnnotations()
-        .Validate(options =>
-                HasConfiguredValue(options.HeaderName)
-                && HasConfiguredValue(options.SharedSecret),
-            "PaymentWebhook settings must be configured with secure non-placeholder values.")
         .ValidateOnStart();
 }
 
