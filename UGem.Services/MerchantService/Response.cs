@@ -21,6 +21,7 @@ public abstract class Response
         public double? Distance { get; set; }
         public double Latitude { get; set; }          
         public double Longitude { get; set; }
+        public decimal UnderratedScore { get; set; }
     }
     
     public class MapResponse : BaseResponse
@@ -35,6 +36,7 @@ public abstract class Response
         public required string Phone { get; set; }
         public double Latitude { get; set; }          
         public double Longitude { get; set; }
+        public decimal UnderratedScore { get; set; }
         public required List<FoodService.Response.Menu> Menu { get; set; }
     }
 }

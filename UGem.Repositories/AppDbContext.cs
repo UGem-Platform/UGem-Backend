@@ -563,7 +563,7 @@ public class AppDbContext : DbContext
                 .HasMaxLength(200);
 
             builder.Property(m => m.UnderratedScore)
-                .HasPrecision(5, 2);
+                .HasPrecision(5, 4);
 
             builder.Property(m => m.Rating)
                 .HasPrecision(3, 2);
@@ -594,7 +594,7 @@ public class AppDbContext : DbContext
                 IsActive = true,
                 LogoUrl = "logo_che.png",
                 Status = "Active",
-                UnderratedScore = 4.90m,
+                UnderratedScore = 0.90m,
                 Rating = 4.80m,
                 PlatformFeePercent = 5.00m,
                 OpeningHours = "15:00 - 22:00",
