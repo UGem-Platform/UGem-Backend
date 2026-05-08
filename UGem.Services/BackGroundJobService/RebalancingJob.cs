@@ -47,7 +47,7 @@ public class RebalancingJob : IJob
                 .Select(m => _dbContext.Orders
                     .Count(o => o.CreatedAt >= threeMonthsAgo
                         && o.CreatedAt < monthStart
-                        && o.Status == "Delivered"
+                        && o.Status == "Completed"
                         && o.OrderDetails.Any(od => od.Food.MerchantId == m.Id)))
                 .ToListAsync();
 
@@ -89,7 +89,7 @@ public class RebalancingJob : IJob
                 
                 var actualOrders = await _dbContext.Orders
                     .CountAsync(o => o.CreatedAt >= monthStart
-                        && o.Status == "Delivered"
+                        && o.Status == "Completed"
                         && o.OrderDetails.Any(od => od.Food.MerchantId == merchant.Id));
                 var actualReviews = await _dbContext.Reviews
                     .CountAsync(r => r.MerchantId == merchant.Id
@@ -119,7 +119,7 @@ public class RebalancingJob : IJob
                     var historyOrders = await _dbContext.Orders
                         .CountAsync(o => o.CreatedAt >= threeMonthsAgo
                             && o.CreatedAt < monthStart
-                            && o.Status == "Delivered"
+                            && o.Status == "Completed"
                             && o.OrderDetails.Any(od => od.Food.MerchantId == merchant.Id));
 
                     var historyReviews = await _dbContext.Reviews
