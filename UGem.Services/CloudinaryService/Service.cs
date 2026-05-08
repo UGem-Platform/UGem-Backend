@@ -49,7 +49,8 @@ public class Service : IService
         var uploadResult = await _cloudinary.UploadAsync(uploadParams);
         if (uploadResult.Error != null || uploadResult.SecureUrl == null)
         {
-            throw new InvalidOperationException("Image upload failed.");
+            var errorMessage = uploadResult.Error?.Message ?? "Cloudinary did not return a secure image URL.";
+            throw new InvalidOperationException($"Image upload failed: {errorMessage}");
         }
 
         return uploadResult.SecureUrl.ToString();
