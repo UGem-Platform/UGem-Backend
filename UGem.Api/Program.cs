@@ -96,7 +96,7 @@ builder.Services.AddQuartz(options =>
         .AddTrigger(trigger => trigger
             .ForJob(rebalancingJobKey)
             .WithSimpleSchedule(schedule => schedule
-                .WithIntervalInHours(24*14)
+                .WithIntervalInSeconds(60)
                 .RepeatForever())
             .StartNow()); 
 });
