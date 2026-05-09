@@ -82,7 +82,7 @@ public class RebalancingJob : IJob
             if (allVisitCounts.Any(x => x > 0))
                 systemAvgVisits = (decimal)allVisitCounts.Average() / 3.0m;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is DbUpdateException || ex is InvalidOperationException)
         {
             _logger.LogWarning("Could not calculate system averages, using defaults. Error: {ex}", ex.Message);
         }
