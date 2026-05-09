@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
 using UGem.Repositories;
@@ -8,10 +9,12 @@ namespace UGem.Services.CheckInService;
 public class Service : IService
 {
     private readonly AppDbContext _dbContext;
+    private readonly IHttpContextAccessor _httpContext;
 
-    public Service(AppDbContext dbContext)
+    public Service(AppDbContext dbContext, IHttpContextAccessor httpContext)
     {
         _dbContext = dbContext;
+        _httpContext = httpContext;
     }
 
     public byte[] GenerateQrCode(string text)
@@ -41,4 +44,19 @@ public class Service : IService
             } 
             await _dbContext.SaveChangesAsync();
         }
+
+    public async Task FireCheckIn()
+    {
+        var cusId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
+        
+        var cusIdGuid = Guid.Parse(cusId!);
+        
+        var customer = await _dbContext.Customers.FirstOrDefaultAsync(x => x.Id == cusIdGuid);
+        
+        if (customer != null)
+        {
+            customer.TotalCheckIns += 1;
+        } 
+        await _dbContext.SaveChangesAsync();    
+    }
 }
