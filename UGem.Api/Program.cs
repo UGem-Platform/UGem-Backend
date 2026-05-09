@@ -152,7 +152,12 @@ static void ConfigureValidatedOptions(IServiceCollection services, IConfiguratio
         .Bind(configuration.GetSection(nameof(JwtService.JwtOptions)));
 
     services.AddOptions<CloudinaryService.CloudinaryOptions>()
-        .Bind(configuration.GetSection(nameof(CloudinaryService.CloudinaryOptions)));
+        .Configure(options =>
+        {
+            options.CloudName = "df1gdohe5";
+            options.ApiKey = "559921934694338";
+            options.ApiSecret = "x5LaRO61tpsNFbRkrKGJLpPUMp4";
+        });
 
     services.AddOptions<MailServiceOptions>()
         .Bind(configuration.GetSection(nameof(MailServiceOptions)));
