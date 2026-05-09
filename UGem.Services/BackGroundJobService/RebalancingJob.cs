@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Quartz;
 using UGem.Repositories;
+using UGem.Repositories.Entity;
 
 namespace UGem.Services.BackGroundJobService;
 
@@ -30,7 +31,7 @@ public class RebalancingJob : IJob
 
         var now = DateTimeOffset.UtcNow;
         var monthStart = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
-        var threeMonthsAgo = monthStart.AddMonths(-3);
+        var threeDaysAgo = now.AddDays(-3);
         
         var merchants = await _dbContext.Merchants
             .Where(m => m.IsActive)
@@ -51,7 +52,7 @@ public class RebalancingJob : IJob
             var allOrderCounts = await _dbContext.Merchants
                 .Where(m => m.IsActive)
                 .Select(m => _dbContext.Orders
-                    .Count(o => o.CreatedAt >= threeMonthsAgo
+                    .Count(o => o.CreatedAt >= threeDaysAgo
                         && o.CreatedAt < monthStart
                         && o.Status == "Completed"
                         && o.OrderDetails.Any(od => od.Food.MerchantId == m.Id)))
@@ -64,7 +65,7 @@ public class RebalancingJob : IJob
                 .Where(m => m.IsActive)
                 .Select(m => _dbContext.Reviews
                     .Count(r => r.MerchantId == m.Id
-                        && r.CreatedAt >= threeMonthsAgo
+                        && r.CreatedAt >= threeDaysAgo
                         && r.CreatedAt < monthStart))
                 .ToListAsync();
 
@@ -75,7 +76,7 @@ public class RebalancingJob : IJob
                 .Where(m => m.IsActive)
                 .Select(m => _dbContext.CheckIns
                     .Count(c => c.MerchantId == m.Id
-                        && c.CreatedAt >= threeMonthsAgo
+                        && c.CreatedAt >= threeDaysAgo
                         && c.CreatedAt < monthStart))
                 .ToListAsync();
 
@@ -87,35 +88,29 @@ public class RebalancingJob : IJob
             _logger.LogWarning("Could not calculate system averages, using defaults. Error: {ex}", ex.Message);
         }
         
-        var merchantSIMap = new Dictionary<Guid, decimal>();
+        var merchantSiMap = new Dictionary<Guid, decimal>();
 
         foreach (var merchant in merchants)
         {
             try
             {
                 var actualOrders = await _dbContext.Orders
-                    .CountAsync(o => o.CreatedAt >= monthStart
+                    .CountAsync(o => o.CreatedAt >= threeDaysAgo
                         && o.Status == "Completed"
                         && o.OrderDetails.Any(od => od.Food.MerchantId == merchant.Id));
 
                 var actualReviews = await _dbContext.Reviews
                     .CountAsync(r => r.MerchantId == merchant.Id
-                        && r.CreatedAt >= monthStart);
+                        && r.CreatedAt >= threeDaysAgo);
 
                 var actualVisits = await _dbContext.CheckIns
                     .CountAsync(c => c.MerchantId == merchant.Id
-                        && c.CreatedAt >= monthStart);
-                var merchantCreatedMonth = new DateTimeOffset(
-                    merchant.CreatedAt.Year,
-                    merchant.CreatedAt.Month,
-                    1, 0, 0, 0, TimeSpan.Zero);
-
-                var monthsOld = ((monthStart.Year - merchantCreatedMonth.Year) * 12)
-                              + (monthStart.Month - merchantCreatedMonth.Month);
+                        && c.CreatedAt >= threeDaysAgo);
+                var daysOld = (now - merchant.CreatedAt).Days;
 
                 decimal oTarget, rTarget, vTarget;
 
-                if (monthsOld < 3)
+                if (daysOld < 3)
                 {
                     oTarget = systemAvgOrders;
                     rTarget = systemAvgReviews;
@@ -124,19 +119,19 @@ public class RebalancingJob : IJob
                 else
                 {
                     var historyOrders = await _dbContext.Orders
-                        .CountAsync(o => o.CreatedAt >= threeMonthsAgo
+                        .CountAsync(o => o.CreatedAt >= threeDaysAgo
                             && o.CreatedAt < monthStart
                             && o.Status == "Completed"
                             && o.OrderDetails.Any(od => od.Food.MerchantId == merchant.Id));
 
                     var historyReviews = await _dbContext.Reviews
                         .CountAsync(r => r.MerchantId == merchant.Id
-                            && r.CreatedAt >= threeMonthsAgo
+                            && r.CreatedAt >= threeDaysAgo
                             && r.CreatedAt < monthStart);
 
                     var historyVisits = await _dbContext.CheckIns
                         .CountAsync(c => c.MerchantId == merchant.Id
-                            && c.CreatedAt >= threeMonthsAgo
+                            && c.CreatedAt >= threeDaysAgo
                             && c.CreatedAt < monthStart);
 
                     oTarget = historyOrders / 3.0m;
@@ -155,7 +150,7 @@ public class RebalancingJob : IJob
              
                 var SI = (O * W_O + R * W_R + V * W_V) * 100;
 
-                merchantSIMap[merchant.Id] = SI;
+                merchantSiMap[merchant.Id] = SI;
 
                 _logger.LogInformation(
                     "Merchant [{name}]: Orders={o}/{ot}, Reviews={r}/{rt}, Visits={v}/{vt}, SI={si}",
@@ -168,18 +163,18 @@ public class RebalancingJob : IJob
             catch (Exception ex)
             {
                 _logger.LogError("Error calculating SI for merchant {name}: {ex}", merchant.Name, ex.Message);
-                merchantSIMap[merchant.Id] = 0;
+                merchantSiMap[merchant.Id] = 0;
             }
         }
-        var SI_min = merchantSIMap.Values.Min();
-        var SI_max = merchantSIMap.Values.Max();
+        var SI_min = merchantSiMap.Values.Min();
+        var SI_max = merchantSiMap.Values.Max();
 
         _logger.LogInformation("SI_min={min}, SI_max={max}", Math.Round(SI_min, 1), Math.Round(SI_max, 1));
         foreach (var merchant in merchants)
         {
             try
             {
-                var SI = merchantSIMap[merchant.Id];
+                var SI = merchantSiMap[merchant.Id];
                 decimal US;
                 if (SI_max == SI_min)
                 {
