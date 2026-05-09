@@ -7,15 +7,16 @@ namespace UGem.Services.BackGroundJobService;
 
 public class RebalancingJob : IJob
 {
+    private readonly AppDbContext _dbContext;
+    private readonly ILogger<RebalancingJob> _logger;
+
+    
     private const decimal W_O = 0.4m;
     private const decimal W_R = 0.3m;
     private const decimal W_V = 0.3m;
-
-    private const decimal BaseFee = 0.05m;
-    private const decimal GrowthFactor = 0.10m;
-
-    private readonly AppDbContext _dbContext;
-    private readonly ILogger<RebalancingJob> _logger;
+    
+    private const decimal BaseFee = 0.05m;     
+    private const decimal GrowthFactor = 0.10m;  
 
     public RebalancingJob(AppDbContext dbContext, ILogger<RebalancingJob> logger)
     {
@@ -30,49 +31,89 @@ public class RebalancingJob : IJob
         var now = DateTimeOffset.UtcNow;
         var monthStart = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
         var threeMonthsAgo = monthStart.AddMonths(-3);
-
+        
         var merchants = await _dbContext.Merchants
             .Where(m => m.IsActive)
             .ToListAsync();
 
-        if (merchants.Count == 0)
+        if (!merchants.Any())
         {
-            _logger.LogInformation("RebalancingJob completed with no active merchants.");
+            _logger.LogInformation("No active merchants found. Job completed.");
             return;
         }
+        
+        var systemAvgOrders = 100m;
+        var systemAvgReviews = 50m;
+        var systemAvgVisits = 1000m;
 
-        var merchantIds = merchants.Select(m => m.Id).ToList();
+        try
+        {
+            var allOrderCounts = await _dbContext.Merchants
+                .Where(m => m.IsActive)
+                .Select(m => _dbContext.Orders
+                    .Count(o => o.CreatedAt >= threeMonthsAgo
+                        && o.CreatedAt < monthStart
+                        && o.Status == "Completed"
+                        && o.OrderDetails.Any(od => od.Food.MerchantId == m.Id)))
+                .ToListAsync();
 
-        var currentOrderCounts = await GetCompletedOrderCountsAsync(merchantIds, monthStart, null);
-        var historicalOrderCounts = await GetCompletedOrderCountsAsync(merchantIds, threeMonthsAgo, monthStart);
-        var currentReviewCounts = await GetReviewCountsAsync(merchantIds, monthStart, null);
-        var historicalReviewCounts = await GetReviewCountsAsync(merchantIds, threeMonthsAgo, monthStart);
-        var currentVisitCounts = await GetVisitCountsAsync(merchantIds, monthStart, null);
-        var historicalVisitCounts = await GetVisitCountsAsync(merchantIds, threeMonthsAgo, monthStart);
+            if (allOrderCounts.Any(x => x > 0))
+                systemAvgOrders = (decimal)allOrderCounts.Average() / 3.0m;
 
-        var systemAvgOrders = CalculateThreeMonthAverage(historicalOrderCounts, merchants.Count, 100m);
-        var systemAvgReviews = CalculateThreeMonthAverage(historicalReviewCounts, merchants.Count, 50m);
-        var systemAvgVisits = CalculateThreeMonthAverage(historicalVisitCounts, merchants.Count, 1000m);
+            var allReviewCounts = await _dbContext.Merchants
+                .Where(m => m.IsActive)
+                .Select(m => _dbContext.Reviews
+                    .Count(r => r.MerchantId == m.Id
+                        && r.CreatedAt >= threeMonthsAgo
+                        && r.CreatedAt < monthStart))
+                .ToListAsync();
+
+            if (allReviewCounts.Any(x => x > 0))
+                systemAvgReviews = (decimal)allReviewCounts.Average() / 3.0m;
+
+            var allVisitCounts = await _dbContext.Merchants
+                .Where(m => m.IsActive)
+                .Select(m => _dbContext.CheckIns
+                    .Count(c => c.MerchantId == m.Id
+                        && c.CreatedAt >= threeMonthsAgo
+                        && c.CreatedAt < monthStart))
+                .ToListAsync();
+
+            if (allVisitCounts.Any(x => x > 0))
+                systemAvgVisits = (decimal)allVisitCounts.Average() / 3.0m;
+        }
+        catch (Exception ex) when (ex is DbUpdateException || ex is InvalidOperationException)
+        {
+            _logger.LogWarning("Could not calculate system averages, using defaults. Error: {ex}", ex.Message);
+        }
+        
+        var merchantSIMap = new Dictionary<Guid, decimal>();
 
         foreach (var merchant in merchants)
         {
             try
             {
-                var actualOrders = currentOrderCounts.GetValueOrDefault(merchant.Id);
-                var actualReviews = currentReviewCounts.GetValueOrDefault(merchant.Id);
-                var actualVisits = currentVisitCounts.GetValueOrDefault(merchant.Id);
+                var actualOrders = await _dbContext.Orders
+                    .CountAsync(o => o.CreatedAt >= monthStart
+                        && o.Status == "Completed"
+                        && o.OrderDetails.Any(od => od.Food.MerchantId == merchant.Id));
 
+                var actualReviews = await _dbContext.Reviews
+                    .CountAsync(r => r.MerchantId == merchant.Id
+                        && r.CreatedAt >= monthStart);
+
+                var actualVisits = await _dbContext.CheckIns
+                    .CountAsync(c => c.MerchantId == merchant.Id
+                        && c.CreatedAt >= monthStart);
                 var merchantCreatedMonth = new DateTimeOffset(
                     merchant.CreatedAt.Year,
                     merchant.CreatedAt.Month,
                     1, 0, 0, 0, TimeSpan.Zero);
 
                 var monthsOld = ((monthStart.Year - merchantCreatedMonth.Year) * 12)
-                                + (monthStart.Month - merchantCreatedMonth.Month);
+                              + (monthStart.Month - merchantCreatedMonth.Month);
 
-                decimal oTarget;
-                decimal rTarget;
-                decimal vTarget;
+                decimal oTarget, rTarget, vTarget;
 
                 if (monthsOld < 3)
                 {
@@ -82,136 +123,97 @@ public class RebalancingJob : IJob
                 }
                 else
                 {
-                    oTarget = historicalOrderCounts.GetValueOrDefault(merchant.Id) / 3.0m;
-                    rTarget = historicalReviewCounts.GetValueOrDefault(merchant.Id) / 3.0m;
-                    vTarget = historicalVisitCounts.GetValueOrDefault(merchant.Id) / 3.0m;
+                    var historyOrders = await _dbContext.Orders
+                        .CountAsync(o => o.CreatedAt >= threeMonthsAgo
+                            && o.CreatedAt < monthStart
+                            && o.Status == "Completed"
+                            && o.OrderDetails.Any(od => od.Food.MerchantId == merchant.Id));
 
+                    var historyReviews = await _dbContext.Reviews
+                        .CountAsync(r => r.MerchantId == merchant.Id
+                            && r.CreatedAt >= threeMonthsAgo
+                            && r.CreatedAt < monthStart);
+
+                    var historyVisits = await _dbContext.CheckIns
+                        .CountAsync(c => c.MerchantId == merchant.Id
+                            && c.CreatedAt >= threeMonthsAgo
+                            && c.CreatedAt < monthStart);
+
+                    oTarget = historyOrders / 3.0m;
+                    rTarget = historyReviews / 3.0m;
+                    vTarget = historyVisits / 3.0m;
                     if (oTarget == 0) oTarget = systemAvgOrders;
                     if (rTarget == 0) rTarget = systemAvgReviews;
                     if (vTarget == 0) vTarget = systemAvgVisits;
                 }
 
-                var O = Math.Min(actualOrders / oTarget, 1.5m);
-                var R = Math.Min(actualReviews / rTarget, 1.5m);
-                var V = Math.Min(actualVisits / vTarget, 1.5m);
-                var SI = (O * W_O + R * W_R + V * W_V) * 100;
-                var US = Math.Max(0m, Math.Min(1m, 1 - (SI / 100)));
-                var platformFeePercent = (BaseFee + GrowthFactor * (1 - US)) * 100;
+                
+                var O = Math.Min((decimal)actualOrders / oTarget, 1.5m);
+                var R = Math.Min((decimal)actualReviews / rTarget, 1.5m);
+                var V = Math.Min((decimal)actualVisits / vTarget, 1.5m);
 
-                merchant.UnderratedScore = Math.Round(US, 4);
-                merchant.PlatformFeePercent = Math.Round(platformFeePercent, 2);
+             
+                var SI = (O * W_O + R * W_R + V * W_V) * 100;
+
+                merchantSIMap[merchant.Id] = SI;
+
                 _logger.LogInformation(
-                    "Merchant [{name}]: Orders={actualO}/{targetO}, Reviews={actualR}/{targetR}, Visits={actualV}/{targetV}, SI={si}, US={us}, Fee={fee}%",
+                    "Merchant [{name}]: Orders={o}/{ot}, Reviews={r}/{rt}, Visits={v}/{vt}, SI={si}",
                     merchant.Name,
                     actualOrders, Math.Round(oTarget, 0),
                     actualReviews, Math.Round(rTarget, 0),
                     actualVisits, Math.Round(vTarget, 0),
+                    Math.Round(SI, 1));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error calculating SI for merchant {name}: {ex}", merchant.Name, ex.Message);
+                merchantSIMap[merchant.Id] = 0;
+            }
+        }
+        var SI_min = merchantSIMap.Values.Min();
+        var SI_max = merchantSIMap.Values.Max();
+
+        _logger.LogInformation("SI_min={min}, SI_max={max}", Math.Round(SI_min, 1), Math.Round(SI_max, 1));
+        foreach (var merchant in merchants)
+        {
+            try
+            {
+                var SI = merchantSIMap[merchant.Id];
+                decimal US;
+                if (SI_max == SI_min)
+                {
+
+                    US = 0.5m;
+                }
+                else
+                {
+                    US = 1 - ((SI - SI_min) / (SI_max - SI_min));
+                    US = Math.Max(0m, Math.Min(1m, US));
+                }
+
+                var platformFeePercent = (BaseFee + GrowthFactor * (1 - US)) * 100;
+                merchant.UnderratedScore = Math.Round(US, 4);
+                merchant.PlatformFeePercent = Math.Round(platformFeePercent, 2);
+
+                _logger.LogInformation(
+                    "Merchant [{name}]: SI={si}, US={us}, Fee={fee}%",
+                    merchant.Name,
                     Math.Round(SI, 1),
                     Math.Round(US, 4),
                     Math.Round(platformFeePercent, 2));
             }
-            catch (Exception ex)
+            catch (KeyNotFoundException ex)
             {
-                _logger.LogError("Error processing merchant {name}: {ex}", merchant.Name, ex.Message);
+                _logger.LogError(ex, "Missing SI value while calculating US for merchant {name}", merchant.Name);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "Invalid operation while calculating US for merchant {name}", merchant.Name);
             }
         }
 
         await _dbContext.SaveChangesAsync();
         _logger.LogInformation("RebalancingJob completed at {time}", DateTimeOffset.UtcNow);
-    }
-
-    private async Task<Dictionary<Guid, decimal>> GetCompletedOrderCountsAsync(
-        List<Guid> merchantIds,
-        DateTimeOffset rangeStart,
-        DateTimeOffset? rangeEnd)
-    {
-        var query = _dbContext.OrderDetails
-            .AsNoTracking()
-            .Where(od =>
-                merchantIds.Contains(od.Food.MerchantId)
-                && od.Order.Status == "Completed"
-                && od.Order.CreatedAt >= rangeStart);
-
-        if (rangeEnd.HasValue)
-        {
-            query = query.Where(od => od.Order.CreatedAt < rangeEnd.Value);
-        }
-
-        return await query
-            .Select(od => new
-            {
-                MerchantId = od.Food.MerchantId,
-                od.OrderId
-            })
-            .Distinct()
-            .GroupBy(x => x.MerchantId)
-            .Select(g => new
-            {
-                MerchantId = g.Key,
-                Count = (decimal)g.Count()
-            })
-            .ToDictionaryAsync(x => x.MerchantId, x => x.Count);
-    }
-
-    private async Task<Dictionary<Guid, decimal>> GetReviewCountsAsync(
-        List<Guid> merchantIds,
-        DateTimeOffset rangeStart,
-        DateTimeOffset? rangeEnd)
-    {
-        var query = _dbContext.Reviews
-            .AsNoTracking()
-            .Where(r => merchantIds.Contains(r.MerchantId) && r.CreatedAt >= rangeStart);
-
-        if (rangeEnd.HasValue)
-        {
-            query = query.Where(r => r.CreatedAt < rangeEnd.Value);
-        }
-
-        return await query
-            .GroupBy(r => r.MerchantId)
-            .Select(g => new
-            {
-                MerchantId = g.Key,
-                Count = (decimal)g.Count()
-            })
-            .ToDictionaryAsync(x => x.MerchantId, x => x.Count);
-    }
-
-    private async Task<Dictionary<Guid, decimal>> GetVisitCountsAsync(
-        List<Guid> merchantIds,
-        DateTimeOffset rangeStart,
-        DateTimeOffset? rangeEnd)
-    {
-        var query = _dbContext.CheckIns
-            .AsNoTracking()
-            .Where(c => merchantIds.Contains(c.MerchantId) && c.CreatedAt >= rangeStart);
-
-        if (rangeEnd.HasValue)
-        {
-            query = query.Where(c => c.CreatedAt < rangeEnd.Value);
-        }
-
-        return await query
-            .GroupBy(c => c.MerchantId)
-            .Select(g => new
-            {
-                MerchantId = g.Key,
-                Count = (decimal)g.Count()
-            })
-            .ToDictionaryAsync(x => x.MerchantId, x => x.Count);
-    }
-
-    private static decimal CalculateThreeMonthAverage(
-        IReadOnlyDictionary<Guid, decimal> counts,
-        int merchantCount,
-        decimal fallback)
-    {
-        if (merchantCount == 0)
-        {
-            return fallback;
-        }
-
-        var average = counts.Values.Sum() / merchantCount / 3.0m;
-        return average > 0 ? average : fallback;
     }
 }
