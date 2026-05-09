@@ -18,10 +18,10 @@ public class CheckInController : ControllerBase
     }
 
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
-    [HttpGet("generate-qr/{orderId}")]
-    public IActionResult GenerateQrCode(Guid orderId)
+    [HttpGet("generate-qr")]
+    public IActionResult GenerateQrCode()
     {
-        var qrText = "https://www.youtube.com/watch?v=XWt96eZphlU";
+        var qrText = $"https://u-gem.vercel.app/check-in";
         var qrCodeBytes = _service.GenerateQrCode(qrText);
         return File(qrCodeBytes, "image/png");
     }
