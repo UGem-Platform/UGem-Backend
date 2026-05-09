@@ -79,18 +79,6 @@ builder.Services.AddScoped<StaffService.IService, StaffService.Service>();
 builder.Services.AddScoped<RebalancingJob>();
 builder.Services.AddQuartz(options =>
 {
-    // var jobKey = new JobKey(nameof(ProcessTransactionPendingJob));
-    //
-    // options
-    //     .AddJob<ProcessTransactionPendingJob>(jobKey)
-    //     .AddTrigger(trigger =>
-    //         trigger
-    //             .ForJob(jobKey)
-    //             .WithSimpleSchedule(schedule => schedule
-    //                 .WithIntervalInMinutes(2)
-    //                 .RepeatForever()
-    //             )
-    //     );
     var rebalancingJobKey = new JobKey(nameof(RebalancingJob));
     options.AddJob<RebalancingJob>(rebalancingJobKey)
         .AddTrigger(trigger => trigger
@@ -99,6 +87,15 @@ builder.Services.AddQuartz(options =>
                 .WithIntervalInHours(24*14)
                 .RepeatForever())
             .StartNow()); 
+    
+    var processTransactionPendingJob = new JobKey(nameof(ProcessTransactionPendingJob));
+    options.AddJob<ProcessTransactionPendingJob>(processTransactionPendingJob)
+        .AddTrigger(trigger => trigger
+            .ForJob(processTransactionPendingJob)
+            .WithSimpleSchedule(schedule => schedule
+                .WithIntervalInMinutes(1)
+                .RepeatForever())
+            .StartNow());
 });
 builder.Services.AddCors(options =>
 {

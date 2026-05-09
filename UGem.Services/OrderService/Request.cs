@@ -10,7 +10,8 @@ public class Request
         Accepted,
         Rejected,
         Completed,
-        NotReceived
+        NotReceived,
+        Expired
     }
 
     public class CreateOrderRequest

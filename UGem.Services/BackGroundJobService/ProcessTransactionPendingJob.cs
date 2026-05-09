@@ -7,8 +7,8 @@ namespace UGem.Services.BackGroundJobService;
 public class ProcessTransactionPendingJob : IJob
 {
     private const string PendingStatus = "Pending";
-    private const string CancelledStatus = "Cancelled";
-    private static readonly TimeSpan DefaultPendingTimeout = TimeSpan.FromMinutes(5);
+    private const string ExpiredStatus = "Expired";
+    private static readonly TimeSpan DefaultPendingTimeout = TimeSpan.FromMinutes(15);
 
     private readonly AppDbContext _dbContext;
     
@@ -41,7 +41,7 @@ public class ProcessTransactionPendingJob : IJob
 
         foreach (var order in expiredPendingOrders)
         {
-            order.Status = CancelledStatus;
+            order.Status = ExpiredStatus;
             order.UpdatedAt = now;
         }
 
