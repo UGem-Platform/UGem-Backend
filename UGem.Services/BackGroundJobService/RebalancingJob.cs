@@ -203,9 +203,13 @@ public class RebalancingJob : IJob
                     Math.Round(US, 4),
                     Math.Round(platformFeePercent, 2));
             }
-            catch (Exception ex)
+            catch (KeyNotFoundException ex)
             {
-                _logger.LogError("Error calculating US for merchant {name}: {ex}", merchant.Name, ex.Message);
+                _logger.LogError(ex, "Missing SI value while calculating US for merchant {name}", merchant.Name);
+            }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogError(ex, "Invalid operation while calculating US for merchant {name}", merchant.Name);
             }
         }
 
