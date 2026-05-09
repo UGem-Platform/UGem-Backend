@@ -47,9 +47,11 @@ public class Service : IService
         };
 
         var uploadResult = await _cloudinary.UploadAsync(uploadParams);
-        if (uploadResult.Error != null || uploadResult.SecureUrl == null)
+        if (uploadResult.Error != null)
         {
-            throw new InvalidOperationException("Image upload failed.");
+            throw new InvalidOperationException(
+                $"Cloudinary upload failed: {uploadResult.Error.Message}"
+            );
         }
 
         return uploadResult.SecureUrl.ToString();
