@@ -48,7 +48,7 @@ public class ProcessTransactionPendingJob : IJob
         await _dbContext.SaveChangesAsync(context.CancellationToken);
 
         _logger.LogInformation(
-            "ProcessTransactionPendingJob completed: cancelled {CancelledCount} pending orders older than {PendingTimeoutMinutes} minutes.",
+            "ProcessTransactionPendingJob completed: expired {ExpiredCount} pending orders older than {PendingTimeoutMinutes} minutes.",
             expiredPendingOrders.Count,
             pendingTimeoutMinutes);
     }
