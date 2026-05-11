@@ -19,10 +19,10 @@ public class CheckInController : ControllerBase
 
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     [HttpGet("generate-qr")]
-    public IActionResult GenerateQrCode(Request.GenerateQrCodeRequest request)
+    public async Task<IActionResult> GenerateQrCode([FromQuery]Request.GenerateQrCodeRequest request)
     {
 
-        var qrCodeBytes = _service.GenerateQrCode(request);
+        var qrCodeBytes = await _service.GenerateQrCode(request);
         return File(qrCodeBytes, "image/png");
     }
     

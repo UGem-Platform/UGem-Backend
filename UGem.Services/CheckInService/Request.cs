@@ -4,6 +4,6 @@ public class Request
 {
     public class GenerateQrCodeRequest
     {
-        public Guid MerchantId { get; set; }
+        public Guid OrderId { get; set; }
     }
 }
