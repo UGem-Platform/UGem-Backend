@@ -48,5 +48,44 @@ public class Response
         public string Code { get; set; } = string.Empty;
         public string QRCode { get; set; } = string.Empty;
     }
+    
+    public class GetOrderBillResponse
+    {
+        public Guid OrderId { get; set; }
+
+        public required string Name { get; set; }
+ 
+        public required string PaymentMethod { get; set; }
+
+        public DateTimeOffset OrderedAt { get; set; }
+
+        public required string DeliveryAddress { get; set; }
+        
+        public decimal Discount { get; set; }
+
+        public decimal FinalPrice { get; set; }
+
+        public List<BillItemResponse> Items { get; set; } = new();
+    }
+        
+    public class BillItemResponse
+    {
+        public required string Name { get; set; } 
+
+        public int Quantity { get; set; }
+
+        public decimal UnitPrice { get; set; }
+        
+        public decimal SubTotal { get; set; }
+ 
+    }
+    
+    public class UpdateBillResponse
+    {
+        public Guid OrderId { get; set; }
+        public decimal Discount { get; set; }
+        public decimal FinalPrice { get; set; }
+        public List<BillItemResponse> Items { get; set; } = new();
+    }
 
 }
