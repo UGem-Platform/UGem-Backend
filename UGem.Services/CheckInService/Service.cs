@@ -17,10 +17,11 @@ public class Service : IService
         _httpContext = httpContext;
     }
 
-    public byte[] GenerateQrCode(string text)
+    public byte[] GenerateQrCode(Request.GenerateQrCodeRequest request)
     {
+        var qrText = $"https://u-gem.vercel.app/check-in?merchantId={request.MerchantId}";
         using var qrGenerator = new QRCodeGenerator();
-        var qrCodeData = qrGenerator.CreateQrCode(text, QRCodeGenerator.ECCLevel.Q);
+        var qrCodeData = qrGenerator.CreateQrCode(qrText, QRCodeGenerator.ECCLevel.Q);
         var qrCode = new PngByteQRCode(qrCodeData);
         return qrCode.GetGraphic(20);
     }
