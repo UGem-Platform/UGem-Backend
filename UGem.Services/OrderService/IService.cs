@@ -14,5 +14,7 @@ public interface IService
     public Task ConfirmOrderReceived(Request.ConfirmOrderRequest request);
     
     public Task ConfirmOrderNotReceived(Request.ConfirmOrderRequest request);
+    public Task<Response.GetOrderBillResponse> GetBill(Request.GetBillByOrderIdRequest request);
+
 
 }

@@ -30,10 +30,11 @@ public class OrderController : ControllerBase
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
     public async Task<IActionResult> CreateOrder(OrderRequest.CreateOrderRequest request)
     {
-        var results =  await _orderService.CreateOrder(request);
-        return Ok(ApiResponseFactory.SuccessResponse(results, "Order created successfully", HttpContext.TraceIdentifier));
+        var results = await _orderService.CreateOrder(request);
+        return Ok(
+            ApiResponseFactory.SuccessResponse(results, "Order created successfully", HttpContext.TraceIdentifier));
     }
-    
+
     [HttpPost(template: "sepay/webhook")]
     public async Task<IActionResult> SepayWebhook(Request.SepayWebhookRequest request)
     {
@@ -119,6 +120,18 @@ public class OrderController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(
             null,
             "Order rejected successfully",
+            HttpContext.TraceIdentifier
+        ));
+    }
+
+    [HttpGet("bill")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    public async Task<IActionResult> GetBill([FromQuery] Request.GetBillByOrderIdRequest request)
+    {
+        var result = await _orderService.GetBill(request);
+        return Ok(ApiResponseFactory.SuccessResponse(
+            result,
+            "Order bill retrieved successfully",
             HttpContext.TraceIdentifier
         ));
     }

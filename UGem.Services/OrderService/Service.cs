@@ -383,6 +383,43 @@ public class Service : IService
         await _dbContext.SaveChangesAsync();
     }
 
+    public async Task<Response.GetOrderBillResponse> GetBill(Request.GetBillByOrderIdRequest request)
+    {
+        var customerId = GetRequiredGuidClaim("CustomerId");
+        
+        var order = await _dbContext.Orders
+            .Include(x => x.OrderDetails)
+            .FirstOrDefaultAsync(x => x.Id == request.OrderId &&  x.CustomerId == customerId);
+
+        if (order == null)
+        {
+            throw new KeyNotFoundException("Order not found");
+        }
+
+        var selectOrder = new Response.GetOrderBillResponse()
+        {
+            OrderId = order.Id,
+            Name = order.Name,
+            PaymentMethod = order.PaymentMethod,
+            OrderedAt = order.OrderedAt,
+            DeliveryAddress = order.DeliveryAddress,
+            Discount = order.Discount,
+            FinalPrice = order.FinalPrice,
+            Items = order.OrderDetails.Select(x =>
+                    new Response.BillItemResponse()
+                    {
+                        Name = x.Name,
+                        Quantity = x.Quantity,
+                        SubTotal = x.UnitPrice * x.Quantity,
+                        UnitPrice = x.UnitPrice
+                    })
+                .ToList()
+        };
+
+        return selectOrder;
+    }
+    
+
     private static Guid ExtractOrderId(string? content)
     {
         if (string.IsNullOrWhiteSpace(content))

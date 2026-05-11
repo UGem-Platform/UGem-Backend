@@ -55,4 +55,9 @@ public class Request
         public decimal Accumulated { get; set; }
         public long Id { get; set; }
     }
+
+    public class GetBillByOrderIdRequest
+    {
+        public Guid OrderId { get; set; }
+    }
 }
