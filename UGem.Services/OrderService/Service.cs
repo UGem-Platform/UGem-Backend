@@ -164,6 +164,7 @@ public class Service : IService
                 FoodId = food.Id,
                 Quantity = requestedItems[food.Id],
                 UnitPrice = food.Price,
+                Notes = request.Foods.First(x => x.FoodId == food.Id).Notes
             }).ToList()
         };
 

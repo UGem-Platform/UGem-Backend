@@ -27,5 +27,6 @@ public class Request
     {
         public Guid FoodId { get; set; }
         public int Quantity { get; set; }
+        public string? Notes { get; set; }
     }
 }
