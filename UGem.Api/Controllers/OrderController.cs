@@ -135,4 +135,41 @@ public class OrderController : ControllerBase
             HttpContext.TraceIdentifier
         ));
     }
+    
+    [HttpPost("bill/confirm")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    public async Task<IActionResult> ConfirmBill(Request.ConfirmBillRequest request)
+    {
+        await _orderService.ConfirmBill(request);
+        return Ok(ApiResponseFactory.SuccessResponse(
+            null,
+            "Bill confirmed successfully",
+            HttpContext.TraceIdentifier
+        ));
+    }
+    
+    [HttpPost("bill/reject")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    public async Task<IActionResult> RejectBill([FromBody] OrderRequest.RejectBillRequest request)
+    {
+        await _orderService.RejectBill(request);
+
+        return Ok(ApiResponseFactory.SuccessResponse(
+            null,
+            "Bill rejected successfully",
+            HttpContext.TraceIdentifier
+        ));
+    }
+    [HttpPatch("bill")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    public async Task<IActionResult> UpdateBill([FromBody] OrderRequest.UpdateBillRequest request)
+    {
+        var result = await _orderService.UpdateBill(request);
+        return Ok(ApiResponseFactory.SuccessResponse(
+            result,
+            "Bill updated successfully",
+            HttpContext.TraceIdentifier
+        ));
+    }
+    
 }

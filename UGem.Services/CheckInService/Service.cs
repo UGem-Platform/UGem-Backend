@@ -45,18 +45,31 @@ public class Service : IService
             await _dbContext.SaveChangesAsync();
         }
 
-    public async Task FireCheckIn()
+    public async Task CreateCheckInForQr(Request.CreateCheckInForQr request)
     {
-        var cusId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "CustomerId")?.Value;
-        
-        var cusIdGuid = Guid.Parse(cusId!);
-        
-        var customer = await _dbContext.Customers.FirstOrDefaultAsync(x => x.Id == cusIdGuid);
-        
-        if (customer != null)
-        {
-            customer.TotalCheckIns += 1;
-        } 
-        await _dbContext.SaveChangesAsync();    
+        var customerId = _httpContext.HttpContext?.User.Claims
+            .FirstOrDefault(x => x.Type == "CustomerId")?.Value;
+
+        if (string.IsNullOrEmpty(customerId))
+            throw new UnauthorizedAccessException("CustomerId not found");
+
+        var customerIdGuid = Guid.Parse(customerId);
+
+        var order = await _dbContext.Orders
+            .Include(x => x.OrderDetails)
+            .ThenInclude(x => x.Food)
+            .FirstOrDefaultAsync(x => x.Id == request.OrderId && x.CustomerId == customerIdGuid);
+
+        if (order == null)
+            throw new KeyNotFoundException("Order not found");
+
+        var merchantId = order.OrderDetails
+            .Select(x => x.Food.MerchantId)
+            .FirstOrDefault();
+
+        if (merchantId == Guid.Empty)
+            throw new KeyNotFoundException("Merchant not found");
+
+        await CreateCheckIn(customerIdGuid, merchantId);
     }
 }

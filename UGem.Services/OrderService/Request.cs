@@ -11,6 +11,9 @@ public class Request
         Rejected,
         Completed,
         NotReceived,
+        BillConfirmed,
+        BillRejected,
+        BillUpdated,
         Expired
     }
 
@@ -59,5 +62,29 @@ public class Request
     public class GetBillByOrderIdRequest
     {
         public Guid OrderId { get; set; }
+    }
+    public class ConfirmBillRequest
+    {
+        public Guid OrderId { get; set; }
+    }
+
+    public class RejectBillRequest
+    {
+        public Guid OrderId { get; set; }
+        public string? Reason { get; set; }
+    }
+
+    public class UpdateBillRequest
+    {
+        public Guid OrderId { get; set; }
+        public decimal? Discount { get; set; }
+        public List<UpdateBillItemRequest>? Items { get; set; }
+    }
+
+    public class UpdateBillItemRequest
+    {
+        public Guid FoodId { get; set; }
+        public int? Quantity { get; set; }
+        public decimal? UnitPrice { get; set; }
     }
 }

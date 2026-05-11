@@ -28,9 +28,9 @@ public class CheckInController : ControllerBase
     
     [HttpPost("verify")]
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
-    public async Task<IActionResult> FireCheckIn()
+    public async Task<IActionResult> CreateCheckInForQr(Request.CreateCheckInForQr request)
     {
-        await _service.FireCheckIn();
+        await _service.CreateCheckInForQr(request);
 
         return Ok(ApiResponseFactory.SuccessResponse(
             null,

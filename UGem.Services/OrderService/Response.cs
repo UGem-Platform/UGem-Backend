@@ -65,7 +65,6 @@ public class Response
 
         public decimal FinalPrice { get; set; }
 
-        // item
         public List<BillItemResponse> Items { get; set; } = new();
     }
         
@@ -79,6 +78,14 @@ public class Response
         
         public decimal SubTotal { get; set; }
  
+    }
+    
+    public class UpdateBillResponse
+    {
+        public Guid OrderId { get; set; }
+        public decimal Discount { get; set; }
+        public decimal FinalPrice { get; set; }
+        public List<BillItemResponse> Items { get; set; } = new();
     }
 
 }

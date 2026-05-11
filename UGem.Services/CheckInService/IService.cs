@@ -6,7 +6,7 @@ public interface IService
     
     public Task CreateCheckIn(Guid customerId, Guid merchantId);
     
-    public Task FireCheckIn();
+    public Task CreateCheckInForQr(Request.CreateCheckInForQr request);
 
     
 }
