@@ -17,12 +17,22 @@ public class Service : IService
         _httpContext = httpContext;
     }
 
-    public byte[] GenerateQrCode(Request.GenerateQrCodeRequest request)
+    public async Task<byte[]> GenerateQrCode(Request.GenerateQrCodeRequest request)
     {
-        var qrText = $"https://u-gem.vercel.app/check-in?merchantId={request.MerchantId}";
+        var order = await _dbContext.Orders
+            .FirstOrDefaultAsync(x => x.Id == request.OrderId);
+
+        if (order == null)
+            throw new KeyNotFoundException("Order not found");
+        
+        var qrText = $"https://u-gem.vercel.app/check-in?orderId={request.OrderId}";
+        
         using var qrGenerator = new QRCodeGenerator();
+        
         var qrCodeData = qrGenerator.CreateQrCode(qrText, QRCodeGenerator.ECCLevel.Q);
+        
         var qrCode = new PngByteQRCode(qrCodeData);
+        
         return qrCode.GetGraphic(20);
     }
 
