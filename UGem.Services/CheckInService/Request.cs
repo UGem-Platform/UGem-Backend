@@ -6,4 +6,8 @@ public class Request
     {
         public Guid OrderId { get; set; }
     }
+    public class CreateCheckInForQr
+    {
+        public Guid OrderId { get; set; }
+    }
 }
