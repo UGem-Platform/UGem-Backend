@@ -639,8 +639,11 @@ public class Service : IService
         if (order == null)
             throw new KeyNotFoundException("Order not found or not yours");
 
-        if (order.Status != Request.OrderStatus.BillConfirmed.ToString())
-            throw new InvalidOperationException("Cash payment can only be confirmed after bill is confirmed");
+        if (!string.Equals(order.PaymentMethod, "Cash", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException("Cash payment confirmation is only available for cash orders");
+
+        if (order.Status != Request.OrderStatus.CashPending.ToString())
+            throw new InvalidOperationException("Cash payment can only be confirmed after the customer marks it as paid");
 
         var merchantId = order.OrderDetails
             .Select(od => od.Food.MerchantId)

@@ -4,12 +4,13 @@ namespace UGem.Services.OrderService;
 
 public class Request
 {
-    public enum OrderStatus
+ public enum OrderStatus
     {
         Pending,
         Accepted,
         Rejected,
         Completed,
+        CashPending,
         NotReceived,
         BillConfirmed,
         BillRejected,
