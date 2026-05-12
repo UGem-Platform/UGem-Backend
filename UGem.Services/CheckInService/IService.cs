@@ -7,6 +7,5 @@ public interface IService
     public Task CreateCheckIn(Guid customerId, Guid merchantId);
     
     public Task CreateCheckInForQr(Request.CreateCheckInForQr request);
-
-    
+    public Task<List<Response.CurrentCheckInResponse>> GetCurrentCheckIns();
 }
