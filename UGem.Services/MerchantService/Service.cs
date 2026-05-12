@@ -205,6 +205,43 @@ public class Service : IService
             PageSize = pageSize,
         };
     }
+    public async Task<Base.Response.PageResult<Response.GetMerchantResponseForStaff>> GetAllMerchantForStaff(string? searchTerm, int  pageSize, int pageIndex)
+    {
+        var (normalizedPageIndex, normalizedPageSize) =
+            NormalizePagination(pageIndex, pageSize);
+        var query = _dbContext.Merchants.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            query = query.Where(x =>
+                x.Name.Contains(searchTerm) ||
+                x.Description.Contains(searchTerm));
+        }
+        var totalItems = await query.CountAsync();
+         query  =  query.OrderByDescending(x => x.CreatedAt) .Skip((normalizedPageIndex - 1) * normalizedPageSize)
+             .Take(normalizedPageSize);
+         var items = await query.Select(x => new Response.GetMerchantResponseForStaff
+         {
+             Id = x.Id,
+             Name = x.Name,
+             Description = x.Description,
+             Address = x.Address,
+             Email = x.Email,
+             LogoUrl = x.LogoUrl,
+             UnderratedScore = x.UnderratedScore,
+             PlatformFeePercent =  x.PlatformFeePercent,
+             OpeningHours =  x.OpeningHours,
+            Rating = x.Reviews.Average(r => (decimal?)r.Rating) ?? 0m,
+
+
+         }).ToListAsync();
+         return new Base.Response.PageResult<Response.GetMerchantResponseForStaff>
+         {
+             Items = items,
+             TotalItems = totalItems,
+             PageIndex = normalizedPageIndex,
+             PageSize = normalizedPageSize
+         };
+    }
 
     public async Task UpdateMerchant(Request.UpdateMerchantRequest request)
     {
@@ -265,6 +302,7 @@ public class Service : IService
 
         await _dbContext.SaveChangesAsync();
     }
+    
 
     private static (int PageIndex, int PageSize) NormalizePagination(int pageIndex, int pageSize)
     {

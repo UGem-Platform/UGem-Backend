@@ -499,6 +499,52 @@ public class Service : IService
         _dbContext.Notifications.Add(notification);
         await _dbContext.SaveChangesAsync();
     }
+
+    public async Task RequestCashPayment(Request.ConfirmOrderRequest request)
+    {
+        var customerId = GetRequiredGuidClaim("CustomerId");
+        var userId = GetRequiredGuidClaim("UserId");
+
+        var order = await _dbContext.Orders
+            .Include(x => x.Customer)
+            .Include(x => x.OrderDetails)
+            .ThenInclude(x => x.Food)
+            .ThenInclude(x => x.Merchant)
+            .FirstOrDefaultAsync(x => x.Id == request.OrderId && x.CustomerId == customerId);
+
+        if (order == null)
+        {
+            throw new KeyNotFoundException("Order not found");
+        }
+
+        if (!string.Equals(order.PaymentMethod, "Cash", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Cash payment request is only available for cash orders");
+        }
+
+        if (order.Status != Request.OrderStatus.BillConfirmed.ToString())
+        {
+            throw new InvalidOperationException("Cash payment can only be requested after bill is confirmed");
+        }
+
+        order.Status = Request.OrderStatus.CashPending.ToString();
+        order.UpdatedAt = DateTimeOffset.UtcNow;
+
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+        var merchant = order.OrderDetails.Select(x => x.Food.Merchant).FirstOrDefault();
+
+        var notification = new Notification
+        {
+            UserId = merchant!.UserId,
+            Title = "Cash payment requested",
+            Message = $"{user!.FullName} marked order #{order.Id} as paid in cash. Please confirm the payment.",
+            Type = "order",
+            IsRead = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+        };
+        _dbContext.Notifications.Add(notification);
+        await _dbContext.SaveChangesAsync();
+    }
  
     public async Task RejectBill(Request.RejectBillRequest request)
     {

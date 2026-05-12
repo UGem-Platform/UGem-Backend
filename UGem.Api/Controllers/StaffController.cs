@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UGem.Api.Extensions;
 using UGem.Services.Models;
 using UGem.Services.StaffService;
 
@@ -34,6 +36,7 @@ public class StaffController : ControllerBase
         return Ok();
     }
     [HttpPost("accept")]
+    [Authorize(Policy = JwtExtensions.StaffPolicy)]
     public async Task<IActionResult> Approve([FromBody] Request.ApproveReviewerApplicationRequest request)
     
     {
@@ -42,6 +45,7 @@ public class StaffController : ControllerBase
     }
 
     [HttpPost("reject")]
+    [Authorize(Policy = JwtExtensions.StaffPolicy)]
     public async Task<IActionResult> Reject([FromBody] Request.RejectReviewerApplicationRequest request)
     {
         await _service.RejectApplication(request);

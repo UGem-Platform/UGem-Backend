@@ -39,4 +39,12 @@ public abstract class Response
         public decimal UnderratedScore { get; set; }
         public required List<FoodService.Response.Menu> Menu { get; set; }
     }
+
+    public class GetMerchantResponseForStaff: BaseResponse
+    {
+        public decimal UnderratedScore { get; set; }
+        public decimal PlatformFeePercent { get; set; }
+       public string? OpeningHours { get; set; }
+       public required string Email { get; set; }
+    }
 }

@@ -7,4 +7,5 @@ public interface IService
     public Task<Response.DetailResponse?> GetDetail(Guid id);
     public Task<Base.Response.PageResult<Response.GetMerchantResponse>> GetMerchantByCategory(Request.GetByCategoryRequest request);
     public Task UpdateMerchant(Request.UpdateMerchantRequest request);
+    public Task<Base.Response.PageResult<Response.GetMerchantResponseForStaff>> GetAllMerchantForStaff(string? searchTerm, int  pageSize, int pageIndex);
 }
