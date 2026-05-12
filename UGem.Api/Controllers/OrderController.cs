@@ -178,4 +178,16 @@ public class OrderController : ControllerBase
             HttpContext.TraceIdentifier
         ));
     }
+    [HttpPatch("{orderId}/cash/confirm")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    public async Task<IActionResult> ConfirmCashPayment([FromRoute] Guid orderId)
+    {
+        await _orderService.ConfirmCashPayment(orderId);
+
+        return Ok(ApiResponseFactory.SuccessResponse(
+            null,
+            "Cash payment confirmed successfully",
+            HttpContext.TraceIdentifier
+        ));
+    }
 }
