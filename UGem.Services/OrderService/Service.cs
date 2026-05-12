@@ -102,7 +102,38 @@ public class Service : IService
     public async Task<Response.CreateOrderResponse> CreateOrder(Request.CreateOrderRequest request)
     {
         var customerId = GetRequiredGuidClaim("CustomerId");
+        return await CreateOrderInternal(customerId, request, null);
+    }
 
+    public async Task<Response.CreateOrderResponse> CreateMerchantOrder(Request.CreateMerchantOrderRequest request)
+    {
+        var merchantUserId = GetRequiredGuidClaim("UserId");
+        var merchant = await _dbContext.Merchants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.UserId == merchantUserId);
+
+        if (merchant == null)
+        {
+            throw new KeyNotFoundException("Merchant not found");
+        }
+
+        var customerExists = await _dbContext.Customers
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == request.CustomerId);
+
+        if (!customerExists)
+        {
+            throw new KeyNotFoundException("Customer not found");
+        }
+
+        return await CreateOrderInternal(request.CustomerId, request, merchant.Id);
+    }
+
+    private async Task<Response.CreateOrderResponse> CreateOrderInternal(
+        Guid customerId,
+        Request.CreateOrderRequest request,
+        Guid? merchantId)
+    {
         if (request.Foods == null || request.Foods.Count == 0)
         {
             throw new InvalidOperationException("At least one food item is required");
@@ -124,7 +155,8 @@ public class Service : IService
             {
                 x.Id,
                 x.Name,
-                x.Price
+                x.Price,
+                x.MerchantId
             })
             .ToListAsync();
 
@@ -137,6 +169,11 @@ public class Service : IService
         if (totalAmount <= 0)
         {
             throw new InvalidOperationException("Total amount must be greater than 0");
+        }
+
+        if (merchantId.HasValue && foods.Any(food => food.MerchantId != merchantId.Value))
+        {
+            throw new InvalidOperationException("All foods must belong to the merchant");
         }
 
         var orderId = Guid.NewGuid();

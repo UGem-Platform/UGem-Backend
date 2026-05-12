@@ -86,4 +86,10 @@ public class Request
         public int? Quantity { get; set; }
         public decimal? UnitPrice { get; set; }
     }
+
+    public class CreateMerchantOrderRequest: CreateOrderRequest
+    {
+        
+        public Guid CustomerId { get; set; }
+    }
 }

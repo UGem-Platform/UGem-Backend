@@ -25,6 +25,18 @@ public class CheckInController : ControllerBase
         var qrCodeBytes = await _service.GenerateQrCode(request);
         return File(qrCodeBytes, "image/png");
     }
+
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    [HttpGet("current")]
+    public async Task<IActionResult> GetCurrentCheckIns()
+    {
+        var result = await _service.GetCurrentCheckIns();
+        return Ok(ApiResponseFactory.SuccessResponse(
+            result,
+            "Current check-ins retrieved successfully",
+            HttpContext.TraceIdentifier
+        ));
+    }
     
     [HttpPost("verify")]
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]

@@ -83,4 +83,40 @@ public class Service : IService
 
         await CreateCheckIn(customerIdGuid, merchantId);
     }
+
+    public async Task<List<Response.CurrentCheckInResponse>> GetCurrentCheckIns()
+    {
+        var merchantUserId = _httpContext.HttpContext?.User.Claims
+            .FirstOrDefault(x => x.Type == "UserId")?.Value;
+
+        if (string.IsNullOrWhiteSpace(merchantUserId))
+            throw new UnauthorizedAccessException("UserId not found");
+
+        var merchantUserIdGuid = Guid.Parse(merchantUserId);
+
+        var merchant = await _dbContext.Merchants
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.UserId == merchantUserIdGuid);
+
+        if (merchant == null)
+            throw new KeyNotFoundException("Merchant not found");
+
+        return await _dbContext.CheckIns
+            .AsNoTracking()
+            .Include(x => x.Customer)
+            .ThenInclude(x => x.User)
+            .Where(x => x.MerchantId == merchant.Id)
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(20)
+            .Select(x => new Response.CurrentCheckInResponse
+            {
+                CheckInId = x.Id,
+                MerchantId = x.MerchantId,
+                CustomerId = x.CustomerId,
+                CustomerName = x.Customer.User.FullName,
+                CustomerEmail = x.Customer.User.Email,
+                CreatedAt = x.CreatedAt,
+            })
+            .ToListAsync();
+    }
 }

@@ -8,6 +8,7 @@ public interface IService
     public Task AcceptOrder(Guid orderId);
     public Task RejectOrder(Request.ReasonRejectRequest request);
     public Task<Response.CreateOrderResponse> CreateOrder(Request.CreateOrderRequest request);
+    public Task<Response.CreateOrderResponse> CreateMerchantOrder(Request.CreateMerchantOrderRequest request);
     public Task SepayWebhookHandler(Request.SepayWebhookRequest request);
     public Task<List<Response.OrderResponse>> GetOrderListFromCustomerId();
     public Task<List<Response.GetOrderDetailResponse>> GetOrderDetail(Guid orderId);

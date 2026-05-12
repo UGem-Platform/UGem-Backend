@@ -33,6 +33,14 @@ public class OrderController : ControllerBase
         var results =  await _orderService.CreateOrder(request);
         return Ok(ApiResponseFactory.SuccessResponse(results, "Order created successfully", HttpContext.TraceIdentifier));
     }
+
+    [HttpPost("merchant")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    public async Task<IActionResult> CreateOrderForMerchant(OrderRequest.CreateMerchantOrderRequest request)
+    {
+        var results = await _orderService.CreateMerchantOrder(request);
+        return Ok(ApiResponseFactory.SuccessResponse(results, "Merchant order created successfully", HttpContext.TraceIdentifier));
+    }
     
     [HttpPost(template: "sepay/webhook")]
     public async Task<IActionResult> SepayWebhook(Request.SepayWebhookRequest request)
