@@ -434,7 +434,7 @@ public class Service : IService
             throw new KeyNotFoundException("Order not found");
         }
 
-        var selectOrder = new Response.GetOrderBillResponse()
+        var selectOrder = new Response.GetOrderBillResponse
         {
             OrderId = order.Id,
             Name = order.Name,
@@ -451,7 +451,8 @@ public class Service : IService
                         SubTotal = x.UnitPrice * x.Quantity,
                         UnitPrice = x.UnitPrice
                     })
-                .ToList()
+                .ToList(),
+            Notes = order.Notes,
         };
 
         return selectOrder;
@@ -498,6 +499,41 @@ public class Service : IService
         };
         _dbContext.Notifications.Add(notification);
         await _dbContext.SaveChangesAsync();
+    }
+    public async Task<Response.GetOrderBillResponse> GetMerchantOrderDetail(Guid orderId)
+    {
+        var merchantUserId = GetRequiredGuidClaim("UserId");
+
+        var order = await _dbContext.Orders
+            .AsNoTracking()
+            .Include(x => x.OrderDetails)
+            .FirstOrDefaultAsync(x =>
+                x.Id == orderId &&
+                x.OrderDetails.Any(od => od.Food.Merchant.UserId == merchantUserId));
+
+        if (order == null)
+        {
+            throw new KeyNotFoundException("Order not found");
+        }
+
+        return new Response.GetOrderBillResponse
+        {
+            OrderId = order.Id,
+            Name = order.Name,
+            Notes = order.Notes,
+            PaymentMethod = order.PaymentMethod,
+            OrderedAt = order.OrderedAt,
+            DeliveryAddress = order.DeliveryAddress,
+            Discount = order.Discount,
+            FinalPrice = order.FinalPrice,
+            Items = order.OrderDetails.Select(x => new Response.BillItemResponse
+            {
+                Name = x.Name,
+                Quantity = x.Quantity,
+                SubTotal = x.UnitPrice * x.Quantity,
+                UnitPrice = x.UnitPrice,
+            }).ToList(),
+        };
     }
 
     public async Task RequestCashPayment(Request.ConfirmOrderRequest request)
