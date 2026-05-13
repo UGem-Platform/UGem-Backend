@@ -4,12 +4,12 @@ public class Request
 {
     public class ApproveReviewerApplicationRequest
     {
-        public Guid ApplicationId { get; set; }
+        public Guid ReviewerApplicationId { get; set; }
     }
 
     public class RejectReviewerApplicationRequest
     {
-        public Guid ApplicationId { get; set; }
+        public Guid ReviewerApplicationId { get; set; }
         public string Reason { get; set; } = null!;
     }
    
