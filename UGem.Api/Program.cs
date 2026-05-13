@@ -6,6 +6,7 @@ using UGem.Api.Middlewares;
 using UGem.Api.Options;
 using UGem.Repositories;
 using  UGem.Services.BackGroundJobService;
+using FoodToppingService = UGem.Services.FoodToppingService;
 using AffiliateLinkService = UGem.Services.AffiliateLinkService;
 using ReviewerApplicationService = UGem.Services.ReviewerApplicationService;
 using ReviewService = UGem.Services.ReviewService;
@@ -80,6 +81,8 @@ builder.Services.AddScoped<AdminService.IService, AdminService.Service>();
 builder.Services.AddScoped<AffiliateLinkService.IService, AffiliateLinkService.Service>();
 builder.Services.AddScoped<ReviewerApplicationService.IService, ReviewerApplicationService.Service>();
 builder.Services.AddScoped<StaffService.IService, StaffService.Service>();
+builder.Services.AddScoped<AffiliateLinkService.IService, AffiliateLinkService.Service>();
+builder.Services.AddScoped<FoodToppingService.IService, FoodToppingService.Service>();
 builder.Services.AddScoped<RebalancingJob>();
 builder.Services.AddQuartz(options =>
 {

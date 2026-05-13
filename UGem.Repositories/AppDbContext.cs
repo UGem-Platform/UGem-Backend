@@ -54,6 +54,7 @@ public class AppDbContext : DbContext
     public DbSet<Category> Categories { get; set; }
     public DbSet<CategoryDetail> CategoryDetails { get; set; }
     public DbSet<Food> Foods { get; set; }
+    public DbSet<FoodTopping> FoodToppings { get; set; }
     public DbSet<Wishlist> Wishlists { get; set; }
     public DbSet<WishlistDetail> WishlistDetails { get; set; }
     public DbSet<CheckIn> CheckIns { get; set; }
@@ -62,7 +63,8 @@ public class AppDbContext : DbContext
     public DbSet<Review> Reviews { get; set; }
     public DbSet<ReviewerApplication> ReviewerApplications { get; set; } 
     public DbSet<ReviewDetail> ReviewDetails { get; set; }
-
+    public DbSet<OrderDetailTopping> OrderDetailToppings { get; set; }
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -767,6 +769,121 @@ public class AppDbContext : DbContext
                 IsDeleted = false
             }
         );
+
+        modelBuilder.Entity<FoodTopping>(builder =>
+        {
+            ConfigureBaseEntity(builder);
+
+            builder.Property(ft => ft.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            builder.Property(ft => ft.Price)
+                .HasPrecision(18, 2);
+
+            builder.Property(ft => ft.IsActive)
+                .IsRequired();
+
+            builder.HasOne(ft => ft.Food)
+                .WithMany(f => f.FoodToppings)
+                .HasForeignKey(ft => ft.FoodId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasIndex(ft => new { ft.FoodId, ft.Name })
+                .IsUnique();
+        });
+        modelBuilder.Entity<FoodTopping>().HasData(
+            new FoodTopping
+            {
+                Id = Guid.Parse("30000000-0000-0000-0000-000000000001"),
+
+                FoodId = FoodId1,
+
+                Name = "Nuoc Cot Dua",
+
+                Price = 5000m,
+
+                IsActive = true,
+
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 30, 0, TimeSpan.Zero),
+
+                IsDeleted = false
+            },
+
+            new FoodTopping
+            {
+                Id = Guid.Parse("30000000-0000-0000-0000-000000000002"),
+
+                FoodId = FoodId1,
+
+                Name = "Khoai Mon",
+
+                Price = 7000m,
+
+                IsActive = true,
+
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 30, 0, TimeSpan.Zero),
+
+                IsDeleted = false
+            },
+
+            new FoodTopping
+            {
+                Id = Guid.Parse("30000000-0000-0000-0000-000000000003"),
+
+                FoodId = FoodId2,
+
+                Name = "Them Cot Dua",
+
+                Price = 4000m,
+
+                IsActive = true,
+
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 30, 0, TimeSpan.Zero),
+
+                IsDeleted = false
+            },
+
+            new FoodTopping
+            {
+                Id = Guid.Parse("30000000-0000-0000-0000-000000000004"),
+
+                FoodId = FoodId2,
+
+                Name = "Them Ca Phe",
+
+                Price = 6000m,
+
+                IsActive = true,
+
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 30, 0, TimeSpan.Zero),
+
+                IsDeleted = false
+            }
+        );
+        modelBuilder.Entity<OrderDetailTopping>(builder =>
+        {
+            ConfigureBaseEntity(builder);
+
+            builder.Property(odt => odt.Name)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            builder.Property(odt => odt.Price)
+                .HasPrecision(18, 2);
+
+            builder.HasOne(odt => odt.OrderDetail)
+                .WithMany(od => od.OrderDetailToppings)
+                .HasForeignKey(odt => odt.OrderDetailId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(odt => odt.FoodTopping)
+                .WithMany()
+                .HasForeignKey(odt => odt.FoodToppingId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasIndex(odt => new { odt.OrderDetailId, odt.FoodToppingId });
+        });
 
         modelBuilder.Entity<Wishlist>(builder =>
         {
