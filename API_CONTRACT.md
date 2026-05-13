@@ -667,92 +667,11 @@ GET /api/v1/affiliate-links/{id}
 ### Admin
 
 ```http
-POST /api/v1/admins/staff
-```
-#### Request:
-```
- "email": "string",
-  "fullName": "string",
-  "password": "string",
-  "phoneNumber": "string"
-  ```
-#### Response:
-      {
-      "success": true,
-      "message": "Create staff success",
-      "data": null,
-      "errors": null,
-      "traceId": null,
-      "timestampUtc": "2026-05-13T11:21:24.6080312Z"
-     }
-```
-GET /api/v1/admins/staff
-```
-#### Request:
-    searchTerm: string
-    pageSize : int
-    pageIndex: int
-#### Response:
-    "success": true,
-    "message": "Get staff list success",
-    "data": {
-    "items": [
-    {
-    "id": "44444444-4444-4444-4444-444444444444",
-    "userId": "33333333-3333-3333-3333-333333333333",
-    "fullName": "Nguyen Tran Admin",
-    "email": "staff.duyet@ugem.com",
-    "phoneNumber": "0901000001",
-    "avatarUrl": null,
-    "isActive": true,
-    "hiredAt": "2026-01-01T00:00:00+00:00",
-    "createdAt": "2026-04-23T08:00:00+00:00"
-    }
-    ],
-    "totalItems": 2,
-    "pageSize": 10,
-    "pageIndex": 1
-    },
-    "errors": null,
-    "traceId": null,
-    "timestampUtc": "2026-05-13T11:19:17.7899557Z"
-    }
+POST /api/v1/admins
+GET /api/v1/admins
+GET /api/v1/admins/{id}
 ```
 
-Delete/api/v1/admins/staff/{staffId}
-```
-#### Request:
-    StaffId: Guid
-#### Response:
-    {
-    "success": true,
-    "message": "Delete staff success",
-    "data": null,
-    "errors": null,
-    "traceId": null,
-    "timestampUtc": "2026-05-13T11:25:27.0501592Z"
-    }
-```
-GET /api/v1/admins/dashboard
-```
-#### Response:
-    {
-    "success": true,
-    "message": "Get dashboard success",
-    "data": {
-    "totalUsers": int,
-    "totalMerchants": int,
-    "totalOrders": int,
-    "totalRevenue": decimal,
-    "newUsersToday": int,
-    "pendingApplications": int,
-    "pendingReviewerApplications": int
-    },
-    "errors": null,
-    "traceId": null,
-    "timestampUtc": "2026-05-13T11:26:18.7964569Z"
-    }
-```
 ### Staff
 
 ```http

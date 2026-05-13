@@ -25,7 +25,6 @@ using JwtService = UGem.Services.JwtService;
 using CustomerService = UGem.Services.CustomerService;
 using MerchantService = UGem.Services.MerchantService;
 using StaffService = UGem.Services.StaffService;
-using AdminService = UGem.Services.AdminService;
 using MailServiceOptions = UGem.Services.MailService.MailOption.MailOptions;
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,10 +75,9 @@ builder.Services.AddScoped<WishlistService.IService, WishlistService.Service>();
 builder.Services.AddScoped<CheckInService.IService, CheckInService.Service>();
 builder.Services.AddScoped<UserService.IService, UserService.Service>();
 builder.Services.AddScoped<ReviewService.IService, ReviewService.Service>();
-builder.Services.AddScoped<AdminService.IService, AdminService.Service>();
-builder.Services.AddScoped<AffiliateLinkService.IService, AffiliateLinkService.Service>();
 builder.Services.AddScoped<ReviewerApplicationService.IService, ReviewerApplicationService.Service>();
 builder.Services.AddScoped<StaffService.IService, StaffService.Service>();
+builder.Services.AddScoped<AffiliateLinkService.IService, AffiliateLinkService.Service>();
 builder.Services.AddScoped<RebalancingJob>();
 builder.Services.AddQuartz(options =>
 {
