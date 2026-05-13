@@ -43,7 +43,7 @@ public class MerchantController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result, "Merchants by category retrieved",
             HttpContext.TraceIdentifier));
     }
-    
+
     [HttpGet("map")]
     public async Task<IActionResult> Map([FromQuery] Request.MapRequest request)
     {
@@ -56,10 +56,16 @@ public class MerchantController : ControllerBase
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> UpdateMerchant(Request.UpdateMerchantRequest request)
     {
-        
         await _service.UpdateMerchant(request);
         return Ok(ApiResponseFactory.SuccessResponse("Merchant updated successfully", HttpContext.TraceIdentifier));
     }
 
-
+    [HttpGet("staff")]
+    [Authorize(Policy = JwtExtensions.StaffPolicy)]
+    public async Task<IActionResult> GetAllMerchantForStaff([FromQuery] string? searchTerm, int pageSize = 10,
+        int pageIndex = 1)
+    {
+        var result = await _service.GetAllMerchantForStaff(searchTerm, pageSize, pageIndex);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Merchants retrieved", HttpContext.TraceIdentifier));
+    }
 }

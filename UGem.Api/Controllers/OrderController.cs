@@ -154,6 +154,19 @@ public class OrderController : ControllerBase
             HttpContext.TraceIdentifier
         ));
     }
+
+    [HttpPatch("{orderId}/cash/request")]
+    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    public async Task<IActionResult> RequestCashPayment([FromRoute] Guid orderId)
+    {
+        await _orderService.RequestCashPayment(new OrderRequest.ConfirmOrderRequest { OrderId = orderId });
+
+        return Ok(ApiResponseFactory.SuccessResponse(
+            null,
+            "Cash payment request sent successfully",
+            HttpContext.TraceIdentifier
+        ));
+    }
     
     [HttpPost("bill/reject")]
     [Authorize(Policy = JwtExtensions.CustomerPolicy)]
