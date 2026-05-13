@@ -200,7 +200,7 @@ public class AppDbContext : DbContext
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
                 PhoneNumber = "0903000004",
                 IsActive = true,
-                Role = "Customer",
+                Role = "Reviewer",
                 CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
                 IsDeleted = false
             }
@@ -996,6 +996,25 @@ public class AppDbContext : DbContext
                 .HasForeignKey(r => r.MerchantId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+        modelBuilder.Entity<Reviewer>().HasData(
+            new Reviewer
+            {
+                Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+
+                CustomerId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
+
+                Rank = "Gold",
+
+                Points = 55,
+
+                Balance = 0,
+
+                CreatedAt = DateTimeOffset.UtcNow,
+
+                UpdatedAt = DateTimeOffset.UtcNow
+            }
+        );
+
 
         modelBuilder.Entity<ReviewDetail>(builder =>
         {

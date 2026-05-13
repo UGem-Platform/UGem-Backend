@@ -1,4 +1,8 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using UGem.Api.Extensions;
+using UGem.Services.AffiliateLinkService;
+using UGem.Services.Models;
 
 namespace UGem.Api.Controllers;
 
@@ -6,21 +10,20 @@ namespace UGem.Api.Controllers;
 [Route("api/v1/affiliate-links")]
 public class AffiliateLinkController : ControllerBase
 {
-    [HttpPost]
-    public IActionResult Create()
+    private readonly IService _service;
+
+    public AffiliateLinkController(IService service)
     {
-        return Ok();
+        _service = service;
     }
 
-    [HttpGet]
-    public IActionResult GetAll()
+    [Authorize(Policy = JwtExtensions.ReviewerPolicy)]
+    [HttpPost("")]
+    public async Task<IActionResult> CreateAffiliateLink(
+        Request.CreateAffiliateLinkRequest request)
     {
-        return Ok();
-    }
+        var result = await _service.CreateAffiliateLink(request);
 
-    [HttpGet("{id}")]
-    public IActionResult GetById(int id)
-    {
-        return Ok();
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Create affiliate link success"));
     }
 }
