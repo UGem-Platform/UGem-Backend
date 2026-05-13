@@ -230,6 +230,7 @@ public class Service : IService
              UnderratedScore = x.UnderratedScore,
              PlatformFeePercent =  x.PlatformFeePercent,
              OpeningHours =  x.OpeningHours,
+             ReviewCount =  x.Reviews.Count(),
             Rating = x.Reviews.Average(r => (decimal?)r.Rating) ?? 0m,
 
 
@@ -243,7 +244,7 @@ public class Service : IService
          };
     }
 
-    public async Task UpdateMerchant(Request.UpdateMerchantRequest request)
+    public   async Task UpdateMerchant(Request.UpdateMerchantRequest request)
     {
         var userIdGuid = GetRequiredGuidClaim("UserId");
 

@@ -54,6 +54,8 @@ public class Response
         public Guid OrderId { get; set; }
 
         public required string Name { get; set; }
+
+        public required string Notes { get; set; }
  
         public required string PaymentMethod { get; set; }
 
