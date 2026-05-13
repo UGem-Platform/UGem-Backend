@@ -14,6 +14,8 @@ public class Food: BaseEntity<Guid>, IAuditableEntity
     public Merchant Merchant { get; set; } = null!;
     
     public ICollection<CategoryDetail> CategoryDetails { get; set; } = new List<CategoryDetail>();
+
+    public ICollection<FoodTopping> FoodToppings { get; set; } = new List<FoodTopping>();
     
     public ICollection<OrderDetail> OrderDetails { get; set; } = new List<OrderDetail>();
     

@@ -151,7 +151,17 @@ public class Service : IService
                     Description = f.Description,
                     Price = f.Price,
                     ImageUrl = f.ImageUrl,
-                    CategoryDetail = f.CategoryDetails.Select(cd => cd.Category.Name).ToList()
+                    CategoryDetail = f.CategoryDetails.Select(cd => cd.Category.Name).ToList(),
+                    Toppings = f.FoodToppings
+                        .Where(ft => ft.IsActive && !ft.IsDeleted)
+                        .Select(ft => new FoodService.Response.Topping
+                        {
+                            Id = ft.Id,
+                            Name = ft.Name,
+                            Price = ft.Price,
+                            IsActive = ft.IsActive
+                        })
+                        .ToList()
                 }).ToList()
             })
             .FirstOrDefaultAsync();

@@ -15,6 +15,8 @@ public static class JwtExtensions
     public const string AdminAndStaffPolicy = "AdminAndStaffPolicy";
     public const string MerchantPolicy = "MerchantPolicy";
     public const string MerchantApplicantPolicy = "MerchantApplicantPolicy";
+    public const string MerchantAndCustomer = "MerchantAndCustomer";
+
 
     public static void AddJwtServices(this IServiceCollection services, IConfiguration configuration)
     {
@@ -70,7 +72,9 @@ public static class JwtExtensions
             //// [Authorize(Policy = JwtExtensions.MerchantPolicy)]
             options.AddPolicy(MerchantPolicy, policy =>
                 policy.RequireRole("Merchant"));
-options.AddPolicy(MerchantApplicantPolicy, policy =>
+            options.AddPolicy(MerchantApplicantPolicy, policy =>
+                policy.RequireRole("Customer", "Merchant"));
+            options.AddPolicy(MerchantAndCustomer, policy =>
                 policy.RequireRole("Customer", "Merchant"));
         });
     }

@@ -17,6 +17,8 @@ public class OrderDetail: BaseEntity<Guid>, IAuditableEntity
     
     public ReviewDetail? ReviewDetail { get; set; }
     
+    public List<OrderDetailTopping> OrderDetailToppings { get; set; }
+    
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }
