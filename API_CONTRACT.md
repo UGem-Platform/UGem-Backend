@@ -667,11 +667,92 @@ GET /api/v1/affiliate-links/{id}
 ### Admin
 
 ```http
-POST /api/v1/admins
-GET /api/v1/admins
-GET /api/v1/admins/{id}
+POST /api/v1/admins/staff
+```
+#### Request:
+```
+ "email": "string",
+  "fullName": "string",
+  "password": "string",
+  "phoneNumber": "string"
+  ```
+#### Response:
+      {
+      "success": true,
+      "message": "Create staff success",
+      "data": null,
+      "errors": null,
+      "traceId": null,
+      "timestampUtc": "2026-05-13T11:21:24.6080312Z"
+     }
+```
+GET /api/v1/admins/staff
+```
+#### Request:
+    searchTerm: string
+    pageSize : int
+    pageIndex: int
+#### Response:
+    "success": true,
+    "message": "Get staff list success",
+    "data": {
+    "items": [
+    {
+    "id": "GUID",
+    "userId": "GUID",
+    "fullName": "string",
+    "email": "string",
+    "phoneNumber": "string",
+    "avatarUrl": null,
+    "isActive": true,
+    "hiredAt": "2026-01-01T00:00:00+00:00",
+    "createdAt": "2026-04-23T08:00:00+00:00"
+    }
+    ],
+    "totalItems": 2,
+    "pageSize": 10,
+    "pageIndex": 1
+    },
+    "errors": null,
+    "traceId": null,
+    "timestampUtc": "2026-05-13T11:19:17.7899557Z"
+    }
 ```
 
+Delete/api/v1/admins/staff/{staffId}
+```
+#### Request:
+    StaffId: Guid
+#### Response:
+    {
+    "success": true,
+    "message": "Delete staff success",
+    "data": null,
+    "errors": null,
+    "traceId": null,
+    "timestampUtc": "2026-05-13T11:25:27.0501592Z"
+    }
+```
+GET /api/v1/admins/dashboard
+```
+#### Response:
+    {
+    "success": true,
+    "message": "Get dashboard success",
+    "data": {
+    "totalUsers": int,
+    "totalMerchants": int,
+    "totalOrders": int,
+    "totalRevenue": decimal,
+    "newUsersToday": int,
+    "pendingApplications": int,
+    "pendingReviewerApplications": int
+    },
+    "errors": null,
+    "traceId": null,
+    "timestampUtc": "2026-05-13T11:26:18.7964569Z"
+    }
+```
 ### Staff
 
 ```http
@@ -707,7 +788,7 @@ GET /api/v1/staff
       "data": {
         "items": [
           {
-            "id": "be6aca0a-ac95-4efd-9f21-b686aa56b193",
+            "id": "GUID",
             "status": "Rejected",
             "motivation": "string",
             "experience": "string",
@@ -716,7 +797,7 @@ GET /api/v1/staff
             "youtubeUrl": "string",
             "otherSocialUrl": "string",
             "rejectionReason": "string",
-            "customerId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "customerId": "GUID",
             "createdAt": "2026-05-06T09:49:21.500452+00:00"
           }
         ],
