@@ -67,7 +67,7 @@ public class Service : IService
         var merchant = await _dbContext.Merchants.FirstOrDefaultAsync(u => u.UserId == user.Id);
         if (merchant != null)
         {
-            claims.Add(new Claim("MerchantId", merchant.Id.ToString()));
+                claims.Add(new Claim("MerchantId", merchant.Id.ToString()));
         }
 
         var staff = await _dbContext.Staffs.FirstOrDefaultAsync(u => u.UserId == user.Id);

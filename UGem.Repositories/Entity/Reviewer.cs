@@ -7,7 +7,8 @@ public class Reviewer : BaseEntity<Guid>, IAuditableEntity
     public required int Points { get; set; } = 0;
     public required string Rank { get; set; }
     public decimal CommissionRate { get; set; }
-    
+    public decimal Balance { get; set; } = 0;
+
     public required Guid CustomerId { get; set; }
     public Customer Customer { get; set; } = null!;
     
