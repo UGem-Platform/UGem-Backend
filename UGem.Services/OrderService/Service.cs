@@ -117,16 +117,9 @@ public class Service : IService
             throw new KeyNotFoundException("Merchant not found");
         }
 
-        var customerExists = await _dbContext.Customers
-            .AsNoTracking()
-            .AnyAsync(x => x.Id == request.CustomerId);
+        
 
-        if (!customerExists)
-        {
-            throw new KeyNotFoundException("Customer not found");
-        }
-
-        return await CreateOrderInternal(request.CustomerId, request, merchant.Id);
+        return await CreateOrderInternal(Guid.Empty, request, merchant.Id);
     }
 
     private async Task<Response.CreateOrderResponse> CreateOrderInternal(
@@ -180,11 +173,11 @@ public class Service : IService
         {
             Id = orderId,
             CustomerId = customerId,
-            DeliveryAddress = request.DeliveryAddress,
+            DeliveryAddress = request.DeliveryAddress ?? "",
             Name = request.Name,
             Notes = request.Notes,
             PaymentMethod = request.PaymentMethod,
-            Status = Request.OrderStatus.Pending.ToString(),
+            Status = Request.OrderStatus.CashPending.ToString(),
             Discount = 0m,
             FinalPrice = totalAmount,
             ReviewerFee = 0m,

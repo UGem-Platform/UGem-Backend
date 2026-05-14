@@ -23,7 +23,7 @@ public class Request
         public required string Name { get; set; }
         public required string PaymentMethod { get; set; }
         public required string Notes { get; set; }
-        public required string DeliveryAddress { get; set; }
+        public string? DeliveryAddress { get; set; }
         public required List<FoodService.Request.FoodOrderRequest> Foods { get; set; }
     }
 
@@ -90,6 +90,6 @@ public class Request
 
     public class CreateMerchantOrderRequest: CreateOrderRequest
     {
-        public Guid CustomerId { get; set; }
+        
     }
 }

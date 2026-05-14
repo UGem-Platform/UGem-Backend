@@ -69,10 +69,14 @@ public class Service : IService
         var order = await _dbContext.Orders
             .Include(x => x.OrderDetails)
             .ThenInclude(x => x.Food)
-            .FirstOrDefaultAsync(x => x.Id == request.OrderId && x.CustomerId == customerIdGuid);
+            .FirstOrDefaultAsync(x => x.Id == request.OrderId );
 
         if (order == null)
             throw new KeyNotFoundException("Order not found");
+        if (order.CustomerId != Guid.Empty)
+        {
+            throw new Exception("Order already claimed");
+        }
 
         var merchantId = order.OrderDetails
             .Select(x => x.Food.MerchantId)
@@ -80,7 +84,20 @@ public class Service : IService
 
         if (merchantId == Guid.Empty)
             throw new KeyNotFoundException("Merchant not found");
+        var alreadyCheckedIn = await _dbContext.CheckIns
+            .AnyAsync(x =>
+                x.CustomerId == customerIdGuid &&
+                x.MerchantId == merchantId &&
+                x.CreatedAt >= DateTimeOffset.UtcNow.AddHours(-3));
 
+        if (alreadyCheckedIn)
+        {
+            throw new Exception("Already checked in");
+        }
+        
+        order.CustomerId = customerIdGuid;
+        order.UpdatedAt = DateTimeOffset.UtcNow;
+        await _dbContext.SaveChangesAsync();
         await CreateCheckIn(customerIdGuid, merchantId);
     }
 
