@@ -139,18 +139,19 @@ public class Service : IService
             throw new InvalidOperationException("At least one food item is required");
         }
 
-        var requestedItems = request.Foods
-            .GroupBy(x => x.FoodId)
-            .ToDictionary(g => g.Key, g => g.Sum(x => x.Quantity));
+        var requestedFoodIds = request.Foods
+            .Select(x => x.FoodId)
+            .Distinct()
+            .ToList();
 
-        if (requestedItems.Values.Any(quantity => quantity <= 0))
+        if (request.Foods.Any(x => x.Quantity <= 0))
         {
             throw new InvalidOperationException("Food quantity must be greater than 0");
         }
 
         var foods = await _dbContext.Foods
             .AsNoTracking()
-            .Where(x => requestedItems.Keys.Contains(x.Id))
+            .Where(x => requestedFoodIds.Contains(x.Id))
             .Select(x => new
             {
                 x.Id,
@@ -160,16 +161,12 @@ public class Service : IService
             })
             .ToListAsync();
 
-        if (foods.Count != requestedItems.Count)
+        if (foods.Count != requestedFoodIds.Count)
         {
             throw new KeyNotFoundException("Some food not found");
         }
 
-        var totalAmount = foods.Sum(food => requestedItems[food.Id] * food.Price);
-        if (totalAmount <= 0)
-        {
-            throw new InvalidOperationException("Total amount must be greater than 0");
-        }
+        decimal totalAmount = 0;
 
         if (merchantId.HasValue && foods.Any(food => food.MerchantId != merchantId.Value))
         {
@@ -193,18 +190,74 @@ public class Service : IService
             ReviewerFee = 0m,
             OrderedAt = DateTimeOffset.UtcNow,
             PlatformFee = 0m,
-            OrderDetails = foods.Select(food => new OrderDetail
+            OrderDetails = new List<OrderDetail>()
+        };
+        foreach (var item in request.Foods)
+        {
+            var food = foods.First(x => x.Id == item.FoodId);
+
+            var toppingIds = item.FoodToppingIds?
+                .Distinct()
+                .ToList() ?? new List<Guid>();
+
+            var toppings = await _dbContext.FoodToppings
+                .Where(x =>
+                    toppingIds.Contains(x.Id) &&
+                    x.FoodId == item.FoodId &&
+                    x.IsActive &&
+                    !x.IsDeleted)
+                .ToListAsync();
+
+            if (toppings.Count != toppingIds.Count)
+            {
+                throw new InvalidOperationException("Some toppings are invalid");
+            }
+
+            var toppingPrice = toppings.Sum(x => x.Price);
+
+            var unitPrice = food.Price + toppingPrice;
+
+            var subTotal = unitPrice * item.Quantity;
+
+            var orderDetail = new OrderDetail
             {
                 Id = Guid.NewGuid(),
                 Name = food.Name,
                 OrderId = orderId,
                 FoodId = food.Id,
-                Quantity = requestedItems[food.Id],
-                UnitPrice = food.Price,
-                Notes = request.Foods.First(x => x.FoodId == food.Id).Notes
-            }).ToList()
-        };
+                Quantity = item.Quantity,
+                UnitPrice = unitPrice,
+                Notes = item.Notes,
+                OrderDetailToppings = new List<OrderDetailTopping>()
+            };
 
+            foreach (var topping in toppings)
+            {
+                orderDetail.OrderDetailToppings.Add(new OrderDetailTopping
+                {
+                    Id = Guid.NewGuid(),
+                    OrderDetailId = orderDetail.Id,
+                    FoodToppingId = topping.Id,
+                    Name = topping.Name,
+                    Price = topping.Price,
+                    CreatedAt = DateTimeOffset.UtcNow,
+                    UpdatedAt = DateTimeOffset.UtcNow,
+                    IsDeleted = false
+                });
+            }
+
+            totalAmount += subTotal;
+
+            order.OrderDetails.Add(orderDetail);
+        }
+
+        if (totalAmount <= 0)
+        {
+            throw new InvalidOperationException("Total amount must be greater than 0");
+        }
+            
+        order.FinalPrice = totalAmount;
+        
         _dbContext.Orders.Add(order);
         await _dbContext.SaveChangesAsync();
 
