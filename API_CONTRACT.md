@@ -329,6 +329,201 @@ DELETE /api/v1/foods/{id}
 }
 
 ---
+# Food Topping APIs
+
+---
+
+## Create Food Topping
+
+Description:
+Merchant thêm topping cho món ăn.
+
+Authorization:
+Bearer Token (Merchant)
+
+Method:
+POST
+
+Request URL:
+
+```txt
+/api/v1/food-toppings
+```
+
+Request Body:
+
+```json
+{
+  "foodId": "09c2daa1-5f3e-45e7-9fc2-79938264c296",
+  "name": "Them Trung",
+  "price": 10000
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Create food topping successfully",
+  "data": null,
+  "errors": null,
+  "traceId": "0HNLC9OGCSF9I:00000004"
+}
+```
+
+---
+
+## Get Food Toppings
+
+Description:
+Lấy danh sách topping của món ăn.
+
+Authorization:
+No Authorization
+
+Method:
+GET
+
+Request URL:
+
+```txt
+/api/v1/foods/{foodId}/toppings
+```
+
+Example:
+
+```txt
+/api/v1/foods/09c2daa1-5f3e-45e7-9fc2-79938264c296/toppings
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Get food toppings successfully",
+  "data": [
+    {
+      "id": "30000000-0000-0000-0000-000000000001",
+      "foodId": "09c2daa1-5f3e-45e7-9fc2-79938264c296",
+      "name": "Them Trung",
+      "price": 10000,
+      "isActive": true
+    },
+    {
+      "id": "30000000-0000-0000-0000-000000000002",
+      "foodId": "09c2daa1-5f3e-45e7-9fc2-79938264c296",
+      "name": "Them Cha",
+      "price": 15000,
+      "isActive": true
+    }
+  ],
+  "errors": null,
+  "traceId": "0HNLC9OGCSF9I:00000004"
+}
+```
+
+---
+
+## Update Food Topping
+
+Description:
+Merchant cập nhật topping.
+
+Authorization:
+Bearer Token (Merchant)
+
+Method:
+PUT
+
+Request URL:
+
+```txt
+/api/v1/food-toppings
+```
+
+Request Body:
+
+```json
+{
+  "foodToppingId": "30000000-0000-0000-0000-000000000001",
+  "name": "Them Trung Ga"
+}
+```
+
+Or:
+
+```json
+{
+  "foodToppingId": "30000000-0000-0000-0000-000000000001",
+  "price": 12000
+}
+```
+
+Or:
+
+```json
+{
+  "foodToppingId": "30000000-0000-0000-0000-000000000001",
+  "isActive": false
+}
+```
+
+Description:
+Only fields sent in request body will be updated.
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Update food topping successfully",
+  "data": null,
+  "errors": null,
+  "traceId": "0HNLC9OGCSF9I:00000004"
+}
+```
+
+---
+
+## Delete Food Topping
+
+Description:
+Merchant xóa topping.
+
+Authorization:
+Bearer Token (Merchant)
+
+Method:
+DELETE
+
+Request URL:
+
+```txt
+/api/v1/food-toppings/{foodToppingId}
+```
+
+Example:
+
+```txt
+/api/v1/food-toppings/30000000-0000-0000-0000-000000000001
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Delete food topping successfully",
+  "data": null,
+  "errors": null,
+  "traceId": "0HNLC9OGCSF9I:00000004"
+}
+```
+
+---
 
 ## 6. ORDERS
 

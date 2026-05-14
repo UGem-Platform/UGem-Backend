@@ -373,6 +373,13 @@ public class Service : IService
                 Notes = x.Notes,
                 OrderId = x.OrderId,
                 FoodId = x.FoodId,
+
+                Toppings = x.OrderDetailToppings.Select(t =>
+                    new Response.OrderDetailToppingResponse
+                    {
+                        Name = t.Name,
+                        Price = t.Price
+                    }).ToList()
             })
             .ToListAsync();
     }
@@ -480,7 +487,10 @@ public class Service : IService
         
         var order = await _dbContext.Orders
             .Include(x => x.OrderDetails)
-            .FirstOrDefaultAsync(x => x.Id == request.OrderId &&  x.CustomerId == customerId);
+            .ThenInclude(x => x.OrderDetailToppings)
+            .FirstOrDefaultAsync(x =>
+                x.Id == request.OrderId &&
+                x.CustomerId == customerId);
 
         if (order == null)
         {
@@ -496,16 +506,19 @@ public class Service : IService
             DeliveryAddress = order.DeliveryAddress,
             Discount = order.Discount,
             FinalPrice = order.FinalPrice,
-            Items = order.OrderDetails.Select(x =>
-                    new Response.BillItemResponse()
-                    {
-                        Name = x.Name,
-                        Quantity = x.Quantity,
-                        SubTotal = x.UnitPrice * x.Quantity,
-                        UnitPrice = x.UnitPrice
-                    })
-                .ToList(),
-            Notes = order.Notes,
+            Items = order.OrderDetails.Select(x => new Response.GetBillItemResponse
+            {
+                Name = x.Name,
+                Quantity = x.Quantity,
+                UnitPrice = x.UnitPrice,
+                SubTotal = x.UnitPrice * x.Quantity,
+                Toppings = x.OrderDetailToppings.Select(t => new Response.OrderDetailToppingResponse
+                {
+                    Name = t.Name,
+                    Price = t.Price
+                }).ToList()
+            }).ToList(),
+            Notes = order.Notes
         };
 
         return selectOrder;
@@ -560,6 +573,7 @@ public class Service : IService
         var order = await _dbContext.Orders
             .AsNoTracking()
             .Include(x => x.OrderDetails)
+            .ThenInclude(x => x.OrderDetailToppings)
             .FirstOrDefaultAsync(x =>
                 x.Id == orderId &&
                 x.OrderDetails.Any(od => od.Food.Merchant.UserId == merchantUserId));
@@ -579,13 +593,18 @@ public class Service : IService
             DeliveryAddress = order.DeliveryAddress,
             Discount = order.Discount,
             FinalPrice = order.FinalPrice,
-            Items = order.OrderDetails.Select(x => new Response.BillItemResponse
+            Items = order.OrderDetails.Select(x => new Response.GetBillItemResponse()
             {
                 Name = x.Name,
                 Quantity = x.Quantity,
-                SubTotal = x.UnitPrice * x.Quantity,
                 UnitPrice = x.UnitPrice,
-            }).ToList(),
+                SubTotal = x.UnitPrice * x.Quantity,
+                Toppings = x.OrderDetailToppings.Select(t => new Response.OrderDetailToppingResponse()
+                {
+                    Name = t.Name,
+                    Price = t.Price
+                }).ToList()
+            }).ToList()
         };
     }
 
@@ -684,10 +703,8 @@ public class Service : IService
  
         var order = await _dbContext.Orders
             .Include(x => x.OrderDetails)
-            .ThenInclude(x => x.Food)
-            .ThenInclude(x => x.Merchant)
-            .FirstOrDefaultAsync(x =>
-                x.Id == request.OrderId);
+            .ThenInclude(x => x.OrderDetailToppings)
+            .FirstOrDefaultAsync(x => x.Id == request.OrderId);
  
         if (order == null)
         {
@@ -726,7 +743,7 @@ public class Service : IService
             }
         }
 
-        order.FinalPrice = order.OrderDetails.Sum(x => x.UnitPrice * x.Quantity) - order.Discount;
+        order.FinalPrice = order.OrderDetails.Sum(x => x.UnitPrice * x.Quantity) - order.Discount;       
         order.Status = Request.OrderStatus.BillUpdated.ToString();
         order.UpdatedAt = DateTimeOffset.UtcNow;
  
@@ -751,12 +768,17 @@ public class Service : IService
             OrderId = order.Id,
             Discount = order.Discount,
             FinalPrice = order.FinalPrice,
-            Items = order.OrderDetails.Select(x => new Response.BillItemResponse
+            Items = order.OrderDetails.Select(x => new Response.GetBillItemResponse
             {
                 Name = x.Name,
                 Quantity = x.Quantity,
                 UnitPrice = x.UnitPrice,
                 SubTotal = x.UnitPrice * x.Quantity,
+                Toppings = x.OrderDetailToppings.Select(t => new Response.OrderDetailToppingResponse
+                {
+                    Name = t.Name,
+                    Price = t.Price
+                }).ToList()
             }).ToList()
         };
     }

@@ -28,13 +28,19 @@ public class Response
     }
     public class GetOrderDetailResponse
     {
-        public required string Name {get; set;}
-        public int Quantity {get; set;}
-        public decimal UnitPrice {get; set;}
-        public string? Notes {get; set;}
-        public Guid FoodId { get; set; }
         public Guid OrderId { get; set; }
 
+        public Guid FoodId { get; set; }
+
+        public string Name { get; set; } = string.Empty;
+
+        public int Quantity { get; set; }
+
+        public decimal UnitPrice { get; set; }
+
+        public string? Notes { get; set; }
+
+        public List<OrderDetailToppingResponse> Toppings { get; set; } = new();
     }
     
     public class CreateOrderResponse
@@ -67,10 +73,10 @@ public class Response
 
         public decimal FinalPrice { get; set; }
 
-        public List<BillItemResponse> Items { get; set; } = new();
+        public List<GetBillItemResponse> Items { get; set; } = new();
     }
         
-    public class BillItemResponse
+    public class GetBillItemResponse
     {
         public required string Name { get; set; } 
 
@@ -80,6 +86,13 @@ public class Response
         
         public decimal SubTotal { get; set; }
  
+        public List<OrderDetailToppingResponse> Toppings { get; set; } = new();
+    }
+    public class OrderDetailToppingResponse
+    {
+        public string Name { get; set; } = string.Empty;
+
+        public decimal Price { get; set; }
     }
     
     public class UpdateBillResponse
@@ -87,7 +100,7 @@ public class Response
         public Guid OrderId { get; set; }
         public decimal Discount { get; set; }
         public decimal FinalPrice { get; set; }
-        public List<BillItemResponse> Items { get; set; } = new();
+        public List<GetBillItemResponse> Items { get; set; } = new();
     }
 
 }
