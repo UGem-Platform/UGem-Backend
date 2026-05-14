@@ -32,7 +32,7 @@ public class FoodToppingController : ControllerBase
 
     [HttpGet("{foodId}/toppings")]
     [Authorize(Policy = JwtExtensions.MerchantAndCustomer)]
-    public async Task<IActionResult> GetByFoodId(Guid foodId)
+    public async Task<IActionResult> GetFoodToppings(Guid foodId)
     {
         var result = await _foodToppingService.GetFoodToppings(foodId);
 
@@ -57,7 +57,7 @@ public class FoodToppingController : ControllerBase
 
     [HttpDelete("{foodToppingId}")]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
-    public async Task<IActionResult> Delete(Guid foodToppingId)
+    public async Task<IActionResult> DeleteFoodTopping(Guid foodToppingId)
     {
         await _foodToppingService.DeleteFoodTopping(foodToppingId);
 
