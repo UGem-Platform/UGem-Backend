@@ -220,15 +220,15 @@ PUT /api/v1/merchants
 ### Request Body
 
 {
-  "merchantName": "string",
-  "merchantDescription": "string",
-  "restaurantType": "string",
-  "mainDishType": "string",
-  "priceRange": "string",
-  "email": "string",
-  "phone": "string",
-  "address": "string",
-  "openingHours": "string"
+"merchantName": "string",
+"merchantDescription": "string",
+"restaurantType": "string",
+"mainDishType": "string",
+"priceRange": "string",
+"email": "string",
+"phone": "string",
+"address": "string",
+"openingHours": "string"
 }
 ### Response
 {
