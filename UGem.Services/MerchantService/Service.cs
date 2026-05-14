@@ -142,6 +142,7 @@ public class Service : IService
                 PriceRange = x.PriceRange,
                 Email = x.Email,
                 Phone = x.Phone,
+                OpeningHours = x.OpeningHours,
                 Latitude = x.Latitude,
                 Longitude = x.Longitude,
                 Menu = x.Foods.Select(f => new FoodService.Response.Menu
