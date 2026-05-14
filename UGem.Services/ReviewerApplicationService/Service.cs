@@ -132,12 +132,17 @@ public class Service : IService
 
         var selectReviewApplicationResponse = new Response.GetReviewApplicationResponse()
         {
+            Id = reviewerApplication.Id,
+            CustomerId = reviewerApplication.CustomerId,
             Motivation = reviewerApplication.Motivation,
             Experience = reviewerApplication.Experience,
             FacebookUrl = reviewerApplication.FacebookUrl,
             TiktokUrl = reviewerApplication.TiktokUrl,
             YoutubeUrl = reviewerApplication.YoutubeUrl,
-            OtherSocialUrl = reviewerApplication.OtherSocialUrl
+            OtherSocialUrl = reviewerApplication.OtherSocialUrl,
+            Status = reviewerApplication.Status,
+            RejectionReason = reviewerApplication.RejectionReason,
+            CreatedAt = reviewerApplication.CreatedAt
         };
         
         return selectReviewApplicationResponse;
