@@ -1,3 +1,4 @@
+using MailKit.Search;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UGem.Api.Extensions;
@@ -49,9 +50,9 @@ public class AdminController : ControllerBase
     }
     [HttpGet("merchant-revenues")]
     [Authorize(Policy = JwtExtensions.AdminPolicy)]
-    public async Task<IActionResult> GetMerchantRevenues()
+    public async Task<IActionResult> GetMerchantRevenues([FromQuery] string? searchTerm, int pageIndex = 1, int  pageSize = 10)
     {
-        var result = await _adminService.GetMerchantRevenues();
+        var result = await _adminService.GetMerchantRevenues(searchTerm, pageIndex, pageSize);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Get merchant revenues success"));
     }
     

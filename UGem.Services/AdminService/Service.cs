@@ -239,8 +239,7 @@ public class Service : IService
                            .AsNoTracking()
                            .FirstOrDefaultAsync(m => m.Id == merchantId)
                        ?? throw new KeyNotFoundException("Merchant not found");
-
-        // Aggregate trực tiếp trên DB
+        
         var stats = await _dbContext.Orders
             .Where(o => o.OrderDetails.Any(od => od.Food.MerchantId == merchantId))
             .GroupBy(_ => 1)
@@ -266,8 +265,6 @@ public class Service : IService
         var completedOrders = stats?.CompletedOrders ?? 0;
         var totalOrders = stats?.TotalOrders ?? 0;
         var rejectedOrders = stats?.RejectedOrders ?? 0;
-
-        // Chart - query riêng theo periodType
         var completedOrdersQuery = _dbContext.Orders
             .Where(o => o.Status == "Completed"
                         && o.OrderDetails.Any(od => od.Food.MerchantId == merchantId));
@@ -290,9 +287,14 @@ public class Service : IService
         }
         else if (periodType == "Week")
         {
-            // EF Core không support GetWeekOfYear nên load về rồi group
+            var weekStart = DateTimeOffset.UtcNow.AddDays(-84);
             var orders = await completedOrdersQuery
-                .Select(o => new { o.CreatedAt, o.FinalPrice })
+                .Where(o => o.CreatedAt >= weekStart)
+                .Select(o => new
+                {
+                    o.CreatedAt,
+                    o.FinalPrice
+                })
                 .ToListAsync();
 
             revenueChart = orders
