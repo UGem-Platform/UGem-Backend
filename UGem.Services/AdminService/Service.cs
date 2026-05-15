@@ -78,6 +78,15 @@ public class Service : IService
             UserId = user.Id,
             HiredAt = DateTimeOffset.UtcNow,
         });
+        _dbContext.Notifications.Add(new Notification
+        {
+            UserId = user.Id,
+            Title = "Staff account created",
+            Message = "Your staff account has been created successfully.",
+            Type = "Staff",
+            IsRead = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
         await _dbContext.SaveChangesAsync();
     }
 
@@ -92,6 +101,15 @@ public class Service : IService
         staff.IsDeleted = true;
         staff.User.IsActive = false;
         staff.UpdatedAt = DateTimeOffset.UtcNow;
+        _dbContext.Notifications.Add(new Notification
+        {
+            UserId = staff.UserId,
+            Title = "Staff account deactivated",
+            Message = "Your staff account has been deactivated.",
+            Type = "Staff",
+            IsRead = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
         await _dbContext.SaveChangesAsync();
     }
 

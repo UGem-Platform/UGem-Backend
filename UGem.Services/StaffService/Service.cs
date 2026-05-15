@@ -20,7 +20,8 @@ public class Service : IService
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-        var app = await _dbContext.ReviewerApplications
+        var app = await _dbContext.ReviewerApplications.Include(reviewerApplication => reviewerApplication.Customer)
+            .ThenInclude(customer => customer.User)
             .FirstOrDefaultAsync(x => x.Id == request.ApplicationId);
 
         if (app == null)
@@ -49,6 +50,15 @@ public class Service : IService
             Rank = "Bronze",
             CommissionRate = 0.05m
         });
+        _dbContext.Notifications.Add(new Notification
+        {
+            UserId = app.Customer.UserId,
+            Title = "Reviewer Application Approved",
+            Message = $"Congratulations {app.Customer.User.FullName}! You have officially become a Reviewer on UGem.",
+            Type = "ReviewerApplication",
+            IsRead = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
 
         await _dbContext.SaveChangesAsync();
         await transaction.CommitAsync();
@@ -56,7 +66,8 @@ public class Service : IService
 
     public async Task RejectApplication(Request.RejectReviewerApplicationRequest request)
     {
-        var app = await _dbContext.ReviewerApplications
+        var app = await _dbContext.ReviewerApplications.Include(reviewerApplication => reviewerApplication.Customer)
+            .ThenInclude(customer => customer.User)
             .FirstOrDefaultAsync(x => x.Id == request.ApplicationId);
 
         if (app == null)
@@ -77,7 +88,15 @@ public class Service : IService
         app.Status = "Rejected";
         app.RejectionReason = request.Reason;
         app.UpdatedAt = DateTimeOffset.UtcNow;
-
+        _dbContext.Notifications.Add(new Notification
+        {
+            UserId = app.Customer.UserId,
+            Title = "Reviewer Application Rejected",
+            Message = $"Sorry {app.Customer.User.FullName}, your Reviewer application has been rejected. Reason: {request.Reason}",
+            Type = "ReviewerApplication",
+            IsRead = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
         await _dbContext.SaveChangesAsync();
     }
 

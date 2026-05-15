@@ -172,6 +172,15 @@ public class Service : IService
 
         merchant.Rating = CalculateAverageRating(existingRatings, request.Rating);
         merchant.UpdatedAt = DateTimeOffset.UtcNow;
+        _dbContext.Notifications.Add(new Notification
+        {
+            UserId = merchant.UserId,
+            Message = "Your merchant has a new receive review",
+            Title = "New review received",
+            Type = "Review",
+            IsRead = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
 
         await _dbContext.SaveChangesAsync();
     }
@@ -257,7 +266,16 @@ public class Service : IService
 
         merchant.Rating = CalculateAverageRating(otherRatings, review.Rating);
         merchant.UpdatedAt = DateTimeOffset.UtcNow;
-
+        _dbContext.Notifications.Add(new Notification
+        {
+            UserId = merchant.UserId,
+            Title = "Review updated",
+            Message = "A customer has updated their review for your merchant.",
+            Type = "Review",
+            IsRead = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        
         await _dbContext.SaveChangesAsync();
     }
 

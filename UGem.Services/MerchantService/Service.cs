@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using UGem.Repositories;
+using UGem.Repositories.Entity;
 
 namespace UGem.Services.MerchantService;
 
@@ -255,7 +256,7 @@ public class Service : IService
          };
     }
 
-    public   async Task UpdateMerchant(Request.UpdateMerchantRequest request)
+    public async Task UpdateMerchant(Request.UpdateMerchantRequest request)
     {
         var userIdGuid = GetRequiredGuidClaim("UserId");
 
@@ -311,7 +312,15 @@ public class Service : IService
         {
             merchant.OpeningHours = request.OpeningHours;
         }
-
+        _dbContext.Notifications.Add(new Notification()
+        {
+            UserId = merchant.UserId,
+            Title = "Merchant profile updated",
+            Message = "Your merchant profile has been updated successfully.",
+            Type = "Merchant",
+            IsRead = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
         await _dbContext.SaveChangesAsync();
     }
     

@@ -105,6 +105,22 @@ public class Service : IService
                 ImageUrl = menu.ImageUrl
             }).ToList()
         };
+        var staffs = await _dbContext.Users
+            .Where(u => u.Role == "Staff")
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        _dbContext.Notifications.AddRange(
+            staffs.Select(staffId => new Notification
+            {
+                UserId = staffId,
+                Title = "New merchant application",
+                Message = "A new merchant application is pending approval.",
+                Type = "MerchantApplication",
+                IsRead = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+            })
+        );
 
         _dbContext.Applications.Add(application);
         await _dbContext.SaveChangesAsync();
@@ -198,7 +214,22 @@ public class Service : IService
                 ImageUrl = menuRequest.ImageUrl,
             });
         }
+        var staffs = await _dbContext.Users
+            .Where(u => u.Role == "Staff")
+            .Select(u => u.Id)
+            .ToListAsync();
 
+        _dbContext.Notifications.AddRange(
+            staffs.Select(staffId => new Notification
+            {
+                UserId = staffId,
+                Title = "Merchant application resubmitted",
+                Message = "A rejected merchant application has been updated and resubmitted.",
+                Type = "MerchantApplication",
+                IsRead = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+            })
+        );
         await _dbContext.SaveChangesAsync();
         return "update success";
     }
