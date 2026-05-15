@@ -108,14 +108,22 @@ public class Service : IService
             .CountAsync(a => a.Status == "Pending");
         var pendingReviewerApplications = await _dbContext.ReviewerApplications
             .CountAsync(a => a.Status == "Pending");
-        var completedOrders = await _dbContext.Orders
+        var completedOrderStats = await _dbContext.Orders
             .Where(o => o.Status == "Completed")
-            .ToListAsync();
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalRevenue = g.Sum(o => o.FinalPrice),
+                TotalPlatformFee = g.Sum(o => o.PlatformFee),
+                TotalReviewerFee = g.Sum(o => o.ReviewerFee),
+                TotalCompletedOrders = g.Count()
+            })
+            .FirstOrDefaultAsync();
 
-        var totalRevenue = completedOrders.Sum(o => o.FinalPrice);
-        var totalPlatformFee = completedOrders.Sum(o => o.PlatformFee);
-        var totalReviewerFee = completedOrders.Sum(o => o.ReviewerFee);
-        var totalCompletedOrders = completedOrders.Count;
+        var totalRevenue = completedOrderStats?.TotalRevenue ?? 0;
+        var totalPlatformFee = completedOrderStats?.TotalPlatformFee ?? 0;
+        var totalReviewerFee = completedOrderStats?.TotalReviewerFee ?? 0;
+        var totalCompletedOrders = completedOrderStats?.TotalCompletedOrders ?? 0;
         var averageOrderValue = totalCompletedOrders > 0
             ? Math.Round(totalRevenue / totalCompletedOrders, 2)
             : 0;
@@ -135,16 +143,39 @@ public class Service : IService
         };
     }
 
-    public async Task<List<Response.MerchantRevenueResponse>> GetMerchantRevenues()
+    public async Task<List<Response.MerchantRevenueResponse>> GetMerchantRevenues(string? searchTerm, int pageIndex, int pageSize)
 {
+    var (normalizedPageIndex, normalizedPageSize) =
+        NormalizePagination(pageIndex, pageSize);
+
     var now = DateTimeOffset.UtcNow;
-    var currentPeriodStart = new DateTimeOffset(now.Year, now.Month, 1, 0, 0, 0, TimeSpan.Zero);
+
+    var currentPeriodStart = new DateTimeOffset(
+        now.Year,
+        now.Month, 1, 0, 0, 0, TimeSpan.Zero);
+
     var previousPeriodStart = currentPeriodStart.AddMonths(-1);
 
-    // Query 1 lần, group theo MerchantId
+    var merchantQuery = _dbContext.Merchants
+        .AsNoTracking();
+
+    if (!string.IsNullOrWhiteSpace(searchTerm))
+    {
+        merchantQuery = merchantQuery.Where(m =>
+            m.Name.Contains(searchTerm));
+    }
+
+    var merchants = await merchantQuery
+        .OrderBy(m => m.Name)
+        .Skip((normalizedPageIndex - 1) * normalizedPageSize)
+        .Take(normalizedPageSize)
+        .ToListAsync();
+
+    var merchantIds = merchants.Select(m => m.Id).ToList();
+
     var orderStats = await _dbContext.Orders
         .Where(o => o.Status == "Completed"
-            && o.OrderDetails.Any(od => od.Food != null))
+                    && o.OrderDetails.Any(od => od.Food != null && merchantIds.Contains(od.Food.MerchantId)))
         .GroupBy(o => o.OrderDetails
             .Select(od => od.Food.MerchantId)
             .FirstOrDefault())
@@ -156,179 +187,181 @@ public class Service : IService
             PlatformFee = g.Sum(o => o.PlatformFee),
             ReviewerFee = g.Sum(o => o.ReviewerFee),
             LastOrderAt = g.Max(o => o.CreatedAt),
-            CurrentRevenue = g.Where(o => o.CreatedAt >= currentPeriodStart)
+
+            CurrentRevenue = g
+                .Where(o => o.CreatedAt >= currentPeriodStart)
                 .Sum(o => o.FinalPrice),
-            PreviousRevenue = g.Where(o => o.CreatedAt >= previousPeriodStart
-                && o.CreatedAt < currentPeriodStart)
+
+            PreviousRevenue = g
+                .Where(o => o.CreatedAt >= previousPeriodStart
+                            && o.CreatedAt < currentPeriodStart)
                 .Sum(o => o.FinalPrice)
         })
         .ToDictionaryAsync(x => x.MerchantId);
 
-    var merchants = await _dbContext.Merchants
-        .AsNoTracking()
-        .ToListAsync();
+    return merchants
+        .Select(merchant =>
+        {
+            var stats = orderStats.GetValueOrDefault(merchant.Id);
 
-    return merchants.Select(merchant =>
+            var totalRevenue = stats?.TotalRevenue ?? 0;
+            var platformFee = stats?.PlatformFee ?? 0;
+            var reviewerFee = stats?.ReviewerFee ?? 0;
+            var totalOrders = stats?.TotalOrders ?? 0;
+            var currentRevenue = stats?.CurrentRevenue ?? 0;
+            var previousRevenue = stats?.PreviousRevenue ?? 0;
+
+            var revenueGrowth = previousRevenue > 0
+                ? Math.Round((currentRevenue - previousRevenue) / previousRevenue * 100, 2) : 0;
+
+            return new Response.MerchantRevenueResponse
+            {
+                MerchantId = merchant.Id,
+                MerchantName = merchant.Name,
+                LogoUrl = merchant.LogoUrl,
+                CompletedOrders = totalOrders,
+                TotalRevenue = totalRevenue,
+                PlatformFee = Math.Round(platformFee, 2),
+                ReviewerFee = Math.Round(reviewerFee, 2),
+                MerchantReceive = Math.Round(totalRevenue - platformFee - reviewerFee, 2),
+                AverageOrderValue = totalOrders > 0 ? Math.Round(totalRevenue / totalOrders, 2) : 0,
+                LastOrderAt = stats?.LastOrderAt,
+                RevenueGrowth = revenueGrowth
+            };
+        })
+        .OrderByDescending(m => m.TotalRevenue)
+        .ToList();
+}
+
+    public async Task<Response.MerchantDetailResponse> GetMerchantDetail(Guid merchantId, string periodType)
     {
-        var stats = orderStats.GetValueOrDefault(merchant.Id);
+        var merchant = await _dbContext.Merchants
+                           .AsNoTracking()
+                           .FirstOrDefaultAsync(m => m.Id == merchantId)
+                       ?? throw new KeyNotFoundException("Merchant not found");
+
+        // Aggregate trực tiếp trên DB
+        var stats = await _dbContext.Orders
+            .Where(o => o.OrderDetails.Any(od => od.Food.MerchantId == merchantId))
+            .GroupBy(_ => 1)
+            .Select(g => new
+            {
+                TotalRevenue = g.Where(o => o.Status == "Completed").Sum(o => o.FinalPrice),
+                PlatformFee = g.Where(o => o.Status == "Completed").Sum(o => o.PlatformFee),
+                ReviewerFee = g.Where(o => o.Status == "Completed").Sum(o => o.ReviewerFee),
+                CompletedOrders = g.Count(o => o.Status == "Completed"),
+                PendingOrders = g.Count(o => o.Status == "Pending"),
+                AcceptedOrders = g.Count(o => o.Status == "Accepted"),
+                RejectedOrders = g.Count(o => o.Status == "Rejected"),
+                TotalOrders = g.Count(),
+                LastOrderAt = g.Where(o => o.Status == "Completed").Max(o => (DateTimeOffset?)o.CreatedAt),
+                TotalUniqueCustomers = g.Where(o => o.Status == "Completed")
+                    .Select(o => o.CustomerId).Distinct().Count()
+            })
+            .FirstOrDefaultAsync();
+
         var totalRevenue = stats?.TotalRevenue ?? 0;
         var platformFee = stats?.PlatformFee ?? 0;
         var reviewerFee = stats?.ReviewerFee ?? 0;
+        var completedOrders = stats?.CompletedOrders ?? 0;
         var totalOrders = stats?.TotalOrders ?? 0;
-        var currentRevenue = stats?.CurrentRevenue ?? 0;
-        var previousRevenue = stats?.PreviousRevenue ?? 0;
+        var rejectedOrders = stats?.RejectedOrders ?? 0;
 
-        var revenueGrowth = previousRevenue > 0
-            ? Math.Round((currentRevenue - previousRevenue) / previousRevenue * 100, 2)
-            : 0;
+        // Chart - query riêng theo periodType
+        var completedOrdersQuery = _dbContext.Orders
+            .Where(o => o.Status == "Completed"
+                        && o.OrderDetails.Any(od => od.Food.MerchantId == merchantId));
 
-        return new Response.MerchantRevenueResponse
+        List<Response.RevenueByPeriod> revenueChart;
+
+        if (periodType == "Day")
+        {
+            revenueChart = await completedOrdersQuery
+                .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month, o.CreatedAt.Day })
+                .Select(g => new Response.RevenueByPeriod
+                {
+                    Period = $"{g.Key.Year}-{g.Key.Month:D2}-{g.Key.Day:D2}",
+                    PeriodType = "Day",
+                    Revenue = g.Sum(o => o.FinalPrice),
+                    OrderCount = g.Count()
+                })
+                .OrderBy(x => x.Period)
+                .ToListAsync();
+        }
+        else if (periodType == "Week")
+        {
+            // EF Core không support GetWeekOfYear nên load về rồi group
+            var orders = await completedOrdersQuery
+                .Select(o => new { o.CreatedAt, o.FinalPrice })
+                .ToListAsync();
+
+            revenueChart = orders
+                .GroupBy(o => $"{o.CreatedAt.Year}-W{GetIso8601WeekOfYear(o.CreatedAt.DateTime)}")
+                .Select(g => new Response.RevenueByPeriod
+                {
+                    Period = g.Key,
+                    PeriodType = "Week",
+                    Revenue = g.Sum(o => o.FinalPrice),
+                    OrderCount = g.Count()
+                })
+                .OrderBy(x => x.Period)
+                .ToList();
+        }
+        else
+        {
+            revenueChart = await completedOrdersQuery
+                .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
+                .Select(g => new Response.RevenueByPeriod
+                {
+                    Period = $"{g.Key.Year}-{g.Key.Month:D2}",
+                    PeriodType = "Month",
+                    Revenue = g.Sum(o => o.FinalPrice),
+                    OrderCount = g.Count()
+                })
+                .OrderBy(x => x.Period)
+                .ToListAsync();
+        }
+
+        // Top foods - query riêng
+        var topFoods = await _dbContext.OrderDetails
+            .Where(od => od.Food.MerchantId == merchantId
+                         && od.Order.Status == "Completed")
+            .GroupBy(od => new { od.FoodId, od.Food.Name })
+            .Select(g => new Response.TopFood
+            {
+                FoodId = g.Key.FoodId,
+                FoodName = g.Key.Name,
+                TotalSold = g.Sum(od => od.Quantity),
+                TotalRevenue = g.Sum(od => od.Quantity * od.UnitPrice)
+            })
+            .OrderByDescending(f => f.TotalSold)
+            .Take(10)
+            .ToListAsync();
+
+        return new Response.MerchantDetailResponse
         {
             MerchantId = merchant.Id,
             MerchantName = merchant.Name,
             LogoUrl = merchant.LogoUrl,
-            CompletedOrders = totalOrders,
             TotalRevenue = totalRevenue,
             PlatformFee = Math.Round(platformFee, 2),
             ReviewerFee = Math.Round(reviewerFee, 2),
             MerchantReceive = Math.Round(totalRevenue - platformFee - reviewerFee, 2),
-            AverageOrderValue = totalOrders > 0 ? Math.Round(totalRevenue / totalOrders, 2) : 0,
+            AverageOrderValue = completedOrders > 0 ? Math.Round(totalRevenue / completedOrders, 2) : 0,
+            PendingOrders = stats?.PendingOrders ?? 0,
+            AcceptedOrders = stats?.AcceptedOrders ?? 0,
+            RejectedOrders = rejectedOrders,
+            CompletedOrders = completedOrders,
+            CancellationRate = totalOrders > 0
+                ? Math.Round((decimal)rejectedOrders / totalOrders * 100, 2)
+                : 0,
+            TotalUniqueCustomers = stats?.TotalUniqueCustomers ?? 0,
             LastOrderAt = stats?.LastOrderAt,
-            RevenueGrowth = revenueGrowth
+            RevenueChart = revenueChart,
+            TopFoods = topFoods
         };
-    })
-    .OrderByDescending(m => m.TotalRevenue)
-    .ToList();
-}
-
-    public async Task<Response.MerchantDetailResponse> GetMerchantDetail(Guid merchantId, string periodType)
-{
-    var merchant = await _dbContext.Merchants
-        .AsNoTracking()
-        .FirstOrDefaultAsync(m => m.Id == merchantId)
-        ?? throw new KeyNotFoundException("Merchant not found");
-
-    // Aggregate trực tiếp trên DB
-    var stats = await _dbContext.Orders
-        .Where(o => o.OrderDetails.Any(od => od.Food.MerchantId == merchantId))
-        .GroupBy(_ => 1)
-        .Select(g => new
-        {
-            TotalRevenue = g.Where(o => o.Status == "Completed").Sum(o => o.FinalPrice),
-            PlatformFee = g.Where(o => o.Status == "Completed").Sum(o => o.PlatformFee),
-            ReviewerFee = g.Where(o => o.Status == "Completed").Sum(o => o.ReviewerFee),
-            CompletedOrders = g.Count(o => o.Status == "Completed"),
-            PendingOrders = g.Count(o => o.Status == "Pending"),
-            AcceptedOrders = g.Count(o => o.Status == "Accepted"),
-            RejectedOrders = g.Count(o => o.Status == "Rejected"),
-            TotalOrders = g.Count(),
-            LastOrderAt = g.Where(o => o.Status == "Completed").Max(o => (DateTimeOffset?)o.CreatedAt),
-            TotalUniqueCustomers = g.Where(o => o.Status == "Completed")
-                .Select(o => o.CustomerId).Distinct().Count()
-        })
-        .FirstOrDefaultAsync();
-
-    var totalRevenue = stats?.TotalRevenue ?? 0;
-    var platformFee = stats?.PlatformFee ?? 0;
-    var reviewerFee = stats?.ReviewerFee ?? 0;
-    var completedOrders = stats?.CompletedOrders ?? 0;
-    var totalOrders = stats?.TotalOrders ?? 0;
-    var rejectedOrders = stats?.RejectedOrders ?? 0;
-
-    // Chart - query riêng theo periodType
-    var completedOrdersQuery = _dbContext.Orders
-        .Where(o => o.Status == "Completed"
-            && o.OrderDetails.Any(od => od.Food.MerchantId == merchantId));
-
-    List<Response.RevenueByPeriod> revenueChart;
-
-    if (periodType == "Day")
-    {
-        revenueChart = await completedOrdersQuery
-            .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month, o.CreatedAt.Day })
-            .Select(g => new Response.RevenueByPeriod
-            {
-                Period = $"{g.Key.Year}-{g.Key.Month:D2}-{g.Key.Day:D2}",
-                PeriodType = "Day",
-                Revenue = g.Sum(o => o.FinalPrice),
-                OrderCount = g.Count()
-            })
-            .OrderBy(x => x.Period)
-            .ToListAsync();
-    }
-    else if (periodType == "Week")
-    {
-        // EF Core không support GetWeekOfYear nên load về rồi group
-        var orders = await completedOrdersQuery
-            .Select(o => new { o.CreatedAt, o.FinalPrice })
-            .ToListAsync();
-
-        revenueChart = orders
-            .GroupBy(o => $"{o.CreatedAt.Year}-W{GetIso8601WeekOfYear(o.CreatedAt.DateTime)}")
-            .Select(g => new Response.RevenueByPeriod
-            {
-                Period = g.Key,
-                PeriodType = "Week",
-                Revenue = g.Sum(o => o.FinalPrice),
-                OrderCount = g.Count()
-            })
-            .OrderBy(x => x.Period)
-            .ToList();
-    }
-    else
-    {
-        revenueChart = await completedOrdersQuery
-            .GroupBy(o => new { o.CreatedAt.Year, o.CreatedAt.Month })
-            .Select(g => new Response.RevenueByPeriod
-            {
-                Period = $"{g.Key.Year}-{g.Key.Month:D2}",
-                PeriodType = "Month",
-                Revenue = g.Sum(o => o.FinalPrice),
-                OrderCount = g.Count()
-            })
-            .OrderBy(x => x.Period)
-            .ToListAsync();
     }
 
-    // Top foods - query riêng
-    var topFoods = await _dbContext.OrderDetails
-        .Where(od => od.Food.MerchantId == merchantId
-            && od.Order.Status == "Completed")
-        .GroupBy(od => new { od.FoodId, od.Food.Name })
-        .Select(g => new Response.TopFood
-        {
-            FoodId = g.Key.FoodId,
-            FoodName = g.Key.Name,
-            TotalSold = g.Sum(od => od.Quantity),
-            TotalRevenue = g.Sum(od => od.Quantity * od.UnitPrice)
-        })
-        .OrderByDescending(f => f.TotalSold)
-        .Take(10)
-        .ToListAsync();
-
-    return new Response.MerchantDetailResponse
-    {
-        MerchantId = merchant.Id,
-        MerchantName = merchant.Name,
-        LogoUrl = merchant.LogoUrl,
-        TotalRevenue = totalRevenue,
-        PlatformFee = Math.Round(platformFee, 2),
-        ReviewerFee = Math.Round(reviewerFee, 2),
-        MerchantReceive = Math.Round(totalRevenue - platformFee - reviewerFee, 2),
-        AverageOrderValue = completedOrders > 0 ? Math.Round(totalRevenue / completedOrders, 2) : 0,
-        PendingOrders = stats?.PendingOrders ?? 0,
-        AcceptedOrders = stats?.AcceptedOrders ?? 0,
-        RejectedOrders = rejectedOrders,
-        CompletedOrders = completedOrders,
-        CancellationRate = totalOrders > 0
-            ? Math.Round((decimal)rejectedOrders / totalOrders * 100, 2)
-            : 0,
-        TotalUniqueCustomers = stats?.TotalUniqueCustomers ?? 0,
-        LastOrderAt = stats?.LastOrderAt,
-        RevenueChart = revenueChart,
-        TopFoods = topFoods
-    };
-}
     private static int GetIso8601WeekOfYear(DateTime date)
     {
         var day = System.Globalization.CultureInfo.InvariantCulture
