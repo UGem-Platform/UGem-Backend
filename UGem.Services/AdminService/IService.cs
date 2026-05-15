@@ -6,5 +6,8 @@ public interface IService
         int pageIndex);
     public Task CreateStaff(Request.CreateStaffRequest request);
     public Task DeleteStaff(Guid staffId);
+    
     public Task<Response.DashboardResponse> GetDashboard();
+    public Task<List<Response.MerchantRevenueResponse>> GetMerchantRevenues();
+    public Task<Response.MerchantDetailResponse> GetMerchantDetail(Guid merchantId, string periodType);
 }

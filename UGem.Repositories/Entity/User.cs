@@ -11,7 +11,7 @@ public class User : BaseEntity<Guid>, IAuditableEntity
     public string? AvatarUrl { get; set; }
     public bool IsActive { get; set; } = true;
     public string Role { get; set; } = "Customer"; // Default role is Customer
-
+    public int NewUsersToday { get; set; }
     public Admin? Admin { get; set; }
     public Staff? Staff { get; set; }
     public Customer? Customer { get; set; }
