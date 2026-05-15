@@ -1,3 +1,4 @@
+using MailKit.Search;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UGem.Api.Extensions;
@@ -40,12 +41,28 @@ public class AdminController : ControllerBase
         await _adminService.DeleteStaff(staffId);
         return Ok(ApiResponseFactory.SuccessResponse(null, "Delete staff success"));
     }
-
     [HttpGet("dashboard")]
     [Authorize(Policy = JwtExtensions.AdminPolicy)]
     public async Task<IActionResult> GetDashboard()
     {
         var result = await _adminService.GetDashboard();
         return Ok(ApiResponseFactory.SuccessResponse(result, "Get dashboard success"));
+    }
+    [HttpGet("merchant-revenues")]
+    [Authorize(Policy = JwtExtensions.AdminPolicy)]
+    public async Task<IActionResult> GetMerchantRevenues([FromQuery] string? searchTerm, int pageIndex = 1, int  pageSize = 10)
+    {
+        var result = await _adminService.GetMerchantRevenues(searchTerm, pageIndex, pageSize);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Get merchant revenues success"));
+    }
+    
+    [HttpGet("merchant-revenues/{merchantId}")]
+    [Authorize(Policy = JwtExtensions.AdminPolicy)]
+    public async Task<IActionResult> GetMerchantDetail(
+        Guid merchantId,
+        [FromQuery] string periodType = "Month")
+    {
+        var result = await _adminService.GetMerchantDetail(merchantId, periodType);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Get merchant detail success"));
     }
 }
