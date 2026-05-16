@@ -256,6 +256,66 @@ public class Service : IService
          };
     }
 
+    public async Task ViewMerchant(Guid merchantId)
+    {
+        var merchant = await _dbContext.Merchants.FirstOrDefaultAsync(m => m.Id == merchantId);
+        if (merchant == null)
+        {
+            throw new KeyNotFoundException("Merchant not found or not yours");
+            
+        }
+        merchant.TotalViews += 1;
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task<Response.MerchantViewResponse> GetMyViews()
+    {
+        var merchantId = GetRequiredGuidClaim("MerchantId");
+
+        var merchant = await _dbContext.Merchants
+                           .AsNoTracking()
+                           .FirstOrDefaultAsync(m => m.Id == merchantId)
+                       ?? throw new KeyNotFoundException("Merchant not found");
+
+        return new Response.MerchantViewResponse
+        {
+            MerchantId = merchant.Id,
+            TotalViews = merchant.TotalViews
+        };
+    }
+
+    public async Task<Response.MerchantStatisticResponse> GetMerchantStatistics()
+    {
+        var merchantId = GetRequiredGuidClaim("MerchantId");
+        var merchant = await _dbContext.Merchants.AsNoTracking().FirstOrDefaultAsync(m => m.Id == merchantId);
+        if (merchant == null)
+        {
+            throw new KeyNotFoundException("Merchant not found or not yours");
+        }
+
+        var stats = await _dbContext.Orders.Where(o =>
+                o.Status == "Completed" && o.OrderDetails.Any(x => x.Food.MerchantId == merchant.Id))
+            .GroupBy(_ => 1).Select(g => new
+            {
+                TotalOrders = g.Count(),
+                TotalRevenues = g.Sum(o => o.FinalPrice)
+            }).FirstOrDefaultAsync();
+        var totalOrders = stats?.TotalOrders ?? 0;
+        var totalRevenues = stats?.TotalRevenues ?? 0;
+        return new Response.MerchantStatisticResponse
+        {
+            MerchantId = merchant.Id,
+            MerchantName = merchant.Name,
+            TotalOrders = totalOrders,
+            TotalRevenue = totalRevenues,
+            TotalViews = merchant.TotalViews,
+            AvgOrderValue = totalOrders > 0 ? Math.Round(totalRevenues / totalRevenues, 2) : 0,
+            UnderrateScore = merchant.UnderratedScore,
+            PlatformFeePercent = merchant.PlatformFeePercent,
+        };
+
+    }
+
     public async Task UpdateMerchant(Request.UpdateMerchantRequest request)
     {
         var userIdGuid = GetRequiredGuidClaim("UserId");

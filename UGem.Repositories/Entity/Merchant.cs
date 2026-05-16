@@ -23,7 +23,7 @@ public class Merchant: BaseEntity<Guid>, IAuditableEntity
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public required Point Location { get; set; }
-    
+    public int TotalViews { get; set; } = 0;
     public required Guid UserId { get; set; }
     public User User { get; set; } = null!;
     
