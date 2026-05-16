@@ -885,7 +885,7 @@ IsRead = false,
         if (order.Status != Request.OrderStatus.CashPending.ToString())
             throw new InvalidOperationException("Cash payment can only be confirmed after the customer marks it as paid");
 
-        if (!order.CustomerId.HasValue || order.Customer == null)
+        if (!order.CustomerId.HasValue || !order.CustomerId.HasValue)
             throw new InvalidOperationException("Order has not been claimed by a customer");
 
         var merchantId = order.OrderDetails

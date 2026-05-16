@@ -17,10 +17,15 @@ public class Service : IService
     
     public async Task<List<Response.NotificationResponse>> GetNotificationRequests()
     {
-        var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
-        
-        var userIdGuid = Guid.Parse(userId!);
-        
+        var userId = _httpContext.HttpContext?.User.Claims
+            .FirstOrDefault(x => x.Type == "UserId")?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new UnauthorizedAccessException("UserId claim is missing.");
+        }
+
+        var userIdGuid = Guid.Parse(userId);
         var query = _dbContext.Notifications
             .AsNoTracking()
             .Where(x => x.UserId == userIdGuid)
@@ -43,8 +48,15 @@ public class Service : IService
 
     public async Task MarkAsRead(Guid notificationId)
     {
-        var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
-        var userIdGuid = Guid.Parse(userId!);
+        var userId = _httpContext.HttpContext?.User.Claims
+            .FirstOrDefault(x => x.Type == "UserId")?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new UnauthorizedAccessException("UserId claim is missing.");
+        }
+
+        var userIdGuid = Guid.Parse(userId);
 
         var notification = await _dbContext.Notifications
             .FirstOrDefaultAsync(x => x.Id == notificationId && x.UserId == userIdGuid);
