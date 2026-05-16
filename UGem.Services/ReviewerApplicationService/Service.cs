@@ -56,6 +56,22 @@ public class Service : IService
             YoutubeUrl = request.YoutubeUrl,
             OtherSocialUrl = request.OtherSocialUrl,
         };
+        var staffs = await _dbContext.Users
+            .Where(u => u.Role == "Staff")
+            .Select(u => u.Id)
+            .ToListAsync();
+
+        _dbContext.Notifications.AddRange(
+            staffs.Select(staffId => new Notification
+            {
+                UserId = staffId,
+                Title = "New reviewer application",
+                Message = "A new reviewer application is pending approval.",
+                Type = "ReviewerApplication",
+                IsRead = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+            })
+        );
         _dbContext.Add(reviewerApplication);
         await _dbContext.SaveChangesAsync();
     }
@@ -108,7 +124,22 @@ public class Service : IService
         }
 
         application.UpdatedAt = DateTimeOffset.UtcNow;
+        var staffs = await _dbContext.Users
+            .Where(u => u.Role == "Staff")
+            .Select(u => u.Id)
+            .ToListAsync();
 
+        _dbContext.Notifications.AddRange(
+            staffs.Select(staffId => new Notification
+            {
+                UserId = staffId,
+                Title = "Reviewer application updated",
+                Message = "A reviewer application has been updated and is pending review.",
+                Type = "ReviewerApplication",
+                IsRead = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+            })
+        );
         await _dbContext.SaveChangesAsync();
     }
 
