@@ -38,6 +38,7 @@ public class Service : IService
             Description = request.Description,
             MerchantId = merchant.Id,
             Price = request.Price,
+            ImageUrl = request.ImageUrl,
             IsAvailable = true
         };
         _dbContext.Foods.Add(food);
