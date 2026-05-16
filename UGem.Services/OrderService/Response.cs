@@ -8,8 +8,10 @@ public class Response
     {
         public Guid OrderId { get; set; }
         public decimal FinalPrice { get; set; }
-        public string DeliveryAddress { get; set; } = null!;
+        public string? DeliveryAddress { get; set; }
         public string PaymentMethod { get; set; } = null!;
+        public string PaymentStatus { get; set; } = null!;
+        public string OrderType { get; set; } = null!;
         public string Status { get; set; } = null!;
         public string CustomerName { get; set; } = null!;
         public DateTimeOffset CreatedAt { get; set; }
@@ -24,7 +26,7 @@ public class Response
         public required string Status { get; set; }
         public DateTimeOffset OrderedAt { get; set; }
         public required string Notes { get; set; }
-        public required string DeliveryAddress { get; set; }
+        public string? DeliveryAddress { get; set; }
     }
     public class GetOrderDetailResponse
     {
@@ -52,7 +54,7 @@ public class Response
         public string Description { get; set; } = string.Empty;
         
         public string Code { get; set; } = string.Empty;
-        public string QRCode { get; set; } = string.Empty;
+        public string? QRCode { get; set; }
     }
     
     public class GetOrderBillResponse
@@ -67,7 +69,7 @@ public class Response
 
         public DateTimeOffset OrderedAt { get; set; }
 
-        public required string DeliveryAddress { get; set; }
+        public string? DeliveryAddress { get; set; }
         
         public decimal Discount { get; set; }
 

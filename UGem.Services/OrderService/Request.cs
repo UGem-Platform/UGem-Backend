@@ -4,6 +4,12 @@ namespace UGem.Services.OrderService;
 
 public class Request
 {
+    public enum OrderType
+    {
+        Offline,
+        Online
+    }
+    
  public enum OrderStatus
     {
         Pending,
@@ -14,14 +20,14 @@ public class Request
         NotReceived,
         BillConfirmed,
         BillRejected,
-        BillUpdated,
-        Expired
+        BillUpdated
     }
 
     public class CreateOrderRequest
     {
         public required string Name { get; set; }
         public required string PaymentMethod { get; set; }
+        public required string OrderType { get; set; } 
         public required string Notes { get; set; }
         public string? DeliveryAddress { get; set; }
         public required List<FoodService.Request.FoodOrderRequest> Foods { get; set; }

@@ -42,6 +42,8 @@ public class Service : IService
                 OrderId = x.Id,
                 DeliveryAddress = x.DeliveryAddress,
                 PaymentMethod = x.PaymentMethod,
+                PaymentStatus = x.PaymentStatus,
+                OrderType = x.OrderType,
                 Status = x.Status,
                 FinalPrice = x.FinalPrice,
                 CustomerName = x.Customer.User.FullName,
@@ -165,6 +167,41 @@ public class Service : IService
         {
             throw new InvalidOperationException("All foods must belong to the merchant");
         }
+        
+        var validOrderTypes = new[]
+        {
+            Request.OrderType.Online.ToString(),
+            Request.OrderType.Offline.ToString()
+        };
+
+        if (!validOrderTypes.Contains(request.OrderType))
+        {
+            throw new InvalidOperationException("Invalid order type");
+        }
+
+        var validPaymentMethods = new[]
+        {
+            "Cash",
+            "BankTransfer",
+            "COD"
+        };
+
+        if (!validPaymentMethods.Contains(request.PaymentMethod))
+        {
+            throw new InvalidOperationException("Invalid payment method");
+        }
+
+        if (request.OrderType == Request.OrderType.Online.ToString()
+            && string.IsNullOrWhiteSpace(request.DeliveryAddress))
+        {
+            throw new InvalidOperationException("Online order must have delivery address");
+        }
+
+        if (request.OrderType == Request.OrderType.Offline.ToString()
+            && string.Equals(request.PaymentMethod, "COD", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException("Offline order cannot use COD");
+        }
 
         var orderId = Guid.NewGuid();
         var description = $"UGem-{orderId:N}";
@@ -173,11 +210,13 @@ public class Service : IService
         {
             Id = orderId,
             CustomerId = customerId,
-            DeliveryAddress = request.DeliveryAddress ?? "",
+            DeliveryAddress = request.DeliveryAddress,
+            OrderType = request.OrderType,
             Name = request.Name,
             Notes = request.Notes,
             PaymentMethod = request.PaymentMethod,
-            Status = Request.OrderStatus.CashPending.ToString(),
+            PaymentStatus = request.PaymentMethod == "BankTransfer" ? "Pending" : "Unpaid",
+            Status = Request.OrderStatus.Pending.ToString(),
             Discount = 0m,
             FinalPrice = totalAmount,
             ReviewerFee = 0m,
@@ -254,15 +293,19 @@ public class Service : IService
         _dbContext.Orders.Add(order);
         await _dbContext.SaveChangesAsync();
 
+        var isBankTransfer = string.Equals(request.PaymentMethod, "BankTransfer", StringComparison.OrdinalIgnoreCase);
+
         return new Response.CreateOrderResponse
         {
             OrderId = order.Id,
             TotalAmount = order.FinalPrice,
-            BankName = "MBBank",
-            BankAccount = "VQRQAIDAX4356",
+            BankName = isBankTransfer ? "MBBank" : string.Empty,
+            BankAccount = isBankTransfer ? "VQRQAIDAX4356" : string.Empty,
             Description = description,
             Code = order.Id.ToString("N"),
-            QRCode = $"https://qr.sepay.vn/img?acc=VQRQAIDAX4356&bank=MBBank&amount={(int)totalAmount}&des={description}&template=qronly"
+            QRCode = isBankTransfer
+                ? $"https://qr.sepay.vn/img?acc=VQRQAIDAX4356&bank=MBBank&amount={(int)totalAmount}&des={description}&template=qronly"
+                : null
         };
     }
 
@@ -323,7 +366,7 @@ public class Service : IService
             throw new InvalidOperationException("Order already processed");
         }
 
-        order.Status = Request.OrderStatus.Completed.ToString();
+        order.PaymentStatus = "Paid";
         order.UpdatedAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync();
     }
@@ -392,13 +435,25 @@ public class Service : IService
             throw new KeyNotFoundException("Order not found");
         }
 
+        if (order.OrderType != Request.OrderType.Online.ToString())
+        {
+            throw new InvalidOperationException("This API is only for online orders");
+        }
+
         if (order.Status == Request.OrderStatus.NotReceived.ToString()
-            || order.Status == Request.OrderStatus.Rejected.ToString())
+            || order.Status == Request.OrderStatus.Rejected.ToString()
+            || order.Status == Request.OrderStatus.Completed.ToString())
         {
             throw new InvalidOperationException("Order cannot be confirmed in its current state");
         }
 
         order.Status = Request.OrderStatus.Completed.ToString();
+
+        if (string.Equals(order.PaymentMethod, "COD", StringComparison.OrdinalIgnoreCase))
+        {
+            order.PaymentStatus = "Paid";
+        }
+
         order.UpdatedAt = DateTimeOffset.UtcNow;
 
         var merchantId = order.OrderDetails
@@ -443,6 +498,12 @@ public class Service : IService
         if (order == null)
         {
             throw new KeyNotFoundException("Order not found");
+        }
+
+        
+        if (order.OrderType != Request.OrderType.Online.ToString())
+        {
+            throw new InvalidOperationException("This API is only for online orders");
         }
 
         if (order.Status == Request.OrderStatus.NotReceived.ToString()
@@ -490,6 +551,11 @@ public class Service : IService
             throw new KeyNotFoundException("Order not found");
         }
 
+        if (order.OrderType != Request.OrderType.Offline.ToString())
+        {
+            throw new InvalidOperationException("Bill API is only for offline orders");
+        }
+
         var selectOrder = new Response.GetOrderBillResponse
         {
             OrderId = order.Id,
@@ -532,6 +598,11 @@ public class Service : IService
         if (order == null)
         {
             throw new KeyNotFoundException("Order not found");
+        }
+
+        if (order.OrderType != Request.OrderType.Offline.ToString())
+        {
+            throw new InvalidOperationException("Bill API is only for offline orders");
         }
  
         if (order.Status != Request.OrderStatus.Accepted.ToString()
@@ -576,6 +647,11 @@ public class Service : IService
             throw new KeyNotFoundException("Order not found");
         }
 
+        if (order.OrderType != Request.OrderType.Offline.ToString())
+        {
+            throw new InvalidOperationException("Bill API is only for offline orders");
+        }
+
         return new Response.GetOrderBillResponse
         {
             OrderId = order.Id,
@@ -616,6 +692,11 @@ public class Service : IService
         if (order == null)
         {
             throw new KeyNotFoundException("Order not found");
+        }
+
+        if (order.OrderType != Request.OrderType.Offline.ToString())
+        {
+            throw new InvalidOperationException("Cash payment request is only for offline orders");
         }
 
         if (!string.Equals(order.PaymentMethod, "Cash", StringComparison.OrdinalIgnoreCase))
@@ -662,6 +743,11 @@ public class Service : IService
         {
             throw new KeyNotFoundException("Order not found");
         }
+
+        if (order.OrderType != Request.OrderType.Offline.ToString())
+        {
+            throw new InvalidOperationException("Bill API is only for offline orders");
+        }
  
         if (order.Status != Request.OrderStatus.Accepted.ToString()
             && order.Status != Request.OrderStatus.BillUpdated.ToString()
@@ -702,6 +788,11 @@ public class Service : IService
         if (order == null)
         {
             throw new KeyNotFoundException("Order not found ");
+        }
+
+        if (order.OrderType != Request.OrderType.Offline.ToString())
+        {
+            throw new InvalidOperationException("Bill API is only for offline orders");
         }
  
         if (order.Status != Request.OrderStatus.BillRejected.ToString())
@@ -789,6 +880,9 @@ public class Service : IService
         if (order == null)
             throw new KeyNotFoundException("Order not found or not yours");
 
+        if (order.OrderType != Request.OrderType.Offline.ToString())
+            throw new InvalidOperationException("Cash payment confirmation is only for offline orders");
+
         if (!string.Equals(order.PaymentMethod, "Cash", StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException("Cash payment confirmation is only available for cash orders");
 
@@ -803,6 +897,7 @@ public class Service : IService
             throw new KeyNotFoundException("Merchant not found");
 
         order.Status = Request.OrderStatus.Completed.ToString();
+        order.PaymentStatus = "Paid";
         order.UpdatedAt = DateTimeOffset.UtcNow;
 
         await _checkInService.CreateCheckIn(order.CustomerId, merchantId);
