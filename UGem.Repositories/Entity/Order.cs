@@ -21,8 +21,8 @@ public class Order: BaseEntity<Guid>, IAuditableEntity
     public string PaymentStatus { get; set; } = "Unpaid";
     public string? DeliveryAddress { get; set; }
     
-    public required Guid CustomerId { get; set; }
-    public Customer Customer { get; set; } = null!;
+    public Guid? CustomerId { get; set; }
+    public Customer? Customer { get; set; }
     
     public Review? Review { get; set; }
     

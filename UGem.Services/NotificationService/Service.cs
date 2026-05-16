@@ -23,17 +23,40 @@ public class Service : IService
         
         var query = _dbContext.Notifications
             .AsNoTracking()
-            .Where(x => x.UserId == userIdGuid);
+            .Where(x => x.UserId == userIdGuid)
+            .OrderByDescending(x => x.CreatedAt);
 
         var notificationResponse = query.Select(x => new Response.NotificationResponse()
         {
+            Id = x.Id,
             Title = x.Title,
             Message = x.Message,
-            IsRead = x.IsRead
+            Type = x.Type,
+            IsRead = x.IsRead,
+            CreatedAt = x.CreatedAt
         });
         
         var result = await notificationResponse.ToListAsync();
         
         return result;
+    }
+
+    public async Task MarkAsRead(Guid notificationId)
+    {
+        var userId = _httpContext.HttpContext.User.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
+        var userIdGuid = Guid.Parse(userId!);
+
+        var notification = await _dbContext.Notifications
+            .FirstOrDefaultAsync(x => x.Id == notificationId && x.UserId == userIdGuid);
+
+        if (notification == null)
+        {
+            throw new KeyNotFoundException("Notification not found");
+        }
+
+        notification.IsRead = true;
+        notification.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
     }
 }

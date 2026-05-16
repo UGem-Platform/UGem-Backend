@@ -27,15 +27,15 @@ public class Service : IService
 
         if (order.OrderType != "Offline")
             throw new InvalidOperationException("Check-in QR can only be generated for offline orders");
-        
+
         var qrText = $"https://u-gem.vercel.app/check-in?orderId={request.OrderId}";
-        
+
         using var qrGenerator = new QRCodeGenerator();
-        
+
         var qrCodeData = qrGenerator.CreateQrCode(qrText, QRCodeGenerator.ECCLevel.Q);
-        
+
         var qrCode = new PngByteQRCode(qrCodeData);
-        
+
         return qrCode.GetGraphic(20);
     }
 
@@ -55,7 +55,8 @@ public class Service : IService
         if (customer != null)
         {
             customer.TotalCheckIns += 1;
-        } 
+        }
+
         await _dbContext.SaveChangesAsync();
     }
 
@@ -73,17 +74,17 @@ public class Service : IService
         var order = await _dbContext.Orders
             .Include(x => x.OrderDetails)
             .ThenInclude(x => x.Food)
-            .FirstOrDefaultAsync(x => x.Id == request.OrderId );
+            .FirstOrDefaultAsync(x => x.Id == request.OrderId);
 
         if (order == null)
             throw new KeyNotFoundException("Order not found");
-        
-        
+
+
         if (order.OrderType != "Offline")
             throw new InvalidOperationException("Check-in QR is only available for offline orders");
 
-        
-        if (order.CustomerId != Guid.Empty)
+
+        if (order.CustomerId.HasValue)
         {
             throw new Exception("Order already claimed");
         }
@@ -104,7 +105,7 @@ public class Service : IService
         {
             throw new Exception("Already checked in");
         }
-        
+
         order.CustomerId = customerIdGuid;
         order.UpdatedAt = DateTimeOffset.UtcNow;
         await _dbContext.SaveChangesAsync();
