@@ -24,9 +24,6 @@ public class Service : IService
 
         if (order == null)
             throw new KeyNotFoundException("Order not found");
-        
-        if (order == null)
-            throw new KeyNotFoundException("Order not found or not yours");
 
         if (order.OrderType != "Offline")
             throw new InvalidOperationException("Check-in QR can only be generated for offline orders");
