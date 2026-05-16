@@ -24,6 +24,9 @@ public class Service : IService
 
         if (order == null)
             throw new KeyNotFoundException("Order not found");
+
+        if (order.OrderType != "Offline")
+            throw new InvalidOperationException("Check-in QR can only be generated for offline orders");
         
         var qrText = $"https://u-gem.vercel.app/check-in?orderId={request.OrderId}";
         
@@ -37,24 +40,25 @@ public class Service : IService
     }
 
     public async Task CreateCheckIn(Guid customerId, Guid merchantId)
+    {
+        var checkIn = new CheckIn()
         {
-            var checkIn = new CheckIn()
-            {
-                Id = Guid.NewGuid(),
-                CustomerId = customerId,
-                MerchantId = merchantId,
-                CreatedAt = DateTimeOffset.UtcNow
-            };
+            Id = Guid.NewGuid(),
+            CustomerId = customerId,
+            MerchantId = merchantId,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
 
-            _dbContext.CheckIns.Add(checkIn);
+        _dbContext.CheckIns.Add(checkIn);
 
-            var customer = await _dbContext.Customers.FirstOrDefaultAsync(x => x.Id == customerId);
-            if (customer != null)
-            {
-                customer.TotalCheckIns += 1;
-            } 
-            await _dbContext.SaveChangesAsync();
-        }
+        var customer = await _dbContext.Customers.FirstOrDefaultAsync(x => x.Id == customerId);
+        if (customer != null)
+        {
+            customer.TotalCheckIns += 1;
+        } 
+        await _dbContext.SaveChangesAsync();
+    }
+
 
     public async Task CreateCheckInForQr(Request.CreateCheckInForQr request)
     {
@@ -73,6 +77,12 @@ public class Service : IService
 
         if (order == null)
             throw new KeyNotFoundException("Order not found");
+        
+        
+        if (order.OrderType != "Offline")
+            throw new InvalidOperationException("Check-in QR is only available for offline orders");
+
+        
         if (order.CustomerId != Guid.Empty)
         {
             throw new Exception("Order already claimed");
