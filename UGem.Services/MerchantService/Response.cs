@@ -48,4 +48,23 @@ public abstract class Response
        public string? OpeningHours { get; set; }
        public required string Email { get; set; }
     }
+
+    public class MerchantViewResponse
+    {
+        public Guid MerchantId { get; set; }
+        public int TotalViews { get; set; }
+    }
+
+    public class MerchantStatisticResponse
+    {
+        public Guid MerchantId { get; set; }
+        public required string MerchantName { get; set; }
+        public int TotalViews { get; set; }
+        public int TotalOrders { get; set; }
+        public decimal TotalRevenue { get; set; }
+        public decimal AvgOrderValue { get; set; }
+        public decimal UnderrateScore { get; set; }
+        public decimal PlatformFeePercent { get; set; }
+        
+    }
 }

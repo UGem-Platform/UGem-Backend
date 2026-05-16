@@ -68,4 +68,29 @@ public class MerchantController : ControllerBase
         var result = await _service.GetAllMerchantForStaff(searchTerm, pageSize, pageIndex);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Merchants retrieved", HttpContext.TraceIdentifier));
     }
+
+    [HttpPost("{id}/views")]
+
+    public async Task<IActionResult> IncrementView(Guid id)
+    {
+         await _service.ViewMerchant(id);
+        return Ok(ApiResponseFactory.SuccessResponse("Merchant view updated successfully", HttpContext.TraceIdentifier));
+    }
+
+    [HttpGet("me/views")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    public async Task<IActionResult> GetMyViews()
+    {
+        var result = await _service.GetMyViews();
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Get views success", HttpContext.TraceIdentifier));
+    }
+
+    [HttpGet("me/statistics")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    public async Task<IActionResult> GetMyViewStatistics()
+    {
+        var result = await _service.GetMerchantStatistics();
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Get statistics success", HttpContext.TraceIdentifier));
+
+    }
 }
