@@ -34,7 +34,7 @@ public class AppDbContext : DbContext
     private static readonly Guid WishlistId1 = Guid.Parse("16161616-1616-1616-1616-161616161616");
     private static readonly Guid WishlistDetailId1 = Guid.Parse("17171717-1717-1717-1717-171717171717");
     private static readonly Guid CheckInId1 = Guid.Parse("18181818-1818-1818-1818-181818181818");
-    private static readonly Guid ReviewerApplicationId1 = Guid.Parse("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1"); 
+private static readonly Guid ReviewerApplicationId1 = Guid.Parse("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1"); 
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -114,8 +114,7 @@ public class AppDbContext : DbContext
                 .WithOne(c => c.User)
                 .HasForeignKey<Customer>(c => c.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
-
-            builder.HasOne(u => u.Merchant)
+builder.HasOne(u => u.Merchant)
                 .WithOne(m => m.User)
                 .HasForeignKey<Merchant>(m => m.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
@@ -191,7 +190,7 @@ public class AppDbContext : DbContext
                 PhoneNumber = "0902000003",
                 IsActive = true,
                 Role = "Merchant",
-                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
+CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
                 IsDeleted = false
             },
             new User
@@ -281,7 +280,7 @@ public class AppDbContext : DbContext
             builder.HasOne(a => a.Merchant)
                 .WithMany(m => m.AffiliateLinks)
                 .HasForeignKey(a => a.MerchantId)
-                .OnDelete(DeleteBehavior.Restrict);
+.OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<Application>(builder =>
@@ -374,8 +373,7 @@ public class AppDbContext : DbContext
         modelBuilder.Entity<ApplicationMenu>(builder =>
         {
             ConfigureBaseEntity(builder);
-
-            builder.Property(am => am.Name)
+builder.Property(am => am.Name)
                 .IsRequired()
                 .HasMaxLength(200);
 
@@ -464,7 +462,7 @@ public class AppDbContext : DbContext
 
             builder.HasOne(c => c.Wishlist)
                 .WithOne(w => w.Customer)
-                .HasForeignKey<Wishlist>(w => w.CustomerId)
+.HasForeignKey<Wishlist>(w => w.CustomerId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             builder.HasData(
@@ -563,8 +561,7 @@ public class AppDbContext : DbContext
             builder.Property(m => m.OpeningHours)
                 .IsRequired()
                 .HasMaxLength(200);
-
-            builder.Property(m => m.UnderratedScore)
+builder.Property(m => m.UnderratedScore)
                 .HasPrecision(5, 4);
 
             builder.Property(m => m.Rating)
@@ -652,7 +649,7 @@ public class AppDbContext : DbContext
             new Category
             {
                 Id = CategoryTraditionalFoodId,
-                Name = "Mon Nuoc Truyen Thong",
+Name = "Mon Nuoc Truyen Thong",
                 Description = "Pho, bun, hu tieu voi nuoc dung ninh ham lau nam.",
                 Slug = "mon-nuoc-truyen-thong",
                 Path = "/mon-nuoc-truyen-thong",
@@ -739,8 +736,7 @@ public class AppDbContext : DbContext
                 .WithMany(m => m.Foods)
                 .HasForeignKey(f => f.MerchantId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
-            builder.HasIndex(f => new { f.Name, f.Description });
+builder.HasIndex(f => new { f.Name, f.Description });
         });
 
         modelBuilder.Entity<Food>().HasData(
@@ -843,8 +839,7 @@ public class AppDbContext : DbContext
 
                 IsDeleted = false
             },
-
-            new FoodTopping
+new FoodTopping
             {
                 Id = Guid.Parse("30000000-0000-0000-0000-000000000004"),
 
@@ -939,7 +934,7 @@ public class AppDbContext : DbContext
             builder.HasOne(ci => ci.Customer)
                 .WithMany(c => c.CheckIns)
                 .HasForeignKey(ci => ci.CustomerId)
-                .OnDelete(DeleteBehavior.Cascade);
+.OnDelete(DeleteBehavior.Cascade);
 
             builder.HasOne(ci => ci.Merchant)
                 .WithMany(m => m.CheckIns)
@@ -1000,7 +995,7 @@ public class AppDbContext : DbContext
             builder.HasOne(o => o.Customer)
                 .WithMany(c => c.Orders)
                 .HasForeignKey(o => o.CustomerId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.SetNull);
 
             builder.HasOne(o => o.AffiliateLink)
                 .WithMany(a => a.Orders)
@@ -1037,7 +1032,7 @@ public class AppDbContext : DbContext
         });
         
         modelBuilder.Entity<ReviewerApplication>(builder =>
-        {
+{
             ConfigureBaseEntity(builder);
 
             builder.Property(ra => ra.Status)
@@ -1127,8 +1122,7 @@ public class AppDbContext : DbContext
                 Balance = 0,
 
                 CreatedAt = DateTimeOffset.UtcNow,
-
-                UpdatedAt = DateTimeOffset.UtcNow
+UpdatedAt = DateTimeOffset.UtcNow
             }
         );
 

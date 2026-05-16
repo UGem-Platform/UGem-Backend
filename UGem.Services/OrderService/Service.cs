@@ -46,7 +46,9 @@ public class Service : IService
                 OrderType = x.OrderType,
                 Status = x.Status,
                 FinalPrice = x.FinalPrice,
-                CustomerName = x.Customer.User.FullName,
+                CustomerName = x.Customer != null && x.Customer.User != null
+                    ? x.Customer.User.FullName
+                    : x.Name,
                 CreatedAt = x.CreatedAt,
             })
             .ToListAsync();
@@ -82,7 +84,7 @@ public class Service : IService
 
         var order = await _dbContext.Orders
             .FirstOrDefaultAsync(x => x.Id == request.OrderId
-                                      && x.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
+&& x.OrderDetails.Any(od => od.Food.Merchant.UserId == userIdGuid));
 
         if (order == null)
         {
@@ -121,11 +123,11 @@ public class Service : IService
 
         
 
-        return await CreateOrderInternal(Guid.Empty, request, merchant.Id);
+        return await CreateOrderInternal(null, request, merchant.Id);
     }
 
     private async Task<Response.CreateOrderResponse> CreateOrderInternal(
-        Guid customerId,
+        Guid? customerId,
         Request.CreateOrderRequest request,
         Guid? merchantId)
     {
@@ -178,8 +180,7 @@ public class Service : IService
         {
             throw new InvalidOperationException("Invalid order type");
         }
-
-        var validPaymentMethods = new[]
+var validPaymentMethods = new[]
         {
             "Cash",
             "BankTransfer",
@@ -266,7 +267,7 @@ public class Service : IService
             foreach (var topping in toppings)
             {
                 orderDetail.OrderDetailToppings.Add(new OrderDetailTopping
-                {
+{
                     Id = Guid.NewGuid(),
                     OrderDetailId = orderDetail.Id,
                     FoodToppingId = topping.Id,
@@ -345,7 +346,7 @@ public class Service : IService
                 "Rejected SePay webhook due to amount mismatch. OrderId={OrderId}, ExpectedAmount={ExpectedAmount}, ActualAmount={ActualAmount}",
                 order.Id,
                 order.FinalPrice,
-                request.TransferAmount);
+request.TransferAmount);
             throw new InvalidOperationException("Invalid transfer amount");
         }
 
@@ -432,7 +433,7 @@ public class Service : IService
 
         if (order == null)
         {
-            throw new KeyNotFoundException("Order not found");
+throw new KeyNotFoundException("Order not found");
         }
 
         if (order.OrderType != Request.OrderType.Online.ToString())
@@ -516,7 +517,7 @@ public class Service : IService
         order.UpdatedAt = DateTimeOffset.UtcNow;
 
         var userId = GetRequiredGuidClaim("UserId");
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
 
         var merchant = order.OrderDetails
             .Select(x => x.Food.Merchant)
@@ -602,7 +603,7 @@ public class Service : IService
 
         if (order.OrderType != Request.OrderType.Offline.ToString())
         {
-            throw new InvalidOperationException("Bill API is only for offline orders");
+throw new InvalidOperationException("Bill API is only for offline orders");
         }
  
         if (order.Status != Request.OrderStatus.Accepted.ToString()
@@ -647,11 +648,6 @@ public class Service : IService
             throw new KeyNotFoundException("Order not found");
         }
 
-        if (order.OrderType != Request.OrderType.Offline.ToString())
-        {
-            throw new InvalidOperationException("Bill API is only for offline orders");
-        }
-
         return new Response.GetOrderBillResponse
         {
             OrderId = order.Id,
@@ -684,7 +680,7 @@ public class Service : IService
 
         var order = await _dbContext.Orders
             .Include(x => x.Customer)
-            .Include(x => x.OrderDetails)
+.Include(x => x.OrderDetails)
             .ThenInclude(x => x.Food)
             .ThenInclude(x => x.Merchant)
             .FirstOrDefaultAsync(x => x.Id == request.OrderId && x.CustomerId == customerId);
@@ -760,7 +756,7 @@ public class Service : IService
         order.RejectionReason = request.Reason;
         order.UpdatedAt = DateTimeOffset.UtcNow;
  
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
         var merchant = order.OrderDetails.Select(x => x.Food.Merchant).FirstOrDefault();
  
         var notification = new Notification
@@ -841,7 +837,7 @@ public class Service : IService
             Title = "Bill updated",
             Message = $"Your bill for order #{order.Id} has been updated.",
             Type = "order",
-            IsRead = false,
+IsRead = false,
             CreatedAt = DateTimeOffset.UtcNow,
         };
         _dbContext.Notifications.Add(notification);
@@ -889,6 +885,9 @@ public class Service : IService
         if (order.Status != Request.OrderStatus.CashPending.ToString())
             throw new InvalidOperationException("Cash payment can only be confirmed after the customer marks it as paid");
 
+        if (!order.CustomerId.HasValue || !order.CustomerId.HasValue)
+            throw new InvalidOperationException("Order has not been claimed by a customer");
+
         var merchantId = order.OrderDetails
             .Select(od => od.Food.MerchantId)
             .FirstOrDefault();
@@ -900,7 +899,7 @@ public class Service : IService
         order.PaymentStatus = "Paid";
         order.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _checkInService.CreateCheckIn(order.CustomerId, merchantId);
+        await _checkInService.CreateCheckIn(order.CustomerId.Value, merchantId);
 
         _dbContext.Notifications.Add(new Notification
         {
@@ -911,8 +910,7 @@ public class Service : IService
             IsRead = false,
             CreatedAt = DateTimeOffset.UtcNow,
         });
-
-        await _dbContext.SaveChangesAsync();
+await _dbContext.SaveChangesAsync();
     }
 
     private static Guid ExtractOrderId(string? content)

@@ -131,6 +131,7 @@ await using (var scope = app.Services.CreateAsyncScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.Database.MigrateAsync();
+    await EnsureOrderCustomerNullableAsync(dbContext);
 }
 
 // Configure the HTTP request pipeline.
@@ -159,12 +160,7 @@ static void ConfigureValidatedOptions(IServiceCollection services, IConfiguratio
         .Bind(configuration.GetSection(nameof(JwtService.JwtOptions)));
 
     services.AddOptions<CloudinaryService.CloudinaryOptions>()
-        .Configure(options =>
-        {
-            options.CloudName = "df1gdohe5";
-            options.ApiKey = "559921934694338";
-            options.ApiSecret = "x5LaRO61tpsNFbRkrKGJLpPUMp4";
-        });
+        .Bind(configuration.GetSection(nameof(CloudinaryService.CloudinaryOptions)));
 
     services.AddOptions<MailServiceOptions>()
         .Bind(configuration.GetSection(nameof(MailServiceOptions)));
@@ -209,4 +205,67 @@ static bool HasPlaceholder(string? value)
     return value.Contains("__SET", StringComparison.OrdinalIgnoreCase)
            || value.Contains("CHANGE_ME", StringComparison.OrdinalIgnoreCase)
            || value.Contains("PLACEHOLDER", StringComparison.OrdinalIgnoreCase);
+}
+
+static async Task EnsureOrderCustomerNullableAsync(AppDbContext dbContext)
+{
+    const string sql = """
+        DO $$
+        DECLARE
+            orders_reg regclass := to_regclass('public."Orders"');
+            customers_reg regclass := to_regclass('public."Customers"');
+            customer_id_attnum smallint;
+            fk_name text;
+        BEGIN
+            IF orders_reg IS NULL OR customers_reg IS NULL THEN
+                RETURN;
+            END IF;
+
+            SELECT attnum
+            INTO customer_id_attnum
+            FROM pg_attribute
+            WHERE attrelid = orders_reg
+              AND attname = 'CustomerId'
+              AND NOT attisdropped;
+
+            IF customer_id_attnum IS NULL THEN
+                RETURN;
+            END IF;
+
+            SELECT conname
+            INTO fk_name
+            FROM pg_constraint
+            WHERE conrelid = orders_reg
+              AND contype = 'f'
+              AND customer_id_attnum = ANY (conkey)
+            LIMIT 1;
+
+            IF fk_name IS NOT NULL THEN
+                EXECUTE format('ALTER TABLE %s DROP CONSTRAINT %I', orders_reg, fk_name);
+            END IF;
+
+            EXECUTE format(
+                'UPDATE %s SET "CustomerId" = NULL WHERE "CustomerId" = %L::uuid',
+                orders_reg,
+                '00000000-0000-0000-0000-000000000000'
+            );
+
+            EXECUTE format('ALTER TABLE %s ALTER COLUMN "CustomerId" DROP NOT NULL', orders_reg);
+
+            IF NOT EXISTS (
+                SELECT 1
+                FROM pg_constraint
+                WHERE conrelid = orders_reg
+                  AND conname = 'FK_Orders_Customers_CustomerId'
+            ) THEN
+                EXECUTE format(
+                    'ALTER TABLE %s ADD CONSTRAINT "FK_Orders_Customers_CustomerId" FOREIGN KEY ("CustomerId") REFERENCES %s ("Id") ON DELETE SET NULL',
+                    orders_reg,
+                    customers_reg
+                );
+            END IF;
+        END $$;
+        """;
+
+    await dbContext.Database.ExecuteSqlRawAsync(sql);
 }
