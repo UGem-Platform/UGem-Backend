@@ -16,17 +16,11 @@ public class Service : IService
 
     public Service(IOptions<CloudinaryOptions> cloudinaryOptions)
     {
-        var options = cloudinaryOptions.Value;
-        
-        // Final fallback to hardcoded credentials if config is missing or invalid
-        var cloudName = string.IsNullOrWhiteSpace(options.CloudName) || options.CloudName.Contains("__SET") ? "dmvb7vbyt" : options.CloudName;
-        var apiKey = string.IsNullOrWhiteSpace(options.ApiKey) || options.ApiKey.Contains("__SET") ? "566938632769158" : options.ApiKey;
-        var apiSecret = string.IsNullOrWhiteSpace(options.ApiSecret) || options.ApiSecret.Contains("__SET") ? "qw1DUWe8dQVajLS46LJOPLIEkCc" : options.ApiSecret;
-
+        // Absolute hardcode to bypass any ENV/config issues
         _cloudinary = new Cloudinary(new Account(
-            cloudName.Trim(),
-            apiKey.Trim(),
-            apiSecret.Trim()));
+            "dmvb7vbyt",
+            "566938632769158",
+            "qw1DUWe8dQVajLS46LJOPLIEkCc"));
     }
 
     public async Task<string> UploadImageAsync(IFormFile file)
