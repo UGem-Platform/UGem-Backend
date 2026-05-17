@@ -69,7 +69,10 @@ public class Service : IService
         if (string.IsNullOrEmpty(customerId))
             throw new UnauthorizedAccessException("CustomerId not found");
 
-        var customerIdGuid = Guid.Parse(customerId);
+        if (!Guid.TryParse(customerId, out var customerIdGuid))
+        {
+            throw new UnauthorizedAccessException("CustomerId is invalid");
+        }
 
         var order = await _dbContext.Orders
             .Include(x => x.OrderDetails)
@@ -86,7 +89,7 @@ public class Service : IService
 
         if (order.CustomerId.HasValue)
         {
-            throw new Exception("Order already claimed");
+            throw new InvalidOperationException("Order already claimed");
         }
 
         var merchantId = order.OrderDetails
@@ -103,7 +106,7 @@ public class Service : IService
 
         if (alreadyCheckedIn)
         {
-            throw new Exception("Already checked in");
+            throw new InvalidOperationException("Already checked in");
         }
 
         order.CustomerId = customerIdGuid;
@@ -120,7 +123,10 @@ public class Service : IService
         if (string.IsNullOrWhiteSpace(merchantUserId))
             throw new UnauthorizedAccessException("UserId not found");
 
-        var merchantUserIdGuid = Guid.Parse(merchantUserId);
+        if (!Guid.TryParse(merchantUserId, out var merchantUserIdGuid))
+        {
+            throw new UnauthorizedAccessException("UserId is invalid");
+        }
 
         var merchant = await _dbContext.Merchants
             .AsNoTracking()

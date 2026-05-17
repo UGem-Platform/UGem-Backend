@@ -112,6 +112,12 @@ public class Service : IService
     public async Task<Response.CreateOrderResponse> CreateMerchantOrder(Request.CreateMerchantOrderRequest request)
     {
         var merchantUserId = GetRequiredGuidClaim("UserId");
+
+        if (request.CustomerId == Guid.Empty)
+        {
+            throw new InvalidOperationException("CustomerId is required");
+        }
+
         var merchant = await _dbContext.Merchants
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.UserId == merchantUserId);
@@ -119,11 +125,6 @@ public class Service : IService
         if (merchant == null)
         {
             throw new KeyNotFoundException("Merchant not found");
-        }
-
-        if (request.CustomerId == Guid.Empty)
-        {
-            throw new InvalidOperationException("CustomerId is required");
         }
 
         var customerExists = await _dbContext.Customers
@@ -584,6 +585,7 @@ var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
                 Quantity = x.Quantity,
                 UnitPrice = x.UnitPrice,
                 SubTotal = x.UnitPrice * x.Quantity,
+                Notes = x.Notes,
                 Toppings = x.OrderDetailToppings.Select(t => new Response.OrderDetailToppingResponse
                 {
                     Name = t.Name,
@@ -676,6 +678,7 @@ throw new InvalidOperationException("Bill API is only for offline orders");
                 Quantity = x.Quantity,
                 UnitPrice = x.UnitPrice,
                 SubTotal = x.UnitPrice * x.Quantity,
+                Notes = x.Notes,
                 Toppings = x.OrderDetailToppings.Select(t => new Response.OrderDetailToppingResponse()
                 {
                     Name = t.Name,
@@ -866,6 +869,7 @@ IsRead = false,
                 Quantity = x.Quantity,
                 UnitPrice = x.UnitPrice,
                 SubTotal = x.UnitPrice * x.Quantity,
+                Notes = x.Notes,
                 Toppings = x.OrderDetailToppings.Select(t => new Response.OrderDetailToppingResponse
                 {
                     Name = t.Name,

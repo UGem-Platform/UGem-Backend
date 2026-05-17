@@ -87,6 +87,8 @@ public class Response
         public decimal UnitPrice { get; set; }
         
         public decimal SubTotal { get; set; }
+
+        public string? Notes { get; set; }
  
         public List<OrderDetailToppingResponse> Toppings { get; set; } = new();
     }
