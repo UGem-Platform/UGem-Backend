@@ -18,9 +18,9 @@ public class Service : IService
     {
         var options = cloudinaryOptions.Value;
         _cloudinary = new Cloudinary(new Account(
-            options.CloudName,
-            options.ApiKey,
-            options.ApiSecret));
+            options.CloudName.Trim(),
+            options.ApiKey.Trim(),
+            options.ApiSecret.Trim()));
     }
 
     public async Task<string> UploadImageAsync(IFormFile file)

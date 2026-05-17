@@ -146,6 +146,7 @@ if (enableSwagger)
 }
 
 app.UseCors("AllowFrontend");
+app.UseStaticFiles();
 app.UseMiddleware<ExceptionMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
