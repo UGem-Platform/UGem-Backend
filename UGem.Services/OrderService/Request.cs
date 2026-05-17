@@ -96,6 +96,6 @@ public class Request
 
     public class CreateMerchantOrderRequest: CreateOrderRequest
     {
-        
+        public Guid CustomerId { get; set; }
     }
 }

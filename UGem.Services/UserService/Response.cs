@@ -5,10 +5,11 @@ public class Response
     public class GetCustomerDetailsResponse
     {
         public Guid Id { get; set; }
-        public string Name { get; set; } = null!;
-        public string Email { get; set; } = null!;
-        public string PhoneNumber { get; set; } = null!;
+        public required string Name { get; set; }
+        public required string Email { get; set; } 
+        public required string PhoneNumber { get; set; }
         public string? AvatarUrl { get; set; }
-        public string Role { get; set; } = null!;
+        public required string Role { get; set; } 
     }
+
 }

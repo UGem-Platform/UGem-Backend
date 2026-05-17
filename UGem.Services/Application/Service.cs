@@ -80,8 +80,9 @@ public class Service : IService
             Id = applicationId,
             UserId = userIdGuid,
             Type = "Merchant",
-            Status = "Pending",
-            ReviewedAt = DateTime.UtcNow,
+            Status = Request.ApplicationStatus.Pending.ToString(),
+            ReviewedAt = default,
+            CreatedAt = DateTimeOffset.UtcNow,
             Name = request.Name,
             Description = request.Description,
             RestaurantType = request.RestaurantType,
@@ -137,12 +138,12 @@ public class Service : IService
             throw new KeyNotFoundException("Application not found");
         }
 
-        if (application.Status != "Pending")
+        if (application.Status != Request.ApplicationStatus.Pending.ToString())
         {
             throw new InvalidOperationException("Application already processed");
         }
 
-        application.Status = "Rejected";
+        application.Status = Request.ApplicationStatus.Rejected.ToString();
         application.Note = request.Note;
         application.ReviewedAt = DateTime.UtcNow;
 
@@ -178,7 +179,7 @@ public class Service : IService
             throw new UnauthorizedAccessException("Cannot edit another user's application.");
         }
 
-        if (application.Status != "Rejected")
+        if (application.Status != Request.ApplicationStatus.Rejected.ToString())
         {
             throw new InvalidOperationException("Just edit when application reject");
         }
@@ -197,7 +198,7 @@ public class Service : IService
         application.Latitude = request.Latitude;
         application.Longitude = request.Longitude;
         application.Note = request.Note;
-        application.Status = "Pending";
+        application.Status = Request.ApplicationStatus.Pending.ToString();
         application.ReviewedAt = default;
         application.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -206,6 +207,7 @@ public class Service : IService
         {
             _dbContext.ApplicationMenus.Add(new ApplicationMenu
             {
+                Id = Guid.NewGuid(),
                 ApplicationId = application.Id,
                 Name = menuRequest.Name,
                 Price = menuRequest.Price,
@@ -253,7 +255,7 @@ public class Service : IService
             throw new InvalidOperationException("Application user not found.");
         }
 
-        if (application.Status != "Pending")
+        if (application.Status != Request.ApplicationStatus.Pending.ToString())
         {
             throw new InvalidOperationException("The application is not pending.");
         }
@@ -274,7 +276,7 @@ public class Service : IService
             throw new InvalidOperationException("This application email is already used by another merchant.");
         }
 
-        application.Status = "Approved";
+        application.Status = Request.ApplicationStatus.Accepted.ToString();
         application.ReviewedAt = DateTime.UtcNow;
         application.User.Role = "Merchant";
 
@@ -323,6 +325,10 @@ public class Service : IService
                 Latitude = (double)application.Latitude,
                 Longitude = (double)application.Longitude,
                 Location = location,
+                PlatformFeePercent = 0,
+                UnderratedScore = 0,
+                Rating = 0,
+                TotalViews = 0,
                 CreatedAt = DateTimeOffset.UtcNow,
             };
             _dbContext.Merchants.Add(merchant);
