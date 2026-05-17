@@ -371,6 +371,33 @@ request.TransferAmount);
             return;
         }
 
+        if (order.OrderType == Request.OrderType.Offline.ToString()
+            && order.Status == Request.OrderStatus.BillConfirmed.ToString())
+        {
+            if (!order.CustomerId.HasValue)
+            {
+                throw new InvalidOperationException("Order has not been claimed by a customer");
+            }
+
+            var merchantId = await _dbContext.OrderDetails
+                .Where(od => od.OrderId == order.Id)
+                .Select(od => od.Food.MerchantId)
+                .FirstOrDefaultAsync();
+
+            if (merchantId == Guid.Empty)
+            {
+                throw new KeyNotFoundException("Merchant not found");
+            }
+
+            order.PaymentStatus = "Paid";
+            order.Status = Request.OrderStatus.Completed.ToString();
+            order.UpdatedAt = DateTimeOffset.UtcNow;
+
+            await _checkInService.CreateCheckIn(order.CustomerId.Value, merchantId);
+            await _dbContext.SaveChangesAsync();
+            return;
+        }
+
         if (order.Status != Request.OrderStatus.Pending.ToString())
         {
             _logger.LogWarning(
