@@ -170,6 +170,17 @@ static void ConfigureValidatedOptions(IServiceCollection services, IConfiguratio
         return;
     }
 
+    services.AddOptions<MailServiceOptions>()
+        .ValidateDataAnnotations()
+        .Validate(options =>
+                HasConfiguredValue(options.Mail)
+                && HasConfiguredValue(options.DisplayName)
+                && HasConfiguredValue(options.Password)
+                && HasConfiguredValue(options.Host)
+                && options.Port > 0,
+            "MailOptions must be configured with secure non-placeholder values.")
+        .ValidateOnStart();
+
     services.AddOptions<JwtService.JwtOptions>()
         .ValidateDataAnnotations()
         .Validate(options =>
@@ -183,9 +194,9 @@ static void ConfigureValidatedOptions(IServiceCollection services, IConfiguratio
     services.AddOptions<CloudinaryService.CloudinaryOptions>()
         .ValidateDataAnnotations()
         .Validate(options =>
-                HasConfiguredValue("dmvb7vbyt")
-                && HasConfiguredValue("566938632769158")
-                && HasConfiguredValue("qw1DUWe8dQVajLS46LJOPLIEkCc"),
+                HasConfiguredValue(options.CloudName)
+                && HasConfiguredValue(options.ApiKey)
+                && HasConfiguredValue(options.ApiSecret),
             "CloudinaryOptions must be configured with secure non-placeholder values.")
         .ValidateOnStart();
 }
