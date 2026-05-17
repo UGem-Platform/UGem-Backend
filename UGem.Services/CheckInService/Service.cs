@@ -85,12 +85,7 @@ public class Service : IService
 
         if (order.OrderType != "Offline")
             throw new InvalidOperationException("Check-in QR is only available for offline orders");
-
-
-        if (order.CustomerId.HasValue)
-        {
-            throw new InvalidOperationException("Order already claimed");
-        }
+        
 
         var merchantId = order.OrderDetails
             .Select(x => x.Food.MerchantId)
