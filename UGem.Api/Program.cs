@@ -183,9 +183,9 @@ static void ConfigureValidatedOptions(IServiceCollection services, IConfiguratio
     services.AddOptions<CloudinaryService.CloudinaryOptions>()
         .ValidateDataAnnotations()
         .Validate(options =>
-                HasConfiguredValue(options.CloudName)
-                && HasConfiguredValue(options.ApiKey)
-                && HasConfiguredValue(options.ApiSecret),
+                HasConfiguredValue("dmvb7vbyt")
+                && HasConfiguredValue("566938632769158")
+                && HasConfiguredValue("qw1DUWe8dQVajLS46LJOPLIEkCc"),
             "CloudinaryOptions must be configured with secure non-placeholder values.")
         .ValidateOnStart();
 }
