@@ -66,13 +66,10 @@ public class Service : IService
         var customerId = _httpContext.HttpContext?.User.Claims
             .FirstOrDefault(x => x.Type == "CustomerId")?.Value;
 
-        if (string.IsNullOrEmpty(customerId))
+        if (string.IsNullOrWhiteSpace(customerId))
             throw new UnauthorizedAccessException("CustomerId not found");
 
-        if (!Guid.TryParse(customerId, out var customerIdGuid))
-        {
-            throw new UnauthorizedAccessException("CustomerId is invalid");
-        }
+        var customerIdGuid = Guid.Parse(customerId);
 
         var order = await _dbContext.Orders
             .Include(x => x.OrderDetails)
@@ -82,10 +79,14 @@ public class Service : IService
         if (order == null)
             throw new KeyNotFoundException("Order not found");
 
-
         if (order.OrderType != "Offline")
             throw new InvalidOperationException("Check-in QR is only available for offline orders");
-        
+
+        if (!order.CustomerId.HasValue)
+            throw new InvalidOperationException("Order does not have customer");
+
+        if (order.CustomerId.Value != customerIdGuid)
+            throw new UnauthorizedAccessException("This order does not belong to you");
 
         var merchantId = order.OrderDetails
             .Select(x => x.Food.MerchantId)
@@ -93,20 +94,7 @@ public class Service : IService
 
         if (merchantId == Guid.Empty)
             throw new KeyNotFoundException("Merchant not found");
-        var alreadyCheckedIn = await _dbContext.CheckIns
-            .AnyAsync(x =>
-                x.CustomerId == customerIdGuid &&
-                x.MerchantId == merchantId &&
-                x.CreatedAt >= DateTimeOffset.UtcNow.AddHours(-3));
 
-        if (alreadyCheckedIn)
-        {
-            throw new InvalidOperationException("Already checked in");
-        }
-
-        order.CustomerId = customerIdGuid;
-        order.UpdatedAt = DateTimeOffset.UtcNow;
-        await _dbContext.SaveChangesAsync();
         await CreateCheckIn(customerIdGuid, merchantId);
     }
 
