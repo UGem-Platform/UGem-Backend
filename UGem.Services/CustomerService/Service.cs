@@ -25,14 +25,15 @@ public class Service : IService
             return new List<Response.SearchUserByEmailResponse>();
         }
 
-        var keyword = email.Trim();
+        var keyword = email.Trim().ToLower();
         var take = Math.Clamp(limit, 1, 20);
 
         var users = await _dbContext.Users
             .AsNoTracking()
             .Where(x => x.IsActive
                         && x.Role == "Customer"
-                        && EF.Functions.ILike(x.Email, $"%{keyword}%"))
+                        && x.Customer != null
+                        && x.Email.ToLower().Contains(keyword))
             .OrderBy(x => x.Email)
             .Select(x => new Response.SearchUserByEmailResponse
             {
