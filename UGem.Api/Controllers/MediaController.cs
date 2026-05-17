@@ -33,7 +33,9 @@ public class MediaController : ControllerBase
         catch (Exception ex)
         {
             // Fallback to local storage if Cloudinary fails
-            var uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "images");
+            var webRootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+            var uploadsFolder = Path.Combine(webRootPath, "uploads", "images");
+            
             if (!Directory.Exists(uploadsFolder))
             {
                 Directory.CreateDirectory(uploadsFolder);
@@ -42,16 +44,26 @@ public class MediaController : ControllerBase
             var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
             var filePath = Path.Combine(uploadsFolder, fileName);
 
-            await using var stream = new FileStream(filePath, FileMode.Create);
-            await file.CopyToAsync(stream);
+            await using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
 
-            var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+            // Ensure the URL is accessible via static files
+            var request = HttpContext.Request;
+            var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}";
             var localUrl = $"{baseUrl}/uploads/images/{fileName}";
 
             return Ok(new
             {
                 url = localUrl,
                 note = "Uploaded to local storage due to Cloudinary failure.",
+                debugInfo = new
+                {
+                    directoryExists = Directory.Exists(uploadsFolder),
+                    filePath = filePath,
+                    webRoot = webRootPath
+                },
                 error = ex.Message
             });
         }
