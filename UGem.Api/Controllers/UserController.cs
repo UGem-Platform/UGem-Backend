@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using UGem.Services.Models;
 using UGem.Services.UserService;
+using UGem.Api.Extensions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace UGem.Api.Controllers;
 

@@ -18,5 +18,35 @@ public class Service : IService
      
     }
     
+    public async Task<List<Response.SearchUserByEmailResponse>> SearchUserByEmail(string? email, int limit = 10)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return new List<Response.SearchUserByEmailResponse>();
+        }
+
+        var keyword = email.Trim();
+        var take = Math.Clamp(limit, 1, 20);
+
+        var users = await _dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.IsActive
+                        && x.Role == "Customer"
+                        && EF.Functions.ILike(x.Email, $"%{keyword}%"))
+            .OrderBy(x => x.Email)
+            .Select(x => new Response.SearchUserByEmailResponse
+            {
+                UserId = x.Id,
+                CustomerId = x.Customer!.Id,
+                FullName = x.FullName,
+                Email = x.Email,
+                Role = x.Role,
+                AvatarUrl = x.AvatarUrl
+            })
+            .Take(take)
+            .ToListAsync();
+
+        return users;
+    }
 
 }

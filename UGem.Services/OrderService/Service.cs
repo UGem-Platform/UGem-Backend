@@ -121,9 +121,21 @@ public class Service : IService
             throw new KeyNotFoundException("Merchant not found");
         }
 
-        
+        if (request.CustomerId == Guid.Empty)
+        {
+            throw new InvalidOperationException("CustomerId is required");
+        }
 
-        return await CreateOrderInternal(null, request, merchant.Id);
+        var customerExists = await _dbContext.Customers
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == request.CustomerId && x.User.IsActive);
+
+        if (!customerExists)
+        {
+            throw new KeyNotFoundException("Customer not found");
+        }
+
+        return await CreateOrderInternal(request.CustomerId, request, merchant.Id);
     }
 
     private async Task<Response.CreateOrderResponse> CreateOrderInternal(
