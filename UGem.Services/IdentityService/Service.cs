@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Security.Claims;
 using Google.Apis.Auth;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using UGem.Repositories;
@@ -18,19 +19,21 @@ public class Service : IService
     private readonly JwtOptions _jwtOption;
     private readonly MailService.IService _mailService;
     private readonly IConfiguration _configuration;
+    private readonly IMemoryCache _cache;
 
     public Service(
         IConfiguration configuration,
         IOptions<JwtOptions> jwtOptions,
         JwtService.IService jwtService,
         AppDbContext dbContext,
-        MailService.IService mailService)
+        MailService.IService mailService, IMemoryCache memoryCache)
     {
         _configuration = configuration;
         _jwtOption = jwtOptions.Value;
         _jwtService = jwtService;
         _dbContext = dbContext;
         _mailService = mailService;
+        _cache = memoryCache;
     }
 
     public async Task<Response.IdentityResponse> Login(Request.LoginRequest request)
@@ -67,7 +70,7 @@ public class Service : IService
         var merchant = await _dbContext.Merchants.FirstOrDefaultAsync(u => u.UserId == user.Id);
         if (merchant != null)
         {
-                claims.Add(new Claim("MerchantId", merchant.Id.ToString()));
+            claims.Add(new Claim("MerchantId", merchant.Id.ToString()));
         }
 
         var staff = await _dbContext.Staffs.FirstOrDefaultAsync(u => u.UserId == user.Id);
@@ -225,6 +228,65 @@ public class Service : IService
             Role = user.Role,
             AvatarUrl = user.AvatarUrl
         };
+    }
+
+    public async Task ForgotPassword(Request.ForgotPasswordRequest request)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Email == request.Email);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found");
+        }
+
+        var otp = Random.Shared.Next(100000, 999999).ToString();
+        _cache.Set($"reset:{request.Email}", otp, TimeSpan.FromMinutes(10));
+
+        await _mailService.SendMail(new MailContext
+        {
+            To = request.Email,
+            Subject = "UGem - Mã xác nhận đặt lại mật khẩu",
+            Body = $"Xin chào {user.FullName},\n\n" +
+                   $"Mã xác nhận đặt lại mật khẩu của bạn là: {otp}\n\n" +
+                   $"Mã có hiệu lực trong 10 phút.\n\n" +
+                   $"Nếu bạn không yêu cầu đặt lại mật khẩu, hãy bỏ qua email này."
+        });
+    }
+
+    public async Task ResetPassword(Request.ResetPasswordRequest request)
+    {
+        if (request.NewPassword != request.ConfirmNewPassword)
+        {
+            throw new InvalidAsynchronousStateException("Passwords don't match");
+        }
+        if (!_cache.TryGetValue($"reset:{request.Email}", out string? cachedOtp))
+        {
+            throw new InvalidOperationException("OTP expired or not found. Please request a new one.");
+        }
+
+        if (cachedOtp != request.Token)
+        {
+            throw new InvalidOperationException("Invalid OTP token");
+        }
+
+        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Email == request.Email);
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found");
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        _dbContext.Notifications.Add(new Notification
+        {
+            Message = "Mật khẩu của bạn đã được đặt lại thành công.",
+            Title = "Mật khẩu đã được đặt lại",
+            Type = "Security",
+            UserId = user.Id,
+            IsRead = false,
+            CreatedAt = DateTimeOffset.UtcNow
+        });
+
+        await _dbContext.SaveChangesAsync();
+        _cache.Remove($"reset:{request.Email}");
     }
 
     private async Task<string> BuildTokenAsync(User user)

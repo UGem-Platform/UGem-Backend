@@ -25,13 +25,32 @@ public class Service : IService
         email.Subject = mailContent.Subject;
 
         BodyBuilder builder = new();
-        builder.HtmlBody = mailContent.Body;
+        builder.TextBody = mailContent.Body;
         email.Body = builder.ToMessageBody();
 
         using SmtpClient smtp = new();
-        await smtp.ConnectAsync(_mailOptions.Host, _mailOptions.Port, SecureSocketOptions.StartTls);
-        await smtp.AuthenticateAsync(_mailOptions.Mail, _mailOptions.Password);
+
+        Console.WriteLine("CONNECTING SMTP...");
+
+        await smtp.ConnectAsync(
+            _mailOptions.Host,
+            _mailOptions.Port,
+            SecureSocketOptions.Auto);
+
+        Console.WriteLine("CONNECTED");
+
+        Console.WriteLine("AUTHENTICATING...");
+
+        await smtp.AuthenticateAsync(
+            _mailOptions.Mail,
+            _mailOptions.Password);
+
+        Console.WriteLine("AUTH SUCCESS");
+
         await smtp.SendAsync(email);
+
+        Console.WriteLine("MAIL SENT");
+
         await smtp.DisconnectAsync(true);
     }
 
