@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
@@ -16,42 +17,22 @@ public class Service : IService
 
     public async Task SendMail(MailContext mailContent)
     {
-        EnsureMailOptionsConfigured();
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Add("api-key", _mailOptions.ApiKey);
 
-        MimeMessage email = new();
-        email.Sender = new MailboxAddress(_mailOptions.DisplayName, _mailOptions.Mail);
-        email.From.Add(new MailboxAddress(_mailOptions.DisplayName, _mailOptions.Mail));
-        email.To.Add(MailboxAddress.Parse(mailContent.To));
-        email.Subject = mailContent.Subject;
+        var body = new
+        {
+            sender = new { name = _mailOptions.DisplayName, email = _mailOptions.Mail },
+            to = new[] { new { email = mailContent.To } },
+            subject = mailContent.Subject,
+            htmlContent = mailContent.Body
+        };
 
-        BodyBuilder builder = new();
-        builder.TextBody = mailContent.Body;
-        email.Body = builder.ToMessageBody();
+        var response = await client.PostAsJsonAsync(
+            "https://api.brevo.com/v3/smtp/email", body);
 
-        Console.WriteLine($"HOST: {_mailOptions.Host}");
-        Console.WriteLine($"PORT: {_mailOptions.Port}");
-
-        using SmtpClient smtp = new();
-
-        Console.WriteLine("CONNECTING SMTP...");
-
-        await smtp.ConnectAsync(_mailOptions.Host, _mailOptions.Port, SecureSocketOptions.SslOnConnect);
-
-        Console.WriteLine("CONNECTED");
-
-        Console.WriteLine("AUTHENTICATING...");
-
-        await smtp.AuthenticateAsync(
-            _mailOptions.Mail,
-            _mailOptions.Password);
-
-        Console.WriteLine("AUTH SUCCESS");
-
-        await smtp.SendAsync(email);
-
-        Console.WriteLine("MAIL SENT");
-
-        await smtp.DisconnectAsync(true);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException("Failed to send email via Brevo API");
     }
 
     private void EnsureMailOptionsConfigured()
