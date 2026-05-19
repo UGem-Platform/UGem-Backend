@@ -31,7 +31,7 @@ public class Service : IService
             .Where(x => x.IsActive
                         && (x.Role == "Customer" || x.Role == "Reviewer")
                         && x.Customer != null
-                        && x.Email.ToLower().Contains(keyword))
+                        && x.PhoneNumber.Contains(keyword))
             .OrderBy(x => x.PhoneNumber)
             .Select(x => new Response.SearchUserByPhoneNumberResponse
             {

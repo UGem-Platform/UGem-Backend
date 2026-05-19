@@ -32,7 +32,7 @@ public class Service : IService
         return tokenString;
     }
 
-    public ClaimsPrincipal? ValidateToken(string token)
+    public ClaimsPrincipal? ValidateToken(string token, bool validateLifetime = true)
     {
         try
         {
@@ -47,7 +47,7 @@ public class Service : IService
                 ValidIssuer = _jwtOption.Issuer,
                 ValidateAudience = true,
                 ValidAudience = _jwtOption.Audience,
-                ValidateLifetime = true,
+                ValidateLifetime = validateLifetime,
                 ClockSkew = TimeSpan.Zero
             };
 

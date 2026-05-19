@@ -160,8 +160,21 @@ public class Service : IService
         return "Register Successfully";
     }
 
-    public async Task<Response.IdentityResponse> RefreshToken(Guid userId)
+    public async Task<Response.IdentityResponse> RefreshToken(Request.RefreshTokenRequest request)
     {
+        if (string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            throw new UnauthorizedAccessException("Invalid token");
+        }
+
+        var principal = _jwtService.ValidateToken(request.RefreshToken, validateLifetime: false);
+        var userIdValue = principal?.FindFirst("UserId")?.Value;
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+        {
+            throw new UnauthorizedAccessException("Invalid token");
+        }
+
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
 
         if (user == null)

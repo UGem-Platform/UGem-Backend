@@ -1,5 +1,3 @@
-using System.Security.Claims;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UGem.Services.IdentityService;
 using UGem.Services.Models;
@@ -39,17 +37,9 @@ public class IdentityController : ControllerBase
     }
 
     [HttpPost("refresh-token")]
-    [Authorize]
-    public async Task<IActionResult> RefreshToken()
+    public async Task<IActionResult> RefreshToken([FromBody] Request.RefreshTokenRequest request)
     {
-        var userIdValue = User.FindFirstValue("UserId");
-
-        if (!Guid.TryParse(userIdValue, out var userId))
-        {
-            throw new UnauthorizedAccessException("Invalid token");
-        }
-
-        var result = await _identityService.RefreshToken(userId);
+        var result = await _identityService.RefreshToken(request);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Token refreshed", HttpContext.TraceIdentifier));
     }
 

@@ -28,6 +28,11 @@ public class Request
         public required string IdToken { get; set; }
     }
 
+    public class RefreshTokenRequest
+    {
+        public required string RefreshToken { get; set; }
+    }
+
     public class ForgotPasswordRequest
     {
         public required string Email { get; set; }
