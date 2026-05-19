@@ -20,6 +20,7 @@ public class Order: BaseEntity<Guid>, IAuditableEntity
     public string OrderType { get; set; } = "Offline";
     public string PaymentStatus { get; set; } = "Unpaid";
     public string? DeliveryAddress { get; set; }
+    public DateTimeOffset? MonetizationProcessedAtUtc { get; set; }
     
     public Guid? CustomerId { get; set; }
     public Customer? Customer { get; set; }

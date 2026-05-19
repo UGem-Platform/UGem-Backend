@@ -30,6 +30,7 @@ public class Request
         public required string OrderType { get; set; } 
         public required string Notes { get; set; }
         public string? DeliveryAddress { get; set; }
+        public string? AffiliateLinkCode { get; set; }
         public required List<FoodService.Request.FoodOrderRequest> Foods { get; set; }
     }
 

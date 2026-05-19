@@ -58,3 +58,5 @@ compose.override.yaml
 Thumbs.db
 
 .fake
+.gemini/
+gha-creds-*.json

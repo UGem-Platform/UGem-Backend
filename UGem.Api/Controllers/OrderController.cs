@@ -203,11 +203,19 @@ public class OrderController : ControllerBase
             HttpContext.TraceIdentifier
         ));
     }
-    [HttpGet("{id}/merchant")]
+    [HttpPatch("{id}/merchant")]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
     public async Task<IActionResult> GetOrderDetailForMerchant(Guid id)
     {
         var result = await _orderService.GetMerchantOrderDetail(id);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Order detail retrieved", HttpContext.TraceIdentifier));
+    }
+
+    [HttpPost("{id}/refund")]
+    [Authorize(Policy = JwtExtensions.StaffPolicy)]
+    public async Task<IActionResult> RefundOrder(Guid id)
+    {
+        await _orderService.RefundOrder(id);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Order refunded successfully", HttpContext.TraceIdentifier));
     }
 }

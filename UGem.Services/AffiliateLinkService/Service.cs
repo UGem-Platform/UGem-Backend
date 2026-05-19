@@ -18,69 +18,90 @@ public class Service : IService
         _httpContextAccessor = httpContextAccessor;
     }
 
-public async Task<Response.CreateAffiliateLinkResponse> CreateAffiliateLink(
-    Request.CreateAffiliateLinkRequest request)
-{
-    var customerId = GetRequiredGuidClaim("CustomerId");
-
-    var reviewer = await _dbContext.Reviewers
-        .FirstOrDefaultAsync(x => x.CustomerId == customerId);
-
-    if (reviewer == null)
-        throw new Exception("Reviewer not found");
-
-    var merchant = await _dbContext.Merchants
-        .FirstOrDefaultAsync(x => x.Id == request.MerchantId);
-
-    if (merchant == null)
-        throw new Exception("Merchant not found");
-
-    var existedAffiliateLink = await _dbContext.AffiliateLinks
-        .FirstOrDefaultAsync(x =>
-            x.ReviewerId == reviewer.Id &&
-            x.MerchantId == merchant.Id);
-
-    if (existedAffiliateLink != null)
+    public async Task<Response.CreateAffiliateLinkResponse> CreateAffiliateLink(
+        Request.CreateAffiliateLinkRequest request)
     {
+        var customerId = GetRequiredGuidClaim("CustomerId");
+
+        var reviewer = await _dbContext.Reviewers
+            .FirstOrDefaultAsync(x => x.CustomerId == customerId);
+
+        if (reviewer == null)
+            throw new Exception("Reviewer not found");
+
+        var merchant = await _dbContext.Merchants
+            .FirstOrDefaultAsync(x => x.Id == request.MerchantId);
+
+        if (merchant == null)
+            throw new Exception("Merchant not found");
+
+        var existedAffiliateLink = await _dbContext.AffiliateLinks
+            .FirstOrDefaultAsync(x =>
+                x.ReviewerId == reviewer.Id &&
+                x.MerchantId == merchant.Id);
+
+        if (existedAffiliateLink != null)
+        {
+            return new Response.CreateAffiliateLinkResponse
+            {
+                AffiliateLinkId = existedAffiliateLink.Id,
+                LinkCode = existedAffiliateLink.LinkCode,
+                Url = $"https://u-gem.vercel.app/merchant/{merchant.Id}?ref={existedAffiliateLink.LinkCode}",
+                ClickCount = existedAffiliateLink.ClickCount,
+                IsActive = existedAffiliateLink.IsActive
+            };
+        }
+
+        var linkCode =
+            $"UGEM-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
+
+        var affiliateLink = new AffiliateLink
+        {
+            Id = Guid.NewGuid(),
+            ReviewerId = reviewer.Id,
+            MerchantId = merchant.Id,
+            LinkCode = linkCode,
+            ClickCount = 0,
+            OrderCount = 0,
+            IsActive = true,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+
+        _dbContext.AffiliateLinks.Add(affiliateLink);
+
+        await _dbContext.SaveChangesAsync();
+
         return new Response.CreateAffiliateLinkResponse
         {
-            AffiliateLinkId = existedAffiliateLink.Id,
-            LinkCode = existedAffiliateLink.LinkCode,
-            Url = $"https://u-gem.vercel.app/merchant/{merchant.Id}?ref={existedAffiliateLink.LinkCode}",
-            ClickCount = existedAffiliateLink.ClickCount,
-            IsActive = existedAffiliateLink.IsActive
+            AffiliateLinkId = affiliateLink.Id,
+            LinkCode = affiliateLink.LinkCode,
+            Url =
+                $"https://u-gem.vercel.app/merchant/{affiliateLink.MerchantId}?ref={affiliateLink.LinkCode}",
+            ClickCount = affiliateLink.ClickCount,
+            IsActive = affiliateLink.IsActive
         };
     }
 
-    var linkCode =
-        $"UGEM-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
-
-    var affiliateLink = new AffiliateLink
+    public async Task<string> TrackClickAndGetRedirectUrl(string linkCode)
     {
-        Id = Guid.NewGuid(),
-        ReviewerId = reviewer.Id,
-        MerchantId = merchant.Id,
-        LinkCode = linkCode,
-        ClickCount = 0,
-        OrderCount = 0,
-        IsActive = true,
-        CreatedAt = DateTimeOffset.UtcNow,
-        UpdatedAt = DateTimeOffset.UtcNow
-    };
+        var affiliateLink = await _dbContext.AffiliateLinks
+            .FirstOrDefaultAsync(x => x.LinkCode == linkCode);
 
-    _dbContext.AffiliateLinks.Add(affiliateLink);
+        if (affiliateLink == null)
+            throw new Exception("Affiliate link not found");
 
-    await _dbContext.SaveChangesAsync();
+        if (!affiliateLink.IsActive)
+            throw new Exception("Affiliate link is inactive");
 
-    return new Response.CreateAffiliateLinkResponse
-    {
-        AffiliateLinkId = affiliateLink.Id,
-        LinkCode = affiliateLink.LinkCode,
-        Url = $"https://u-gem.vercel.app/merchant/{merchant.Id}?ref={affiliateLink.LinkCode}",
-        ClickCount = affiliateLink.ClickCount,
-        IsActive = affiliateLink.IsActive
-    };
-}
+        // Note: MVP Attribution relies on client-side TTL (7 days). Backend only validates LinkCode existence and merchant match.
+        affiliateLink.ClickCount++;
+        affiliateLink.UpdatedAt = DateTimeOffset.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
+
+        return $"https://u-gem.vercel.app/merchant/{affiliateLink.MerchantId}?ref={affiliateLink.LinkCode}";
+    }
 
     private Guid GetRequiredGuidClaim(string claimType)
     {

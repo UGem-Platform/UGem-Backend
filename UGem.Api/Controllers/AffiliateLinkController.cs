@@ -26,4 +26,12 @@ public class AffiliateLinkController : ControllerBase
 
         return Ok(ApiResponseFactory.SuccessResponse(result, "Create affiliate link success"));
     }
+
+    [AllowAnonymous]
+    [HttpGet("{linkCode}/track")]
+    public async Task<IActionResult> TrackClick(string linkCode)
+    {
+        var redirectUrl = await _service.TrackClickAndGetRedirectUrl(linkCode);
+        return Redirect(redirectUrl);
+    }
 }

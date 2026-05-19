@@ -23,4 +23,5 @@ public interface IService
     public Task<Response.UpdateBillResponse> UpdateBill(Request.UpdateBillRequest request);
     public Task ConfirmCashPayment (Guid orderId);
     public Task<Response.GetOrderBillResponse> GetMerchantOrderDetail(Guid orderId);
+    public Task RefundOrder(Guid orderId);
 }

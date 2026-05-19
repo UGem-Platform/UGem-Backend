@@ -64,6 +64,7 @@ private static readonly Guid ReviewerApplicationId1 = Guid.Parse("a1a1a1a1-a1a1-
     public DbSet<ReviewerApplication> ReviewerApplications { get; set; } 
     public DbSet<ReviewDetail> ReviewDetails { get; set; }
     public DbSet<OrderDetailTopping> OrderDetailToppings { get; set; }
+    public DbSet<ReviewerWalletTransaction> ReviewerWalletTransactions { get; set; }
     
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -126,7 +127,7 @@ builder.HasOne(u => u.Merchant)
                 Id = AdminUserId,
                 Email = "admin@ugem.com",
                 FullName = "System Administrator",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                PasswordHash = "$2a$11$ETv6aeIJVgY3sBsmsQBzBehjdNxLPddu0z.1bREP/vWjYc0h1ZBr2",
                 PhoneNumber = "0123456789",
                 IsActive = true,
                 Role = "Admin",
@@ -138,7 +139,7 @@ builder.HasOne(u => u.Merchant)
                 Id = UserCustomerId2,
                 Email = "hungsui@gmail.com",
                 FullName = "Trần Văn Hùng",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                PasswordHash = "$2a$11$ETv6aeIJVgY3sBsmsQBzBehjdNxLPddu0z.1bREP/vWjYc0h1ZBr2",
                 PhoneNumber = "902222222",
                 IsActive = true,
                 Role = "Customer",
@@ -150,7 +151,7 @@ builder.HasOne(u => u.Merchant)
                 Id = UserStaffId1,
                 Email = "staff.ngoc@ugem.com",
                 FullName = "Lê Bảo Ngọc",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                PasswordHash = "$2a$11$ETv6aeIJVgY3sBsmsQBzBehjdNxLPddu0z.1bREP/vWjYc0h1ZBr2",
                 PhoneNumber = "901111111",
                 IsActive = true,
                 Role = "Staff",
@@ -162,7 +163,7 @@ builder.HasOne(u => u.Merchant)
                 Id = StaffUserId2,
                 Email = "staff.duyet@ugem.com",
                 FullName = "Nguyen Tran Admin",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                PasswordHash = "$2a$11$ETv6aeIJVgY3sBsmsQBzBehjdNxLPddu0z.1bREP/vWjYc0h1ZBr2",
                 PhoneNumber = "0901000001",
                 IsActive = true,
                 Role = "Staff",
@@ -174,7 +175,7 @@ builder.HasOne(u => u.Merchant)
                 Id = ApplicantUserId,
                 Email = "chuquan.bun@ugem.com",
                 FullName = "Tran Bun Cha",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                PasswordHash = "$2a$11$ETv6aeIJVgY3sBsmsQBzBehjdNxLPddu0z.1bREP/vWjYc0h1ZBr2",
                 PhoneNumber = "0902000002",
                 IsActive = true,
                 Role = "Customer",
@@ -186,11 +187,11 @@ builder.HasOne(u => u.Merchant)
                 Id = MerchantUserId,
                 Email = "chuquan.che@ugem.com",
                 FullName = "Le Thi Che",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                PasswordHash = "$2a$11$ETv6aeIJVgY3sBsmsQBzBehjdNxLPddu0z.1bREP/vWjYc0h1ZBr2",
                 PhoneNumber = "0902000003",
                 IsActive = true,
                 Role = "Merchant",
-CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
                 IsDeleted = false
             },
             new User
@@ -198,7 +199,7 @@ CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 0, 0, TimeSpan.Zero),
                 Id = DiscoveryUserId,
                 Email = "khach.sanh@ugem.com",
                 FullName = "Pham Thuc Khach",
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword("123456"),
+                PasswordHash = "$2a$11$ETv6aeIJVgY3sBsmsQBzBehjdNxLPddu0z.1bREP/vWjYc0h1ZBr2",
                 PhoneNumber = "0903000004",
                 IsActive = true,
                 Role = "Reviewer",
@@ -1121,8 +1122,9 @@ new FoodTopping
 
                 Balance = 0,
 
-                CreatedAt = DateTimeOffset.UtcNow,
-UpdatedAt = DateTimeOffset.UtcNow
+                CreatedAt = new DateTimeOffset(2026, 4, 23, 8, 35, 0, TimeSpan.Zero),
+
+                UpdatedAt = null
             }
         );
 
@@ -1149,6 +1151,37 @@ UpdatedAt = DateTimeOffset.UtcNow
 
             builder.HasIndex(rd => rd.OrderDetailId)
                 .IsUnique();
+        });
+
+        modelBuilder.Entity<ReviewerWalletTransaction>(builder =>
+        {
+            ConfigureBaseEntity(builder);
+
+            builder.Property(t => t.Amount)
+                .HasPrecision(18, 2);
+
+            builder.Property(t => t.BalanceAfter)
+                .HasPrecision(18, 2);
+
+            builder.Property(t => t.Type)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.Property(t => t.Reason)
+                .HasMaxLength(500);
+
+            builder.HasIndex(t => new { t.OrderId, t.Type })
+                .IsUnique();
+
+            builder.HasOne(t => t.Reviewer)
+                .WithMany()
+                .HasForeignKey(t => t.ReviewerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.HasOne(t => t.Order)
+                .WithMany()
+                .HasForeignKey(t => t.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 

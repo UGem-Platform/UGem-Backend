@@ -1,0 +1,177 @@
+using Microsoft.EntityFrameworkCore;
+using UGem.Repositories;
+using UGem.Repositories.Entity;
+
+namespace UGem.Services.MonetizationService;
+
+public class Service : IService
+{
+    private readonly AppDbContext _dbContext;
+
+    public Service(AppDbContext dbContext)
+    {
+        _dbContext = dbContext;
+    }
+
+    public async Task HandlePaymentSuccess(Guid orderId)
+    {
+        var order = await _dbContext.Orders
+            .Include(o => o.Customer)
+                .ThenInclude(c => c!.User)
+            .Include(o => o.AffiliateLink)
+                .ThenInclude(al => al!.Reviewer)
+                    .ThenInclude(r => r.Customer)
+                        .ThenInclude(c => c.User)
+            .Include(o => o.OrderDetails)
+                .ThenInclude(od => od.Food)
+                    .ThenInclude(f => f.Merchant)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
+
+        if (order == null)
+        {
+            throw new Exception($"Order {orderId} not found");
+        }
+
+        if (order.MonetizationProcessedAtUtc != null)
+        {
+            return;
+        }
+
+        if (order.FinalPrice <= 0)
+        {
+            return;
+        }
+
+        var merchantIds = order.OrderDetails.Select(od => od.Food.MerchantId).Distinct().ToList();
+        if (merchantIds.Count > 1)
+        {
+            // Log error and possibly throw or handle
+            throw new Exception("Order contains items from multiple merchants. This is not supported for monetization.");
+        }
+
+        if (merchantIds.Count == 0)
+        {
+             throw new Exception("Order contains no items.");
+        }
+
+        var merchant = order.OrderDetails.First().Food.Merchant;
+
+        decimal reviewerFee = 0;
+        Reviewer? targetReviewer = null;
+        string? skipReason = null;
+
+        if (order.AffiliateLink != null)
+        {
+            var affiliateLink = order.AffiliateLink;
+            targetReviewer = affiliateLink.Reviewer;
+
+            if (targetReviewer == null)
+            {
+                skipReason = "Affiliate link has no associated reviewer.";
+            }
+            else
+            {
+                bool isSelfReferral = order.Customer != null && targetReviewer.Customer != null && order.Customer.UserId == targetReviewer.Customer.UserId;
+                bool isMerchantSelfPurchase = order.Customer != null && order.Customer.UserId == merchant.UserId;
+
+                if (!affiliateLink.IsActive)
+                {
+                    skipReason = "Affiliate link is inactive.";
+                }
+                else if (isSelfReferral)
+                {
+                    skipReason = "Self-referral detected.";
+                }
+                else if (isMerchantSelfPurchase)
+                {
+                    skipReason = "Merchant self-purchase detected.";
+                }
+                else
+                {
+                    decimal rankRate = 0;
+                    if (targetReviewer.Points >= 100)
+                    {
+                        rankRate = 0.02m;
+                    }
+                    else if (targetReviewer.Points >= 50)
+                    {
+                        rankRate = 0.01m;
+                    }
+                    else if (targetReviewer.Points >= 20)
+                    {
+                        rankRate = 0.005m;
+                    }
+
+                    reviewerFee = order.FinalPrice * rankRate;
+                }
+            }
+
+            if (targetReviewer != null)
+            {
+                targetReviewer.Balance += reviewerFee;
+
+                var transaction = new ReviewerWalletTransaction
+                {
+                    Id = Guid.NewGuid(),
+                    ReviewerId = targetReviewer.Id,
+                    OrderId = order.Id,
+                    Amount = reviewerFee,
+                    Type = ReviewerWalletTransactionType.Commission,
+                    BalanceAfter = targetReviewer.Balance,
+                    CreatedAtUtc = DateTimeOffset.UtcNow,
+                    Reason = skipReason ?? $"Commission from order {order.Name}"
+                };
+
+                _dbContext.ReviewerWalletTransactions.Add(transaction);
+            }
+        }
+
+        order.ReviewerFee = reviewerFee;
+        order.PlatformFee = order.FinalPrice * (merchant.PlatformFeePercent / 100);
+        order.MonetizationProcessedAtUtc = DateTimeOffset.UtcNow;
+
+        await _dbContext.SaveChangesAsync();
+    }
+
+    public async Task HandleRefund(Guid orderId)
+    {
+        var order = await _dbContext.Orders
+            .Include(o => o.AffiliateLink)
+                .ThenInclude(al => al!.Reviewer)
+            .FirstOrDefaultAsync(o => o.Id == orderId);
+
+        if (order == null) return;
+
+        var commissionTransaction = await _dbContext.ReviewerWalletTransactions
+            .FirstOrDefaultAsync(t => t.OrderId == orderId && t.Type == ReviewerWalletTransactionType.Commission);
+
+        if (commissionTransaction == null) return;
+
+        var alreadyReversed = await _dbContext.ReviewerWalletTransactions
+            .AnyAsync(t => t.OrderId == orderId && t.Type == ReviewerWalletTransactionType.Reversal);
+
+        if (alreadyReversed) return;
+
+        var reviewer = await _dbContext.Reviewers.FindAsync(commissionTransaction.ReviewerId);
+        if (reviewer != null)
+        {
+            reviewer.Balance -= commissionTransaction.Amount;
+
+            var reversalTransaction = new ReviewerWalletTransaction
+            {
+                Id = Guid.NewGuid(),
+                ReviewerId = reviewer.Id,
+                OrderId = orderId,
+                Amount = commissionTransaction.Amount,
+                Type = ReviewerWalletTransactionType.Reversal,
+                BalanceAfter = reviewer.Balance,
+                CreatedAtUtc = DateTimeOffset.UtcNow,
+                Reason = $"Reversal of commission for refunded order {orderId}"
+            };
+
+            _dbContext.ReviewerWalletTransactions.Add(reversalTransaction);
+        }
+
+        await _dbContext.SaveChangesAsync();
+    }
+}

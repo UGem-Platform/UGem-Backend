@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using UGem.Repositories;
 using UGem.Repositories.Entity;
+using UGem.Services.MonetizationService;
 
 namespace UGem.Services.OrderService;
 
@@ -15,17 +16,20 @@ public class Service : IService
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContext;
     private readonly CheckInService.IService _checkInService;
+    private readonly MonetizationService.IService _monetizationService;
     private readonly ILogger<Service> _logger;
 
     public Service(
         AppDbContext dbContext,
         IHttpContextAccessor httpContext,
         CheckInService.IService checkInService,
+        MonetizationService.IService monetizationService,
         ILogger<Service> logger)
     {
         _dbContext = dbContext;
         _httpContext = httpContext;
         _checkInService = checkInService;
+        _monetizationService = monetizationService;
         _logger = logger;
     }
 
@@ -178,11 +182,43 @@ public class Service : IService
 
         decimal totalAmount = 0;
 
-        if (merchantId.HasValue && foods.Any(food => food.MerchantId != merchantId.Value))
+        var merchantIds = foods.Select(x => x.MerchantId).Distinct().ToList();
+        if (merchantIds.Count > 1)
+        {
+            throw new InvalidOperationException("An order can only contain items from a single merchant.");
+        }
+
+        var orderMerchantId = merchantIds.First();
+
+        if (merchantId.HasValue && orderMerchantId != merchantId.Value)
         {
             throw new InvalidOperationException("All foods must belong to the merchant");
         }
-        
+
+        Guid? resolvedAffiliateLinkId = null;
+        if (!string.IsNullOrWhiteSpace(request.AffiliateLinkCode))
+        {
+            var affiliateLink = await _dbContext.AffiliateLinks
+                .FirstOrDefaultAsync(x => x.LinkCode == request.AffiliateLinkCode);
+
+            if (affiliateLink == null)
+            {
+                throw new KeyNotFoundException("Affiliate link not found");
+            }
+
+            if (!affiliateLink.IsActive)
+            {
+                throw new InvalidOperationException("Affiliate link is not active");
+            }
+
+            if (affiliateLink.MerchantId != orderMerchantId)
+            {
+                throw new InvalidOperationException("Affiliate link does not belong to this merchant");
+            }
+
+            resolvedAffiliateLinkId = affiliateLink.Id;
+        }
+
         var validOrderTypes = new[]
         {
             Request.OrderType.Online.ToString(),
@@ -236,7 +272,8 @@ var validPaymentMethods = new[]
             ReviewerFee = 0m,
             OrderedAt = DateTimeOffset.UtcNow,
             PlatformFee = 0m,
-            OrderDetails = new List<OrderDetail>()
+            OrderDetails = new List<OrderDetail>(),
+            AffiliateLinkId = resolvedAffiliateLinkId
         };
         foreach (var item in request.Foods)
         {
@@ -380,9 +417,22 @@ request.TransferAmount);
             throw new InvalidOperationException("Order already processed");
         }
 
-        order.PaymentStatus = "Paid";
-        order.UpdatedAt = DateTimeOffset.UtcNow;
-        await _dbContext.SaveChangesAsync();
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            order.PaymentStatus = "Paid";
+            order.UpdatedAt = DateTimeOffset.UtcNow;
+            await _dbContext.SaveChangesAsync();
+            await _monetizationService.HandlePaymentSuccess(order.Id);
+            
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error processing SePay payment success for order {OrderId}", order.Id);
+            throw;
+        }
     }
 
     public async Task<List<Response.OrderResponse>> GetOrderListFromCustomerId()
@@ -470,33 +520,47 @@ throw new KeyNotFoundException("Order not found");
 
         order.UpdatedAt = DateTimeOffset.UtcNow;
 
-        var merchantId = order.OrderDetails
-            .Select(od => od.Food.MerchantId)
-            .FirstOrDefault();
-
-        if (merchantId != Guid.Empty)
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        try
         {
-            await _checkInService.CreateCheckIn(customerId, merchantId);
+            var merchantId = order.OrderDetails
+                .Select(od => od.Food.MerchantId)
+                .FirstOrDefault();
+
+            if (merchantId != Guid.Empty)
+            {
+                await _checkInService.CreateCheckIn(customerId, merchantId);
+            }
+
+            var userId = GetRequiredGuidClaim("UserId");
+            var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
+
+            var merchant = order.OrderDetails
+                .Select(x => x.Food.Merchant)
+                .FirstOrDefault();
+
+            var notificationMerchant = new Notification
+            {
+                UserId = merchant!.UserId,
+                Title = "Order completed",
+                Message = $"{user!.FullName} has received the order",
+                Type = "order",
+                IsRead = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+            };
+            _dbContext.Notifications.Add(notificationMerchant);
+            await _dbContext.SaveChangesAsync();
+
+            await _monetizationService.HandlePaymentSuccess(order.Id);
+            
+            await transaction.CommitAsync();
         }
-
-        var userId = GetRequiredGuidClaim("UserId");
-        var user = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == userId);
-
-        var merchant = order.OrderDetails
-            .Select(x => x.Food.Merchant)
-            .FirstOrDefault();
-
-        var notificationMerchant = new Notification
+        catch (Exception ex)
         {
-            UserId = merchant!.UserId,
-            Title = "Order completed",
-            Message = $"{user!.FullName} has received the order",
-            Type = "order",
-            IsRead = false,
-            CreatedAt = DateTimeOffset.UtcNow,
-        };
-        _dbContext.Notifications.Add(notificationMerchant);
-        await _dbContext.SaveChangesAsync();
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error processing order received confirmation for order {OrderId}", order.Id);
+            throw;
+        }
     }
 
     public async Task ConfirmOrderNotReceived(Request.ConfirmOrderRequest request)
@@ -915,18 +979,61 @@ IsRead = false,
         order.PaymentStatus = "Paid";
         order.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _checkInService.CreateCheckIn(order.CustomerId.Value, merchantId);
-
-        _dbContext.Notifications.Add(new Notification
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        try
         {
-            UserId = order.Customer.UserId,
-            Title = "Order completed",
-            Message = $"Your cash payment for order #{order.Id} has been confirmed.",
-            Type = "order",
-            IsRead = false,
-            CreatedAt = DateTimeOffset.UtcNow,
-        });
-await _dbContext.SaveChangesAsync();
+            await _checkInService.CreateCheckIn(order.CustomerId.Value, merchantId);
+
+            _dbContext.Notifications.Add(new Notification
+            {
+                UserId = order.Customer.UserId,
+                Title = "Order completed",
+                Message = $"Your cash payment for order #{order.Id} has been confirmed.",
+                Type = "order",
+                IsRead = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+            });
+            await _dbContext.SaveChangesAsync();
+            await _monetizationService.HandlePaymentSuccess(order.Id);
+            
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error confirming cash payment for order {OrderId}", order.Id);
+            throw;
+        }
+    }
+
+    public async Task RefundOrder(Guid orderId)
+    {
+        var order = await _dbContext.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
+        if (order == null) throw new KeyNotFoundException("Order not found");
+
+        if (order.PaymentStatus != "Paid")
+        {
+            throw new InvalidOperationException("Only paid orders can be refunded");
+        }
+
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        try
+        {
+            order.Status = "Refunded";
+            order.PaymentStatus = "Refunded";
+            order.UpdatedAt = DateTimeOffset.UtcNow;
+
+            await _dbContext.SaveChangesAsync();
+            await _monetizationService.HandleRefund(order.Id);
+            
+            await transaction.CommitAsync();
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            _logger.LogError(ex, "Error refunding order {OrderId}", order.Id);
+            throw;
+        }
     }
 
     private static Guid ExtractOrderId(string? content)

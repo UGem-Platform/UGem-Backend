@@ -22,6 +22,7 @@ using ApplicationService = UGem.Services.Application;
 using NotificationService = UGem.Services.NotificationService;
 using OrderService = UGem.Services.OrderService;
 using IdentityService = UGem.Services.IdentityService;
+using MonetizationService = UGem.Services.MonetizationService;
 using JwtService = UGem.Services.JwtService;
 using CustomerService = UGem.Services.CustomerService;
 using MerchantService = UGem.Services.MerchantService;
@@ -81,7 +82,7 @@ builder.Services.AddScoped<AdminService.IService, AdminService.Service>();
 builder.Services.AddScoped<AffiliateLinkService.IService, AffiliateLinkService.Service>();
 builder.Services.AddScoped<ReviewerApplicationService.IService, ReviewerApplicationService.Service>();
 builder.Services.AddScoped<StaffService.IService, StaffService.Service>();
-builder.Services.AddScoped<AffiliateLinkService.IService, AffiliateLinkService.Service>();
+builder.Services.AddScoped<MonetizationService.IService, MonetizationService.Service>();
 builder.Services.AddScoped<FoodToppingService.IService, FoodToppingService.Service>();
 builder.Services.AddScoped<RebalancingJob>();
 builder.Services.AddQuartz(options =>
