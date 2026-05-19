@@ -33,15 +33,9 @@ public class Service : IService
 
         using SmtpClient smtp = new();
 
-        smtp.Timeout = 30000;
-
         Console.WriteLine("CONNECTING SMTP...");
 
-        await smtp.ConnectAsync(
-            _mailOptions.Host,
-            _mailOptions.Port,
-            SecureSocketOptions.StartTls
-        );
+        await smtp.ConnectAsync(_mailOptions.Host, _mailOptions.Port, SecureSocketOptions.SslOnConnect);
 
         Console.WriteLine("CONNECTED");
 
