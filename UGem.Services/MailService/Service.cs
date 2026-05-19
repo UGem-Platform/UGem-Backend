@@ -32,7 +32,10 @@ public class Service : IService
             "https://api.brevo.com/v3/smtp/email", body);
 
         if (!response.IsSuccessStatusCode)
-            throw new InvalidOperationException("Failed to send email via Brevo API");
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Failed to send email via Brevo API: {errorBody}");
+        }
     }
 
     private void EnsureMailOptionsConfigured()
