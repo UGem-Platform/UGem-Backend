@@ -28,16 +28,21 @@ public class Service : IService
         builder.TextBody = mailContent.Body;
         email.Body = builder.ToMessageBody();
 
+        Console.WriteLine($"HOST: {_mailOptions.Host}");
+        Console.WriteLine($"PORT: {_mailOptions.Port}");
+
         using SmtpClient smtp = new();
 
-        Console.WriteLine("CONNECTING SMTP..."); 
-        smtp.Timeout = 10000;
+        smtp.Timeout = 30000;
+
+        Console.WriteLine("CONNECTING SMTP...");
 
         await smtp.ConnectAsync(
             _mailOptions.Host,
             _mailOptions.Port,
             SecureSocketOptions.StartTls
         );
+
         Console.WriteLine("CONNECTED");
 
         Console.WriteLine("AUTHENTICATING...");
