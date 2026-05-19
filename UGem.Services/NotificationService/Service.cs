@@ -71,4 +71,35 @@ public class Service : IService
 
         await _dbContext.SaveChangesAsync();
     }
+    public async Task MarkAllAsRead()
+    {
+        var userId = _httpContext.HttpContext?.User.Claims
+            .FirstOrDefault(x => x.Type == "UserId")?.Value;
+
+        if (string.IsNullOrWhiteSpace(userId))
+        {
+            throw new UnauthorizedAccessException("UserId claim is missing.");
+        }
+
+        var userIdGuid = Guid.Parse(userId);
+
+        var unreadNotifications = await _dbContext.Notifications
+            .Where(x => x.UserId == userIdGuid && !x.IsRead)
+            .ToListAsync();
+
+        if (unreadNotifications.Count == 0)
+        {
+            return;
+        }
+
+        var now = DateTimeOffset.UtcNow;
+
+        foreach (var notification in unreadNotifications)
+        {
+            notification.IsRead = true;
+            notification.UpdatedAt = now;
+        }
+
+        await _dbContext.SaveChangesAsync();
+    }
 }

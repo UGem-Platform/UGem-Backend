@@ -62,6 +62,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 builder.Services.AddJwtServices(builder.Configuration);
 builder.Services.AddSwaggerServices();
+builder.Services.AddMemoryCache();
 
 builder.Services.AddScoped<MailService.IService, MailService.Service>();
 builder.Services.AddScoped<MediaService.IService, CloudinaryService.Service>();
@@ -163,8 +164,8 @@ static void ConfigureValidatedOptions(IServiceCollection services, IConfiguratio
     services.AddOptions<CloudinaryService.CloudinaryOptions>()
         .Bind(configuration.GetSection(nameof(CloudinaryService.CloudinaryOptions)));
 
-    services.AddOptions<MailServiceOptions>()
-        .Bind(configuration.GetSection(nameof(MailServiceOptions)));
+    services.Configure<MailServiceOptions>(
+        configuration.GetSection("MailOptions"));
 
     if (environment.IsDevelopment())
     {

@@ -35,4 +35,18 @@ public class IdentityController : ControllerBase
         var result = await _identityService.GooleLogin(request);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Google Login success", HttpContext.TraceIdentifier));
     }
+
+    [HttpPost("forgot-password")]
+    public async Task<IActionResult> ForgotPassword([FromBody] Request.ForgotPasswordRequest request)
+    {
+        await  _identityService.ForgotPassword(request);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "OTP send to your email", HttpContext.TraceIdentifier));
+    }
+
+    [HttpPost("reset-password")]
+    public async Task<IActionResult> ResetPassword([FromBody] Request.ResetPasswordRequest request)
+    {
+        await _identityService.ResetPassword(request);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Password reset Successfully", HttpContext.TraceIdentifier));
+    }
 }

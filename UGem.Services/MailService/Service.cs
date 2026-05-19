@@ -1,3 +1,4 @@
+using System.Net.Http.Json;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Options;
@@ -16,23 +17,25 @@ public class Service : IService
 
     public async Task SendMail(MailContext mailContent)
     {
-        EnsureMailOptionsConfigured();
+        using var client = new HttpClient();
+        client.DefaultRequestHeaders.Add("api-key", _mailOptions.ApiKey);
 
-        MimeMessage email = new();
-        email.Sender = new MailboxAddress(_mailOptions.DisplayName, _mailOptions.Mail);
-        email.From.Add(new MailboxAddress(_mailOptions.DisplayName, _mailOptions.Mail));
-        email.To.Add(MailboxAddress.Parse(mailContent.To));
-        email.Subject = mailContent.Subject;
+        var body = new
+        {
+            sender = new { name = _mailOptions.DisplayName, email = _mailOptions.Mail },
+            to = new[] { new { email = mailContent.To } },
+            subject = mailContent.Subject,
+            htmlContent = mailContent.Body
+        };
 
-        BodyBuilder builder = new();
-        builder.HtmlBody = mailContent.Body;
-        email.Body = builder.ToMessageBody();
+        var response = await client.PostAsJsonAsync(
+            "https://api.brevo.com/v3/smtp/email", body);
 
-        using SmtpClient smtp = new();
-        await smtp.ConnectAsync(_mailOptions.Host, _mailOptions.Port, SecureSocketOptions.StartTls);
-        await smtp.AuthenticateAsync(_mailOptions.Mail, _mailOptions.Password);
-        await smtp.SendAsync(email);
-        await smtp.DisconnectAsync(true);
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync();
+            throw new InvalidOperationException($"Failed to send email via Brevo API: {errorBody}");
+        }
     }
 
     private void EnsureMailOptionsConfigured()
