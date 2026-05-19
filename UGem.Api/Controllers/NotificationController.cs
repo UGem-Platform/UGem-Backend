@@ -31,4 +31,11 @@ public class NotificationController : ControllerBase
         await _notificationService.MarkAsRead(id);
         return Ok(ApiResponseFactory.SuccessResponse(null, "Notification marked as read", HttpContext.TraceIdentifier));
     }
+    [HttpPatch("read-all")]
+    [Authorize]
+    public async Task<IActionResult> MarkAllAsRead()
+    {
+        await _notificationService.MarkAllAsRead();
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Notifications marked as read", HttpContext.TraceIdentifier));
+    }
 }
