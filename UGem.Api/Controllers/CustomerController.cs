@@ -17,12 +17,12 @@ public class CustomerController : ControllerBase
         _service = service;
     }
 
-    [HttpGet("search-by-email")]
+    [HttpGet("search-by-phone-number")]
     [Authorize(Policy = JwtExtensions.MerchantPolicy)]
-    public async Task<IActionResult> SearchUserByEmail([FromQuery] string? email, [FromQuery] int limit = 10)
+    public async Task<IActionResult> SearchUserByPhoneNumber([FromQuery] string? phoneNumber, [FromQuery] int limit = 10)
     {
-        var result = await _service.SearchUserByEmail(email, limit);
-        return Ok(ApiResponseFactory.SuccessResponse(result, "Search user by email success"));
+        var result = await _service.SearchUserByPhoneNumber(phoneNumber, limit);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Search user by phone number success"));
     }
     
 }

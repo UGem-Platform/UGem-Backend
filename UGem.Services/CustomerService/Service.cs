@@ -1,8 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using UGem.Repositories;
-using UGem.Repositories.Entity;
-using UGem.Services.MailService;
 
 namespace UGem.Services.CustomerService;
 
@@ -18,29 +16,29 @@ public class Service : IService
      
     }
     
-    public async Task<List<Response.SearchUserByEmailResponse>> SearchUserByEmail(string? email, int limit = 10)
+    public async Task<List<Response.SearchUserByPhoneNumberResponse>> SearchUserByPhoneNumber(string? phoneNumber, int limit = 10)
     {
-        if (string.IsNullOrWhiteSpace(email))
+        if (string.IsNullOrWhiteSpace(phoneNumber))
         {
-            return new List<Response.SearchUserByEmailResponse>();
+            return new List<Response.SearchUserByPhoneNumberResponse>();
         }
 
-        var keyword = email.Trim().ToLower();
+        var keyword = phoneNumber.Trim();
         var take = Math.Clamp(limit, 1, 20);
 
         var users = await _dbContext.Users
             .AsNoTracking()
             .Where(x => x.IsActive
-                        && x.Role == "Customer"
+                        && (x.Role == "Customer" || x.Role == "Reviewer")
                         && x.Customer != null
                         && x.Email.ToLower().Contains(keyword))
-            .OrderBy(x => x.Email)
-            .Select(x => new Response.SearchUserByEmailResponse
+            .OrderBy(x => x.PhoneNumber)
+            .Select(x => new Response.SearchUserByPhoneNumberResponse
             {
                 UserId = x.Id,
                 CustomerId = x.Customer!.Id,
                 FullName = x.FullName,
-                Email = x.Email,
+                PhoneNumber = x.PhoneNumber,
                 Role = x.Role,
                 AvatarUrl = x.AvatarUrl
             })
