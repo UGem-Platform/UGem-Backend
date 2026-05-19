@@ -56,7 +56,7 @@ public static class JwtExtensions
             // [Authorize(Policy = JwtExtensions.ReviewerPolicy)]
 
             options.AddPolicy(CustomerPolicy, policy =>
-                policy.RequireRole("Customer"));
+                policy.RequireRole("Customer", "Reviewer"));
             // [Authorize(Policy = JwtExtensions.CustomerPolicy)]
 
             options.AddPolicy(StaffPolicy, policy =>
@@ -73,9 +73,9 @@ public static class JwtExtensions
             options.AddPolicy(MerchantPolicy, policy =>
                 policy.RequireRole("Merchant"));
             options.AddPolicy(MerchantApplicantPolicy, policy =>
-                policy.RequireRole("Customer", "Merchant"));
+                policy.RequireRole("Customer", "Reviewer", "Merchant"));
             options.AddPolicy(MerchantAndCustomer, policy =>
-                policy.RequireRole("Customer", "Merchant"));
+                policy.RequireRole("Customer", "Reviewer", "Merchant"));
         });
     }
 }

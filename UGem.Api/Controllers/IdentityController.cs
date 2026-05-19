@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using UGem.Services.IdentityService;
 using UGem.Services.Models;
@@ -34,6 +36,21 @@ public class IdentityController : ControllerBase
     {
         var result = await _identityService.GooleLogin(request);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Google Login success", HttpContext.TraceIdentifier));
+    }
+
+    [HttpPost("refresh-token")]
+    [Authorize]
+    public async Task<IActionResult> RefreshToken()
+    {
+        var userIdValue = User.FindFirstValue("UserId");
+
+        if (!Guid.TryParse(userIdValue, out var userId))
+        {
+            throw new UnauthorizedAccessException("Invalid token");
+        }
+
+        var result = await _identityService.RefreshToken(userId);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Token refreshed", HttpContext.TraceIdentifier));
     }
 
     [HttpPost("forgot-password")]

@@ -160,6 +160,21 @@ public class Service : IService
         return "Register Successfully";
     }
 
+    public async Task<Response.IdentityResponse> RefreshToken(Guid userId)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+
+        if (user == null)
+        {
+            throw new KeyNotFoundException("User not found");
+        }
+
+        return new Response.IdentityResponse
+        {
+            AccessToken = await BuildTokenAsync(user)
+        };
+    }
+
     public async Task<Response.IdentityResponseGoogle> GooleLogin(Request.GoogleLoginRequest request)
     {
         var clinetId = _configuration["GoogleAuth:ClientId"];

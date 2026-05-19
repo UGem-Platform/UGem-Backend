@@ -42,6 +42,7 @@ public class Service : IService
 
         app.Status = "Accept";
         app.UpdatedAt = DateTimeOffset.UtcNow;
+        app.Customer.User.Role = "Reviewer";
 
         _dbContext.Reviewers.Add(new Reviewer
         {
