@@ -94,6 +94,11 @@ public class Service : IService
 
     public async Task<string> Register(Request.RegisterUserRequest request)
     {
+        var isExistPhoneNumber = await _dbContext.Users.AnyAsync(u => u.PhoneNumber == request.PhoneNumber);
+        if (isExistPhoneNumber)
+        {
+            throw new Exception("User Already Exist with this phone number");
+        }
         if (!System.Net.Mail.MailAddress.TryCreate(request.Email, out _))
         {
             throw new Exception("Invalid email format");
