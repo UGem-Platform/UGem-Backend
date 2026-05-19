@@ -30,13 +30,14 @@ public class Service : IService
 
         using SmtpClient smtp = new();
 
-        Console.WriteLine("CONNECTING SMTP...");
+        Console.WriteLine("CONNECTING SMTP..."); 
+        smtp.Timeout = 10000;
 
         await smtp.ConnectAsync(
             _mailOptions.Host,
             _mailOptions.Port,
-            SecureSocketOptions.Auto);
-
+            SecureSocketOptions.StartTls
+        );
         Console.WriteLine("CONNECTED");
 
         Console.WriteLine("AUTHENTICATING...");
