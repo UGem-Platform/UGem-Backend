@@ -103,4 +103,55 @@ public class CampaignController : ControllerBase
             "Delete campaign successfully",
             HttpContext.TraceIdentifier));
     }
+    [HttpPost("apply")]
+    [Authorize]
+    public async Task<IActionResult> ApplyCampaign(
+        [FromBody] Request.ApplyCampaignRequest request)
+    {
+        var userIdClaim =
+            User.FindFirst("UserId")?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            throw new Exception("UserId not found");
+        }
+
+        var result =
+            await _campaignService.ApplyCampaign(
+                request,
+                Guid.Parse(userIdClaim));
+
+        return Ok(ApiResponseFactory.SuccessResponse(
+            result,
+            "Apply campaign successfully",
+            HttpContext.TraceIdentifier));
+    }
+    [HttpGet("best")]
+    [Authorize(Policy =
+        JwtExtensions.MerchantAndCustomer)]
+    public async Task<IActionResult>
+        GetBestCampaign(
+            [FromQuery] Guid? merchantId)
+    {
+        var userIdClaim =
+            User.FindFirst("UserId")?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            throw new Exception(
+                "UserId not found");
+        }
+
+        var result =
+            await _campaignService
+                .GetBestCampaign(
+                    Guid.Parse(userIdClaim),
+                    merchantId);
+
+        return Ok(
+            ApiResponseFactory.SuccessResponse(
+                result,
+                "Get best campaign successfully",
+                HttpContext.TraceIdentifier));
+    }
 }

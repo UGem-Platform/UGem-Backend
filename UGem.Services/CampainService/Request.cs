@@ -37,4 +37,10 @@ public class Request
 
         public bool IsActive { get; set; }
     }
+    public class ApplyCampaignRequest
+    {
+        public  string Code { get; set; }
+        
+        public Guid? MerchantId { get; set; }
+    }
 }
