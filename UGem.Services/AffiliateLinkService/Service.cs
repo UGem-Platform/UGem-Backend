@@ -103,6 +103,74 @@ public class Service : IService
         return $"https://u-gem.vercel.app/merchant/{affiliateLink.MerchantId}?ref={affiliateLink.LinkCode}";
     }
 
+    public async Task<Response.ReviewerAffiliateEarningsResponse> GetReviewerAffiliateEarnings()
+    {
+        var customerId = GetRequiredGuidClaim("CustomerId");
+
+        var reviewer = await _dbContext.Reviewers
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.CustomerId == customerId);
+
+        if (reviewer == null)
+            throw new Exception("Reviewer not found");
+
+        var transactionQuery = _dbContext.ReviewerWalletTransactions
+            .AsNoTracking()
+            .Where(x => x.ReviewerId == reviewer.Id);
+
+        var totalCommission = await transactionQuery
+            .Where(x => x.Type == ReviewerWalletTransactionType.Commission)
+            .SumAsync(x => (decimal?)x.Amount) ?? 0;
+
+        var totalReversal = await transactionQuery
+            .Where(x => x.Type == ReviewerWalletTransactionType.Reversal)
+            .SumAsync(x => (decimal?)x.Amount) ?? 0;
+
+        var commissionOrderCount = await transactionQuery
+            .Where(x => x.Type == ReviewerWalletTransactionType.Commission && x.Amount > 0)
+            .Select(x => x.OrderId)
+            .Distinct()
+            .CountAsync();
+
+        var affiliateLinks = await _dbContext.AffiliateLinks
+            .AsNoTracking()
+            .Where(x => x.ReviewerId == reviewer.Id)
+            .Select(x => new
+            {
+                x.ClickCount
+            })
+            .ToListAsync();
+
+        var recentTransactions = await transactionQuery
+            .OrderByDescending(x => x.CreatedAtUtc)
+            .Take(10)
+            .Select(x => new Response.ReviewerAffiliateEarningTransaction
+            {
+                TransactionId = x.Id,
+                OrderId = x.OrderId,
+                Amount = x.Amount,
+                Type = x.Type,
+                EarningsAfter = x.BalanceAfter,
+                CreatedAtUtc = x.CreatedAtUtc,
+                Reason = x.Reason
+            })
+            .ToListAsync();
+
+        return new Response.ReviewerAffiliateEarningsResponse
+        {
+            ReviewerId = reviewer.Id,
+            CurrentEarnings = reviewer.Balance,
+            TotalCommission = totalCommission,
+            TotalReversal = totalReversal,
+            NetEarnings = totalCommission - totalReversal,
+            CommissionRate = reviewer.CommissionRate,
+            AffiliateLinkCount = affiliateLinks.Count,
+            TotalClicks = affiliateLinks.Sum(x => x.ClickCount),
+            CommissionOrderCount = commissionOrderCount,
+            RecentTransactions = recentTransactions
+        };
+    }
+
     private Guid GetRequiredGuidClaim(string claimType)
     {
         var value = _httpContextAccessor.HttpContext?.User.Claims

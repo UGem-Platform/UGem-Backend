@@ -62,6 +62,9 @@ public abstract class Response
         public int TotalViews { get; set; }
         public int TotalOrders { get; set; }
         public decimal TotalRevenue { get; set; }
+        public decimal PlatformFee { get; set; }
+        public decimal ReviewerFee { get; set; }
+        public decimal MerchantReceive { get; set; }
         public decimal AvgOrderValue { get; set; }
         public decimal UnderrateScore { get; set; }
         public decimal PlatformFeePercent { get; set; }

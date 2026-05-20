@@ -298,18 +298,25 @@ public class Service : IService
             .GroupBy(_ => 1).Select(g => new
             {
                 TotalOrders = g.Count(),
-                TotalRevenues = g.Sum(o => o.FinalPrice)
+                TotalRevenues = g.Sum(o => o.FinalPrice),
+                PlatformFee = g.Sum(o => o.PlatformFee),
+                ReviewerFee = g.Sum(o => o.ReviewerFee)
             }).FirstOrDefaultAsync();
         var totalOrders = stats?.TotalOrders ?? 0;
         var totalRevenues = stats?.TotalRevenues ?? 0;
+        var platformFee = stats?.PlatformFee ?? 0;
+        var reviewerFee = stats?.ReviewerFee ?? 0;
         return new Response.MerchantStatisticResponse
         {
             MerchantId = merchant.Id,
             MerchantName = merchant.Name,
             TotalOrders = totalOrders,
             TotalRevenue = totalRevenues,
+            PlatformFee = platformFee,
+            ReviewerFee = reviewerFee,
+            MerchantReceive = Math.Max(0, totalRevenues - platformFee - reviewerFee),
             TotalViews = merchant.TotalViews,
-            AvgOrderValue = totalOrders > 0 ? Math.Round(totalRevenues / totalRevenues, 2) : 0,
+            AvgOrderValue = totalOrders > 0 ? Math.Round(totalRevenues / totalOrders, 2) : 0,
             UnderrateScore = merchant.UnderratedScore,
             PlatformFeePercent = merchant.PlatformFeePercent,
         };
