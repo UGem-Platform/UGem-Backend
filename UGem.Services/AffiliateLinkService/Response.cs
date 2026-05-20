@@ -19,6 +19,10 @@ public class Response
     {
         public Guid ReviewerId { get; set; }
 
+        public int Points { get; set; }
+
+        public required string Rank { get; set; }
+
         public decimal CurrentEarnings { get; set; }
 
         public decimal TotalCommission { get; set; }

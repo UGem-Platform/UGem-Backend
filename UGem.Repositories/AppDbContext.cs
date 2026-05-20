@@ -1286,7 +1286,7 @@ modelBuilder.Entity<UserCampaignUsage>(builder =>
 
                 CustomerId = Guid.Parse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"),
 
-                Rank = "Gold",
+                Rank = Reviewer.CalculateRank(55),
 
                 Points = 55,
 
@@ -1415,6 +1415,12 @@ modelBuilder.Entity<UserCampaignUsage>(builder =>
                 {
                     deletedAuditableEntity.UpdatedAt = now;
                 }
+            }
+
+            if (entry.Entity is Reviewer reviewer &&
+                (entry.State == EntityState.Added || entry.State == EntityState.Modified))
+            {
+                reviewer.SyncRankWithPoints();
             }
         }
     }
