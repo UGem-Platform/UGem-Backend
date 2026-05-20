@@ -40,7 +40,7 @@ public class CampaignController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    [Authorize(Policy = JwtExtensions.AdminOrMerchantPolicy)]
     public async Task<IActionResult> CreateCampaign(
         [FromBody] Request.CreateCampaignRequest request)
     {
@@ -62,7 +62,7 @@ public class CampaignController : ControllerBase
     }
 
     [HttpPut]
-    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    [Authorize(Policy = JwtExtensions.AdminOrMerchantPolicy)]
     public async Task<IActionResult> UpdateCampaign(
         [FromBody] Request.UpdateCampaignRequest request)
     {
@@ -84,7 +84,7 @@ public class CampaignController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    [Authorize(Policy = JwtExtensions.AdminOrMerchantPolicy)]
     public async Task<IActionResult> DeleteCampaign(Guid id)
     {
         var userIdClaim = User.FindFirst("UserId")?.Value;
