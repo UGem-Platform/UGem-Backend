@@ -18,14 +18,14 @@ public class ReviewController : ControllerBase
     }
 
     [HttpGet("merchant")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> GetReviewByMerchantId([FromQuery] Request.GetReviewByMerchantIdRequest request)
     {
         var result = await _reviewService.GetReviewByMerchantId(request);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Reviews retrieved successfully", HttpContext.TraceIdentifier));
     }
     [HttpGet("merchant/review-details")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> GetReviewDetailsByMerchant([FromQuery]Request.GetReviewDetailsByMerchantRequest request)
     {
         var result = await _reviewService.GetReviewDetailsByMerchant(request);
@@ -38,7 +38,7 @@ public class ReviewController : ControllerBase
     }
     
     [HttpPost("merchant")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> ReviewMerchant([FromBody] Request.ReviewByMerchantIdRequest request)
     {
         await _reviewService.ReviewMerchant(request);

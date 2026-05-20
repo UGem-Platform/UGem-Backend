@@ -18,7 +18,7 @@ public class WishlistController : ControllerBase
     }
 
     //add 1 merchant to your wish list.
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     [HttpPost("")]
     public async Task<IActionResult> AddToWishlist(Request.CreateWishlistRequest request)
     {
@@ -27,7 +27,7 @@ public class WishlistController : ControllerBase
     }
 
     //show all wish list
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     [HttpGet("")]
     public async Task<IActionResult> GetWishlist()
     {
@@ -36,7 +36,7 @@ public class WishlistController : ControllerBase
     }
 
     //delete 1 merchant from wishlist
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     [HttpDelete("{merchantId}")]
     public async Task<IActionResult> RemoveFromWishlist(Guid merchantId)
     {

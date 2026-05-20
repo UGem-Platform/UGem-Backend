@@ -189,7 +189,8 @@ static void ConfigureValidatedOptions(IServiceCollection services, IConfiguratio
                 HasConfiguredValue(options.SecretKey)
                 && HasConfiguredValue(options.Issuer)
                 && HasConfiguredValue(options.Audience)
-                && options.ExpireMinutes > 0,
+                && options.ExpireMinutes > 0
+                && options.RefreshTokenExpireDays > 0,
             "JwtOptions must be configured with secure non-placeholder values.")
         .ValidateOnStart();
 

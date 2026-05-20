@@ -65,6 +65,7 @@ private static readonly Guid ReviewerApplicationId1 = Guid.Parse("a1a1a1a1-a1a1-
     public DbSet<ReviewDetail> ReviewDetails { get; set; }
     public DbSet<OrderDetailTopping> OrderDetailToppings { get; set; }
     public DbSet<ReviewerWalletTransaction> ReviewerWalletTransactions { get; set; }
+    public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
     
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -443,6 +444,28 @@ builder.Property(am => am.Name)
             builder.HasOne(n => n.User)
                 .WithMany(u => u.Notifications)
                 .HasForeignKey(n => n.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<UserRefreshToken>(builder =>
+        {
+            ConfigureBaseEntity(builder);
+
+            builder.Property(rt => rt.TokenHash)
+                .IsRequired()
+                .HasMaxLength(128);
+
+            builder.Property(rt => rt.ReplacedByTokenHash)
+                .HasMaxLength(128);
+
+            builder.HasIndex(rt => rt.TokenHash)
+                .IsUnique();
+
+            builder.HasIndex(rt => new { rt.UserId, rt.ExpiresAtUtc });
+
+            builder.HasOne(rt => rt.User)
+                .WithMany(u => u.RefreshTokens)
+                .HasForeignKey(rt => rt.UserId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

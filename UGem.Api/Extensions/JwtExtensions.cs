@@ -11,6 +11,7 @@ public static class JwtExtensions
     public const string AdminPolicy = "AdminPolicy";
     public const string ReviewerPolicy = "ReviewerPolicy";
     public const string CustomerPolicy = "CustomerPolicy";
+    public const string CustomerOrReviewerPolicy = "CustomerOrReviewerPolicy";
     public const string StaffPolicy = "StaffPolicy";
     public const string AdminAndStaffPolicy = "AdminAndStaffPolicy";
     public const string MerchantPolicy = "MerchantPolicy";
@@ -57,7 +58,9 @@ public static class JwtExtensions
 
             options.AddPolicy(CustomerPolicy, policy =>
                 policy.RequireRole("Customer", "Reviewer"));
-            // [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+            options.AddPolicy(CustomerOrReviewerPolicy, policy =>
+                policy.RequireRole("Customer", "Reviewer"));
+            // [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
 
             options.AddPolicy(StaffPolicy, policy =>
                 policy.RequireRole("Staff"));

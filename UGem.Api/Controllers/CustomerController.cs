@@ -24,6 +24,14 @@ public class CustomerController : ControllerBase
         var result = await _service.SearchUserByPhoneNumber(phoneNumber, limit);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Search user by phone number success"));
     }
+
+    [HttpGet("search-by-email")]
+    [Authorize(Policy = JwtExtensions.MerchantPolicy)]
+    public async Task<IActionResult> SearchUserByEmail([FromQuery] string? email, [FromQuery] int limit = 10)
+    {
+        var result = await _service.SearchUserByEmail(email, limit);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Search user by email success"));
+    }
     
 }
 

@@ -27,7 +27,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpPost("")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> CreateOrder(OrderRequest.CreateOrderRequest request)
     {
         var results =  await _orderService.CreateOrder(request);
@@ -50,7 +50,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet("mine")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> GetMyOrders()
     {
         var result = await _orderService.GetOrderListFromCustomerId();
@@ -58,7 +58,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpGet("{id}")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> GetOrderDetail(Guid id)
     {
         var result = await _orderService.GetOrderDetail(id);
@@ -132,7 +132,7 @@ public class OrderController : ControllerBase
     }
     
     [HttpGet("bill")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> GetBill([FromQuery] Request.GetBillByOrderIdRequest request)
     {
         var result = await _orderService.GetBill(request);
@@ -144,7 +144,7 @@ public class OrderController : ControllerBase
     }
     
     [HttpPost("bill/confirm")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> ConfirmBill(Request.ConfirmBillRequest request)
     {
         await _orderService.ConfirmBill(request);
@@ -156,7 +156,7 @@ public class OrderController : ControllerBase
     }
 
     [HttpPatch("{orderId}/cash/request")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> RequestCashPayment([FromRoute] Guid orderId)
     {
         await _orderService.RequestCashPayment(new OrderRequest.ConfirmOrderRequest { OrderId = orderId });
@@ -169,7 +169,7 @@ public class OrderController : ControllerBase
     }
     
     [HttpPost("bill/reject")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> RejectBill([FromBody] OrderRequest.RejectBillRequest request)
     {
         await _orderService.RejectBill(request);

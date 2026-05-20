@@ -18,6 +18,7 @@ public class User : BaseEntity<Guid>, IAuditableEntity
     public Merchant? Merchant { get; set; }
     public ICollection<Application> Applications { get; set; } = new List<Application>();
     public ICollection<Notification> Notifications { get; set; } = new List<Notification>();
+    public ICollection<UserRefreshToken> RefreshTokens { get; set; } = new List<UserRefreshToken>();
 
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }

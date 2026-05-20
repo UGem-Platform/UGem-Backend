@@ -38,6 +38,7 @@ public class Service : IService
                 UserId = x.Id,
                 CustomerId = x.Customer!.Id,
                 FullName = x.FullName,
+                Email = x.Email,
                 PhoneNumber = x.PhoneNumber,
                 Role = x.Role,
                 AvatarUrl = x.AvatarUrl
@@ -46,6 +47,37 @@ public class Service : IService
             .ToListAsync();
 
         return users;
+    }
+
+    public async Task<List<Response.SearchUserByPhoneNumberResponse>> SearchUserByEmail(string? email, int limit = 10)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return new List<Response.SearchUserByPhoneNumberResponse>();
+        }
+
+        var keyword = email.Trim();
+        var take = Math.Clamp(limit, 1, 20);
+
+        return await _dbContext.Users
+            .AsNoTracking()
+            .Where(x => x.IsActive
+                        && (x.Role == "Customer" || x.Role == "Reviewer")
+                        && x.Customer != null
+                        && x.Email.Contains(keyword))
+            .OrderBy(x => x.Email)
+            .Select(x => new Response.SearchUserByPhoneNumberResponse
+            {
+                UserId = x.Id,
+                CustomerId = x.Customer!.Id,
+                FullName = x.FullName,
+                Email = x.Email,
+                PhoneNumber = x.PhoneNumber,
+                Role = x.Role,
+                AvatarUrl = x.AvatarUrl
+            })
+            .Take(take)
+            .ToListAsync();
     }
 
 }
