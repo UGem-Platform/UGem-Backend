@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using UGem.Api.Extensions;
 using UGem.Services.AdminService;
 using UGem.Services.Models;
+using MonetizationService = UGem.Services.MonetizationService;
 
 namespace UGem.Api.Controllers;
 
@@ -12,10 +13,12 @@ namespace UGem.Api.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IService _adminService;
+    private readonly MonetizationService.IService _monetizationService;
 
-    public AdminController(IService adminService)
+    public AdminController(IService adminService, MonetizationService.IService monetizationService)
     {
         _adminService = adminService;
+        _monetizationService = monetizationService;
     }
 
     [HttpGet("staff")]
@@ -64,5 +67,13 @@ public class AdminController : ControllerBase
     {
         var result = await _adminService.GetMerchantDetail(merchantId, periodType);
         return Ok(ApiResponseFactory.SuccessResponse(result, "Get merchant detail success"));
+    }
+
+    [HttpPost("orders/{orderId}/monetization/reprocess")]
+    [Authorize(Policy = JwtExtensions.AdminPolicy)]
+    public async Task<IActionResult> ReprocessOrderMonetization(Guid orderId)
+    {
+        await _monetizationService.ReprocessCompletedOrder(orderId);
+        return Ok(ApiResponseFactory.SuccessResponse(null, "Reprocess order monetization success"));
     }
 }
