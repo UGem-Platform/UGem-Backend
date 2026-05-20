@@ -36,7 +36,7 @@ public class Merchant: BaseEntity<Guid>, IAuditableEntity
     public ICollection<CheckIn> CheckIns { get; set; } = new List<CheckIn>();
     
     public ICollection<Review> Reviews { get; set; } = new List<Review>();
-    
+    public ICollection<Campaign> Campaigns { get; set; } = new List<Campaign>();
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
 }

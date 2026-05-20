@@ -35,6 +35,14 @@ public class AppDbContext : DbContext
     private static readonly Guid WishlistDetailId1 = Guid.Parse("17171717-1717-1717-1717-171717171717");
     private static readonly Guid CheckInId1 = Guid.Parse("18181818-1818-1818-1818-181818181818");
 private static readonly Guid ReviewerApplicationId1 = Guid.Parse("a1a1a1a1-a1a1-a1a1-a1a1-a1a1a1a1a1a1"); 
+private static readonly Guid WelcomeCampaignId =
+    Guid.Parse("7d3f7c71-0c72-4a77-9d6f-5f6cb9d4d1a1");
+
+private static readonly Guid FreeShipCampaignId =
+    Guid.Parse("c2d9d0a4-95d4-4e34-8b7f-9f5b9d8f3a22");
+
+private static readonly Guid LunchCampaignId =
+    Guid.Parse("f84c77e1-6a42-49a8-93b1-2d9a5a7c4b33");
 
     public AppDbContext(DbContextOptions<AppDbContext> options)
         : base(options)
@@ -66,7 +74,8 @@ private static readonly Guid ReviewerApplicationId1 = Guid.Parse("a1a1a1a1-a1a1-
     public DbSet<OrderDetailTopping> OrderDetailToppings { get; set; }
     public DbSet<ReviewerWalletTransaction> ReviewerWalletTransactions { get; set; }
     public DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
-    
+    public DbSet<Campaign> Campaigns { get; set; }
+    public DbSet<UserCampaignUsage> UserCampaignUsages { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -939,7 +948,145 @@ new FoodTopping
             builder.HasIndex(wd => new { wd.WishlistId, wd.MerchantId })
                 .IsUnique();
         });
+        modelBuilder.Entity<Campaign>(builder =>
+        {
+            ConfigureBaseEntity(builder);
 
+            builder.Property(x => x.Code)
+                .IsRequired()
+                .HasMaxLength(50);
+
+            builder.Property(x => x.Title)
+                .IsRequired()
+                .HasMaxLength(200);
+
+            builder.Property(x => x.Description)
+                .HasMaxLength(1000);
+
+            builder.Property(x => x.DiscountValue)
+                .HasPrecision(18, 2);
+
+            builder.Property(x => x.MinOrderAmount)
+                .HasPrecision(18, 2);
+
+            builder.Property(x => x.MaxDiscountAmount)
+                .HasPrecision(18, 2);
+
+            builder.Property(x => x.IsPercentage)
+                .IsRequired();
+
+            builder.Property(x => x.IsActive)
+                .HasDefaultValue(true);
+
+            builder.Property(x => x.Quantity)
+                .HasDefaultValue(0);
+
+            builder.Property(x => x.UsedCount)
+                .HasDefaultValue(0);
+
+            builder.HasIndex(x => x.Code)
+                .IsUnique();
+
+            builder.HasOne(x => x.Merchant)
+                .WithMany(x => x.Campaigns)
+                .HasForeignKey(x => x.MerchantId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            builder.HasOne(x => x.CreatedByUser)
+                .WithMany(x => x.CreatedCampaigns)
+                .HasForeignKey(x => x.CreatedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+            builder.HasData(
+                new Campaign
+                {
+                    Id = WelcomeCampaignId,
+                    Code = "WELCOME50",
+                    Title = "Welcome New User",
+                    Description = "Voucher cho người dùng mới",
+                    DiscountValue = 50,
+                    IsPercentage = true,
+                    MinOrderAmount = 100000,
+                    MaxDiscountAmount = 50000,
+                    Quantity = 1000,
+                    UsedCount = 0,
+                    MaxUsagePerUser = 1,
+                    IsGlobal = true,
+                    IsNewUserOnly = true,
+                    IsActive = true,
+                    StartDate = new DateTimeOffset(
+                        new DateTime(2026, 1, 1)),
+                    EndDate = new DateTimeOffset(
+                        new DateTime(2026, 12, 31)),
+                    CreatedByUserId = AdminUserId
+                },
+
+                new Campaign
+                {
+                    Id = FreeShipCampaignId,
+                    Code = "FREESHIP",
+                    Title = "Free Ship",
+                    Description = "Miễn phí vận chuyển",
+                    DiscountValue = 30000,
+                    IsPercentage = false,
+                    MinOrderAmount = 50000,
+                    MaxDiscountAmount = 30000,
+                    Quantity = 5000,
+                    UsedCount = 0,
+                    MaxUsagePerUser = 2,
+                    IsGlobal = true,
+                    IsNewUserOnly = false,
+                    IsActive = true,
+                    StartDate = new DateTimeOffset(
+                        new DateTime(2026, 1, 1)),
+                    EndDate = new DateTimeOffset(
+                        new DateTime(2026, 12, 31)),
+                    CreatedByUserId = AdminUserId
+                },
+
+                new Campaign
+                {
+                    Id = LunchCampaignId,
+                    Code = "LUNCH30",
+                    Title = "Lunch Time",
+                    Description = "Giảm giá giờ trưa",
+                    DiscountValue = 30,
+                    IsPercentage = true,
+                    MinOrderAmount = 120000,
+                    MaxDiscountAmount = 40000,
+                    Quantity = 300,
+                    UsedCount = 0,
+                    MaxUsagePerUser = 1,
+                    IsGlobal = true,
+                    IsNewUserOnly = false,
+                    IsActive = true,
+                    StartDate = new DateTimeOffset(
+                        new DateTime(2026, 1, 1)),
+                    EndDate = new DateTimeOffset(
+                        new DateTime(2026, 6, 30)),
+                    CreatedByUserId = AdminUserId
+                }
+            );
+        });
+modelBuilder.Entity<UserCampaignUsage>(builder =>
+{
+    ConfigureBaseEntity(builder);
+
+    builder.HasIndex(x => new
+    {
+        x.UserId,
+        x.CampaignId
+    }).IsUnique();
+
+    builder.HasOne(x => x.User)
+        .WithMany(x => x.UserCampaignUsages)
+        .HasForeignKey(x => x.UserId)
+        .OnDelete(DeleteBehavior.Cascade);
+
+    builder.HasOne(x => x.Campaign)
+        .WithMany(x => x.UserCampaignUsages)
+        .HasForeignKey(x => x.CampaignId)
+        .OnDelete(DeleteBehavior.Cascade);
+});
         modelBuilder.Entity<WishlistDetail>().HasData(
             new WishlistDetail
             {
