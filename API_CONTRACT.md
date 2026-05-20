@@ -1239,3 +1239,222 @@ api.interceptors.request.use((config) => {
     return config;
 });
 ```
+## 17.Campaign APIs:
+### Get All Campaigns
+```http
+GET     /api/v1/campaigns
+(Role customer)
+```
+
+#### Request
+
+```ts
+```
+#### Response
+```
+{
+  "success": true,
+  "message": "Get campaign list successfully",
+  "data": [
+    {
+      "id": "Guid",
+      "code": "string",
+      "title": "string",
+      "description": "string",
+      "discountValue": 50,
+      "isPercentage": true,
+      "minOrderAmount": 100000,
+      "maxDiscountAmount": 50000,
+      "quantity": int,
+      "usedCount": int,
+      "maxUsagePerUser": int,
+      "isGlobal": bool,
+      "isNewUserOnly": bool,
+      "isActive": bool,
+      "startDate": "DateTimeOffset",
+      "endDate": "DateTimeOffset",
+      "merchantId": null
+    }
+  ```
+---
+### Create capaigns(Role merchant or admin)
+```http
+POST    /api/v1/campaigns
+```
+#### Request
+```
+{
+  "code": "string",
+  "title": "string",
+  "description": "string",
+  "discountValue": 100000,
+  "isPercentage": false,
+  "minOrderAmount": decimal,
+  "maxDiscountAmount": decimal,
+  "quantity": int,
+  "maxUsagePerUser": int,
+  "isGlobal": true,
+  "isNewUserOnly": false,
+  "startDate": "2026-05-20T00:00:00Z",
+  "endDate": "2026-12-31T23:59:59Z"
+}
+```
+#### Response
+```
+{
+  "success": true,
+  "message": "Create campaign successfully",
+  "data": "Create campaign successfully",
+  "errors": null,
+  "traceId": "0HNLMC2KQ88FL:00000002",
+  "timestampUtc": "2026-05-20T11:30:29.9604734Z"
+}
+```
+### Update capaigns(role merchant or admin)
+```http
+PUT     /api/v1/campaigns
+```
+#### Request
+```
+"code": "string",
+  "title": "string",
+  "description": "string",
+  "discountValue": 100000,
+  "isPercentage": false,
+  "minOrderAmount": decimal,
+  "maxDiscountAmount": decimal,
+  "quantity": int,
+  "maxUsagePerUser": int,
+  "isGlobal": true,
+  "isNewUserOnly": false,
+  "startDate": "2026-05-20T00:00:00Z",
+  "endDate": "2026-12-31T23:59:59Z"
+  "id": "Guid"
+```
+#### Response
+```
+{
+  "success": true,
+  "message": "Update campaign successfully",
+  "data": "Update campaign successfully",
+  "errors": null,
+  "traceId": "0HNLMA1NBM77L:00000002",
+  "timestampUtc": "2026-05-20T09:20:26.4181968Z"
+}
+```
+
+### Get capaigns By Id(role customer)
+```http
+GET     /api/v1/campaigns/{id}
+```
+#### Request
+```
+"id": "Guid"
+```
+#### Response
+```
+{
+  "success": true,
+  "message": "Get campaign successfully",
+  "data": {
+    "id": "440b2854-cc05-45b0-973a-b2685f5c2fc3",
+    "code": "BUNBO67",
+    "title": "Weekend Spicy Noodle",
+    "description": "Voucher cuối tuần cho mì cay",
+    "discountValue": 25,
+    "isPercentage": true,
+    "minOrderAmount": 90000,
+    "maxDiscountAmount": 35000,
+    "quantity": 150,
+    "usedCount": 0,
+    "maxUsagePerUser": 1,
+    "isGlobal": false,
+    "isNewUserOnly": false,
+    "isActive": true,
+    "startDate": "2026-05-20T00:00:00+00:00",
+    "endDate": "2026-07-30T23:59:59+00:00",
+    "merchantId": "88888888-8888-8888-8888-888888888888"
+  },
+  "errors": null,
+  "traceId": "0HNLMA1NBM77L:00000003",
+  "timestampUtc": "2026-05-20T09:20:45.684626Z"
+}
+```
+### Delete campaign(role Merchant or Admin)
+```http
+DELETE  /api/v1/campaigns/{id}
+```
+#### Request
+```
+"id": "Guid"
+```
+#### Response
+```
+{
+  "success": true,
+  "message": "Delete campaign successfully",
+  "data": "Delete campaign successfully",
+  "errors": null,
+  "traceId": "0HNLMA1NBM77L:00000004",
+  "timestampUtc": "2026-05-20T09:20:56.8508428Z"
+}
+```
+### Apply campaign(role customer)
+```http
+POST    /api/v1/campaigns/apply
+```
+#### Request
+```
+{
+  "code": "WELCOME50",
+  "merchantId": null
+}
+```
+#### Response
+```
+{
+  "success": true,
+  "message": "Apply campaign successfully",
+  "data": {
+    "campaignId": "7d3f7c71-0c72-4a77-9d6f-5f6cb9d4d1a1",
+    "code": "WELCOME50",
+    "title": "Welcome New User",
+    "isPercentage": true,
+    "discountValue": 50,
+    "maxDiscountAmount": 50000,
+    "minOrderAmount": 100000,
+    "message": "Apply campaign successfully"
+  },
+  "errors": null,
+  "traceId": "0HNLMC2KQ88FJ:00000001",
+  "timestampUtc": "2026-05-20T11:17:48.7978712Z"
+}
+```
+### Auto apply campaign
+```http
+GET     /api/v1/campaigns/best
+```
+#### Request
+```
+"merchantId": "Guid"
+```
+#### Response
+```
+{
+  "success": true,
+  "message": "Get best campaign successfully",
+  "data": {
+    "campaignId": "c2d9d0a4-95d4-4e34-8b7f-9f5b9d8f3a22",
+    "code": "FREESHIP",
+    "title": "Free Ship",
+    "isPercentage": false,
+    "discountValue": 30000,
+    "maxDiscountAmount": 30000,
+    "minOrderAmount": 50000,
+    "message": "Best campaign found"
+  },
+  "errors": null,
+  "traceId": "0HNLMC2KQ88FJ:00000002",
+  "timestampUtc": "2026-05-20T11:18:13.2286316Z"
+}
+```

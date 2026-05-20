@@ -38,4 +38,22 @@ public class Response
 
         public Guid? MerchantId { get; set; }
     }
+    public class ApplyCampaignResponse
+    {
+        public Guid CampaignId { get; set; }
+
+        public string Code { get; set; }
+
+        public string Title { get; set; }
+
+        public bool IsPercentage { get; set; }
+
+        public decimal DiscountValue { get; set; }
+
+        public decimal? MaxDiscountAmount { get; set; }
+
+        public decimal MinOrderAmount { get; set; }
+
+        public string Message { get; set; }
+    }
 }

@@ -17,4 +17,11 @@ public interface IService
     Task<string> DeleteCampaign(
         Guid id,
         Guid userId);
+    Task<Response.ApplyCampaignResponse> ApplyCampaign(
+        Request.ApplyCampaignRequest request,
+        Guid userId);
+    Task<Response.ApplyCampaignResponse?>
+        GetBestCampaign(
+            Guid userId,
+            Guid? merchantId);
 }
