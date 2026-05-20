@@ -6,5 +6,5 @@ public interface IService
 {
     public string GenerateAccessToken(IEnumerable<Claim> claims);
 
-    ClaimsPrincipal? ValidateToken(string token, bool validateLifetime = true);
+    ClaimsPrincipal? ValidateToken(string token);
 }
