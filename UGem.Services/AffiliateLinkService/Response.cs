@@ -14,4 +14,44 @@ public class Response
 
         public bool IsActive { get; set; }
     }
+
+    public class ReviewerAffiliateEarningsResponse
+    {
+        public Guid ReviewerId { get; set; }
+
+        public decimal CurrentEarnings { get; set; }
+
+        public decimal TotalCommission { get; set; }
+
+        public decimal TotalReversal { get; set; }
+
+        public decimal NetEarnings { get; set; }
+
+        public decimal CommissionRate { get; set; }
+
+        public int AffiliateLinkCount { get; set; }
+
+        public int TotalClicks { get; set; }
+
+        public int CommissionOrderCount { get; set; }
+
+        public List<ReviewerAffiliateEarningTransaction> RecentTransactions { get; set; } = new();
+    }
+
+    public class ReviewerAffiliateEarningTransaction
+    {
+        public Guid TransactionId { get; set; }
+
+        public Guid OrderId { get; set; }
+
+        public decimal Amount { get; set; }
+
+        public required string Type { get; set; }
+
+        public decimal EarningsAfter { get; set; }
+
+        public DateTimeOffset CreatedAtUtc { get; set; }
+
+        public string? Reason { get; set; }
+    }
 }

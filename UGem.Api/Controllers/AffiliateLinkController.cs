@@ -27,6 +27,15 @@ public class AffiliateLinkController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result, "Create affiliate link success"));
     }
 
+    [Authorize(Policy = JwtExtensions.ReviewerPolicy)]
+    [HttpGet("earnings")]
+    public async Task<IActionResult> GetReviewerAffiliateEarnings()
+    {
+        var result = await _service.GetReviewerAffiliateEarnings();
+
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Get reviewer affiliate earnings success"));
+    }
+
     [AllowAnonymous]
     [HttpGet("{linkCode}/track")]
     public async Task<IActionResult> TrackClick(string linkCode)
