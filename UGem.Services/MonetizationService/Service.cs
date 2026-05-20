@@ -88,21 +88,8 @@ public class Service : IService
                 }
                 else
                 {
-                    decimal rankRate = 0;
-                    if (targetReviewer.Points >= 100)
-                    {
-                        rankRate = 0.02m;
-                    }
-                    else if (targetReviewer.Points >= 50)
-                    {
-                        rankRate = 0.01m;
-                    }
-                    else if (targetReviewer.Points >= 20)
-                    {
-                        rankRate = 0.005m;
-                    }
-
-                    reviewerFee = order.FinalPrice * rankRate;
+                    var commissionRate = GetReviewerCommissionRate(targetReviewer);
+                    reviewerFee = order.FinalPrice * commissionRate;
                 }
             }
 
@@ -131,6 +118,22 @@ public class Service : IService
         order.MonetizationProcessedAtUtc = DateTimeOffset.UtcNow;
 
         await _dbContext.SaveChangesAsync();
+    }
+
+    private static decimal GetReviewerCommissionRate(Reviewer reviewer)
+    {
+        if (reviewer.CommissionRate > 0)
+        {
+            return reviewer.CommissionRate > 1
+                ? reviewer.CommissionRate / 100
+                : reviewer.CommissionRate;
+        }
+
+        if (reviewer.Points >= 100) return 0.02m;
+        if (reviewer.Points >= 50) return 0.01m;
+        if (reviewer.Points >= 20) return 0.005m;
+
+        return 0;
     }
 
     public async Task HandleRefund(Guid orderId)

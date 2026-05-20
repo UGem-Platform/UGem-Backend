@@ -48,7 +48,7 @@ public class Service : IService
         {
             CustomerId = app.CustomerId,
             Points = 0,
-            Rank = "Bronze",
+            Rank = Reviewer.CalculateRank(0),
             CommissionRate = 0.05m
         });
         _dbContext.Notifications.Add(new Notification

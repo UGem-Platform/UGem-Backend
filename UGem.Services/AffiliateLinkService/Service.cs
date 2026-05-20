@@ -159,6 +159,8 @@ public class Service : IService
         return new Response.ReviewerAffiliateEarningsResponse
         {
             ReviewerId = reviewer.Id,
+            Points = reviewer.Points,
+            Rank = reviewer.Rank,
             CurrentEarnings = reviewer.Balance,
             TotalCommission = totalCommission,
             TotalReversal = totalReversal,

@@ -4,6 +4,11 @@ namespace UGem.Repositories.Entity;
 
 public class Reviewer : BaseEntity<Guid>, IAuditableEntity
 {
+    public const string BronzeRank = "Bronze";
+    public const string SilverRank = "Silver";
+    public const string GoldRank = "Gold";
+    public const string DiamondRank = "Diamond";
+
     public required int Points { get; set; } = 0;
     public required string Rank { get; set; }
     public decimal CommissionRate { get; set; }
@@ -18,4 +23,29 @@ public class Reviewer : BaseEntity<Guid>, IAuditableEntity
     
     public DateTimeOffset CreatedAt { get; set; }
     public DateTimeOffset? UpdatedAt { get; set; }
+
+    public void SyncRankWithPoints()
+    {
+        Rank = CalculateRank(Points);
+    }
+
+    public static string CalculateRank(int points)
+    {
+        if (points >= 100)
+        {
+            return DiamondRank;
+        }
+
+        if (points >= 50)
+        {
+            return GoldRank;
+        }
+
+        if (points >= 20)
+        {
+            return SilverRank;
+        }
+
+        return BronzeRank;
+    }
 }
