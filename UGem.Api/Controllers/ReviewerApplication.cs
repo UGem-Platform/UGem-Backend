@@ -18,7 +18,7 @@ public class ReviewerApplication : ControllerBase
     }
 
     [HttpPost("")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> CreateReviewerApplication([FromBody] Request.ReviewerApplicationRequest request)
     {
         await _reviewerService.CreateReviewerApplication(request);
@@ -30,7 +30,7 @@ public class ReviewerApplication : ControllerBase
         ));
     }
     [HttpPatch("")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> UpdateReviewerApplication([FromBody]Request.UpdateReviewerApplicationRequest request)
     {
         await _reviewerService.UpdateReviewerApplication(request);
@@ -43,7 +43,7 @@ public class ReviewerApplication : ControllerBase
     }
     
     [HttpGet("")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> GetMyReviewerApplication()
     {
         var result = await _reviewerService.GetReviewApplicationByCus();

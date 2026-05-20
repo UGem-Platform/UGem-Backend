@@ -36,6 +36,13 @@ public class IdentityController : ControllerBase
         return Ok(ApiResponseFactory.SuccessResponse(result, "Google Login success", HttpContext.TraceIdentifier));
     }
 
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> RefreshToken([FromBody] Request.RefreshTokenRequest request)
+    {
+        var result = await _identityService.RefreshToken(request);
+        return Ok(ApiResponseFactory.SuccessResponse(result, "Token refreshed", HttpContext.TraceIdentifier));
+    }
+
     [HttpPost("forgot-password")]
     public async Task<IActionResult> ForgotPassword([FromBody] Request.ForgotPasswordRequest request)
     {

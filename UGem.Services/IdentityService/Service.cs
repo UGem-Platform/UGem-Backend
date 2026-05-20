@@ -1,5 +1,8 @@
 using System.ComponentModel;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
+using System.Text;
 using Google.Apis.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -14,6 +17,9 @@ namespace UGem.Services.IdentityService;
 
 public class Service : IService
 {
+    private const string AccessTokenType = "access";
+    private const string TokenTypeClaim = "TokenType";
+
     private readonly JwtService.IService _jwtService;
     private readonly AppDbContext _dbContext;
     private readonly JwtOptions _jwtOption;
@@ -51,45 +57,7 @@ public class Service : IService
             throw new UnauthorizedAccessException("Invalid password");
         }
 
-        var claims = new List<Claim>
-        {
-            new("UserId", user.Id.ToString()),
-            new("Email", user.Email),
-            new Claim(type: "Name", user.FullName),
-            new("Role", user.Role),
-            new(ClaimTypes.Role, user.Role),
-            new(ClaimTypes.Expired, DateTimeOffset.UtcNow.AddMinutes(_jwtOption.ExpireMinutes).ToString()),
-        };
-
-        var customer = await _dbContext.Customers.FirstOrDefaultAsync(u => u.UserId == user.Id);
-        if (customer != null)
-        {
-            claims.Add(new Claim("CustomerId", customer.Id.ToString()));
-        }
-
-        var merchant = await _dbContext.Merchants.FirstOrDefaultAsync(u => u.UserId == user.Id);
-        if (merchant != null)
-        {
-            claims.Add(new Claim("MerchantId", merchant.Id.ToString()));
-        }
-
-        var staff = await _dbContext.Staffs.FirstOrDefaultAsync(u => u.UserId == user.Id);
-        if (staff != null)
-        {
-            claims.Add(new Claim("StaffId", staff.Id.ToString()));
-        }
-
-        var admin = await _dbContext.Admins.FirstOrDefaultAsync(u => u.UserId == user.Id);
-        if (admin != null)
-        {
-            claims.Add(new Claim("AdminId", admin.Id.ToString()));
-        }
-
-        var token = _jwtService.GenerateAccessToken(claims);
-        return new Response.IdentityResponse
-        {
-            AccessToken = token
-        };
+        return await BuildTokenPairAsync(user);
     }
 
     public async Task<string> Register(Request.RegisterUserRequest request)
@@ -160,6 +128,53 @@ public class Service : IService
         return "Register Successfully";
     }
 
+    public async Task<Response.IdentityResponse> RefreshToken(Request.RefreshTokenRequest request)
+    {
+        if (string.IsNullOrWhiteSpace(request.AccessToken) || string.IsNullOrWhiteSpace(request.RefreshToken))
+        {
+            throw new UnauthorizedAccessException("Access token and refresh token are required");
+        }
+
+        var principal = _jwtService.ValidateToken(request.AccessToken, validateLifetime: false);
+        if (principal == null)
+        {
+            throw new UnauthorizedAccessException("Invalid access token");
+        }
+
+        var tokenType = principal.Claims.FirstOrDefault(x => x.Type == TokenTypeClaim)?.Value;
+        if (!string.Equals(tokenType, AccessTokenType, StringComparison.Ordinal))
+        {
+            throw new UnauthorizedAccessException("Invalid token type");
+        }
+
+        if (principal.Claims.All(x => x.Type != JwtRegisteredClaimNames.Exp))
+        {
+            throw new UnauthorizedAccessException("Access token expiry is missing");
+        }
+
+        var userIdValue = principal.Claims.FirstOrDefault(x => x.Type == "UserId")?.Value;
+        if (!Guid.TryParse(userIdValue, out var userId))
+        {
+            throw new UnauthorizedAccessException("Invalid access token subject");
+        }
+
+        var refreshTokenHash = HashRefreshToken(request.RefreshToken);
+        var refreshToken = await _dbContext.UserRefreshTokens
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(x => x.UserId == userId && x.TokenHash == refreshTokenHash);
+
+        var now = DateTimeOffset.UtcNow;
+        if (refreshToken == null
+            || refreshToken.RevokedAtUtc.HasValue
+            || refreshToken.ExpiresAtUtc <= now
+            || !refreshToken.User.IsActive)
+        {
+            throw new UnauthorizedAccessException("Invalid refresh token");
+        }
+
+        return await BuildTokenPairAsync(refreshToken.User, refreshToken);
+    }
+
     public async Task<Response.IdentityResponseGoogle> GooleLogin(Request.GoogleLoginRequest request)
     {
         var clinetId = _configuration["GoogleAuth:ClientId"];
@@ -225,10 +240,12 @@ public class Service : IService
             });
         }
 
-        var token = await BuildTokenAsync(user);
+        var token = await BuildTokenPairAsync(user);
         return new Response.IdentityResponseGoogle
         {
-            AccessToken = token,
+            AccessToken = token.AccessToken,
+            RefreshToken = token.RefreshToken,
+            RefreshTokenExpiresAtUtc = token.RefreshTokenExpiresAtUtc,
             FullName = user.FullName,
             Role = user.Role,
             AvatarUrl = user.AvatarUrl
@@ -294,7 +311,40 @@ public class Service : IService
         _cache.Remove($"reset:{request.Email}");
     }
 
-    private async Task<string> BuildTokenAsync(User user)
+    private async Task<Response.IdentityResponse> BuildTokenPairAsync(
+        User user,
+        UserRefreshToken? tokenToRevoke = null)
+    {
+        var accessToken = await BuildAccessTokenAsync(user);
+        var refreshToken = GenerateRefreshToken();
+        var refreshTokenHash = HashRefreshToken(refreshToken);
+        var refreshTokenExpiresAtUtc = DateTimeOffset.UtcNow.AddDays(_jwtOption.RefreshTokenExpireDays);
+
+        if (tokenToRevoke != null)
+        {
+            tokenToRevoke.RevokedAtUtc = DateTimeOffset.UtcNow;
+            tokenToRevoke.ReplacedByTokenHash = refreshTokenHash;
+        }
+
+        _dbContext.UserRefreshTokens.Add(new UserRefreshToken
+        {
+            Id = Guid.NewGuid(),
+            UserId = user.Id,
+            TokenHash = refreshTokenHash,
+            ExpiresAtUtc = refreshTokenExpiresAtUtc
+        });
+
+        await _dbContext.SaveChangesAsync();
+
+        return new Response.IdentityResponse
+        {
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            RefreshTokenExpiresAtUtc = refreshTokenExpiresAtUtc
+        };
+    }
+
+    private async Task<string> BuildAccessTokenAsync(User user)
     {
         var claims = new List<Claim>
         {
@@ -302,6 +352,8 @@ public class Service : IService
             new("Email", user.Email),
             new("Name", user.FullName),
             new("Role", user.Role),
+            new(TokenTypeClaim, AccessTokenType),
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
             new(ClaimTypes.Role, user.Role),
             new(ClaimTypes.Expired, DateTimeOffset.UtcNow.AddMinutes(_jwtOption.ExpireMinutes).ToString()),
         };
@@ -331,5 +383,16 @@ public class Service : IService
         }
 
         return _jwtService.GenerateAccessToken(claims);
+    }
+
+    private static string GenerateRefreshToken()
+    {
+        return Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+    }
+
+    private static string HashRefreshToken(string refreshToken)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken));
+        return Convert.ToBase64String(bytes);
     }
 }

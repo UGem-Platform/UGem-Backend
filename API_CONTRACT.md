@@ -65,6 +65,47 @@ LoginRequest {
 }
 ```
 
+#### Response data
+
+```ts
+IdentityResponse {
+  accessToken: string;
+  refreshToken: string;
+  refreshTokenExpiresAtUtc: string;
+}
+```
+
+### Refresh token
+
+```http
+POST /api/v1/auth/refresh-token
+```
+
+#### Request
+
+```ts
+RefreshTokenRequest {
+  accessToken: string;
+  refreshToken: string;
+}
+```
+
+#### Notes
+
+- Does not require `Authorization` header.
+- The access token may be expired, but the refresh token must match the stored active DB record.
+- Refresh rotates tokens: store the returned `refreshToken` and discard the old one.
+
+#### Response data
+
+```ts
+IdentityResponse {
+  accessToken: string;
+  refreshToken: string;
+  refreshTokenExpiresAtUtc: string;
+}
+```
+
 ### Register
 
 ```http
@@ -91,6 +132,37 @@ RegisterUserRequest {
 
 ```http
 GET /api/v1/customers/profile
+```
+
+### Search customers by phone number
+
+```http
+GET /api/v1/customers/search-by-phone-number?phoneNumber={phoneNumber}&limit={limit}
+```
+
+### Search customers by email
+
+```http
+GET /api/v1/customers/search-by-email?email={email}&limit={limit}
+```
+
+#### Notes
+
+- Auth: `Merchant`
+- `limit` is clamped from `1` to `20`.
+
+#### Response item shape
+
+```ts
+SearchCustomerResponse {
+  userId: string;
+  customerId: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  role: "Customer" | "Reviewer";
+  avatarUrl?: string;
+}
 ```
 
 ---

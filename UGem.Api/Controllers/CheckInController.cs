@@ -39,7 +39,7 @@ public class CheckInController : ControllerBase
     }
     
     [HttpPost("verify")]
-    [Authorize(Policy = JwtExtensions.CustomerPolicy)]
+    [Authorize(Policy = JwtExtensions.CustomerOrReviewerPolicy)]
     public async Task<IActionResult> CreateCheckInForQr(Request.CreateCheckInForQr request)
     {
         await _service.CreateCheckInForQr(request);
