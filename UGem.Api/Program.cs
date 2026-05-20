@@ -29,6 +29,7 @@ using MerchantService = UGem.Services.MerchantService;
 using StaffService = UGem.Services.StaffService;
 using AdminService = UGem.Services.AdminService;
 using MailServiceOptions = UGem.Services.MailService.MailOption.MailOptions;
+using CampaignService = UGem.Services.CampainService;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -83,6 +84,7 @@ builder.Services.AddScoped<AdminService.IService, AdminService.Service>();
 builder.Services.AddScoped<AffiliateLinkService.IService, AffiliateLinkService.Service>();
 builder.Services.AddScoped<ReviewerApplicationService.IService, ReviewerApplicationService.Service>();
 builder.Services.AddScoped<StaffService.IService, StaffService.Service>();
+builder.Services.AddScoped<CampaignService.IService, CampaignService.Service>();
 builder.Services.AddScoped<MonetizationService.IService, MonetizationService.Service>();
 builder.Services.AddScoped<FoodToppingService.IService, FoodToppingService.Service>();
 builder.Services.AddScoped<RebalancingJob>();
