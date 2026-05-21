@@ -39,8 +39,24 @@ public class Request
     }
     public class ApplyCampaignRequest
     {
-        public  string Code { get; set; }
-        
+        public required string Code { get; set; }
+
         public Guid? MerchantId { get; set; }
+
+        public decimal TotalAmount { get; set; }
     }
+
+    public class ConfirmCampaignUsageRequest
+    {
+        public Guid OrderId { get; set; }
+
+        public Guid CampaignId { get; set; }
+    }
+    public class GetBestCampaignRequest
+    {
+        public Guid? MerchantId { get; set; }
+
+        public decimal TotalAmount { get; set; }
+    }
+    
 }

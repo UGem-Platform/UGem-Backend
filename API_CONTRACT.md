@@ -1458,3 +1458,86 @@ GET     /api/v1/campaigns/best
   "timestampUtc": "2026-05-20T11:18:13.2286316Z"
 }
 ```
+### Apply campaign(role customer)
+```http
+POST    /api/v1/campaigns/apply
+```
+#### Request
+```
+{
+  "code": "WELCOME50",
+  "merchantId": null
+}
+```
+#### Response
+```
+{
+  {
+  "success": true,
+  "message": "Apply campaign successfully",
+  "data": {
+    "campaignId": "ea3cc58d-98ab-48c1-ba24-9cece6edcba5",
+    "code": "HUNGANH100",
+    "title": "Hung Anh Super Sale",
+    "isPercentage": false,
+    "discountValue": 100000,
+    "maxDiscountAmount": 100000,
+    "minOrderAmount": 300000,
+    "discountAmount": 100000,
+    "finalAmount": 586868,
+    "message": "Apply campaign successfully"
+  },
+  "errors": null,
+  "traceId": "0HNLMG8PHELO7:00000007",
+  "timestampUtc": "2026-05-20T15:15:16.3601371Z"
+}
+}
+```
+### Auto apply campaign
+```http
+GET     /api/v1/campaigns/best
+```
+#### Request
+```
+"merchantId": "Guid"
+```
+#### Response
+```
+{
+  {
+  "success": true,
+  "message": "Get best campaign successfully",
+  "data": {
+    "campaignId": "ea3cc58d-98ab-48c1-ba24-9cece6edcba5",
+    "code": "HUNGANH100",
+    "title": "Hung Anh Super Sale",
+    "isPercentage": false,
+    "discountValue": 100000,
+    "maxDiscountAmount": 100000,
+    "minOrderAmount": 300000,
+    "discountAmount": 100000,
+    "finalAmount": 200000,
+    "message": "Best campaign found"
+  },
+  "errors": null,
+  "traceId": "0HNLMG8PHELO7:00000008",
+  "timestampUtc": "2026-05-20T15:17:01.3007158Z"
+}
+}
+```
+### Confirm apply campaign
+```http
+POST     /api/v1/campaigns/confirm-usage
+```
+#### Request
+```
+public class ConfirmCampaignUsageRequest
+    {
+        public Guid OrderId { get; set; }
+
+        public Guid CampaignId { get; set; }
+        UserId : Guid
+    }
+```
+#### Response
+```
