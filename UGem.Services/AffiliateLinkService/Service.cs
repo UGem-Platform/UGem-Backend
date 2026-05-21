@@ -9,13 +9,16 @@ public class Service : IService
 {
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly UGem.Services.MonetizationService.IService _monetizationService;
 
     public Service(
         AppDbContext dbContext,
-        IHttpContextAccessor httpContextAccessor)
+        IHttpContextAccessor httpContextAccessor,
+        UGem.Services.MonetizationService.IService monetizationService)
     {
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
+        _monetizationService = monetizationService;
     }
 
     public async Task<Response.CreateAffiliateLinkResponse> CreateAffiliateLink(
@@ -113,6 +116,12 @@ public class Service : IService
 
         if (reviewer == null)
             throw new Exception("Reviewer not found");
+
+        await _monetizationService.ProcessCompletedOrdersMissingMonetization(reviewerId: reviewer.Id);
+
+        reviewer = await _dbContext.Reviewers
+            .AsNoTracking()
+            .FirstAsync(x => x.Id == reviewer.Id);
 
         var transactionQuery = _dbContext.ReviewerWalletTransactions
             .AsNoTracking()

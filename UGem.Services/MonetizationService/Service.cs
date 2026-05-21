@@ -136,6 +136,88 @@ public class Service : IService
         return 0;
     }
 
+    public async Task ProcessCompletedOrdersMissingMonetization(Guid? merchantId = null, Guid? reviewerId = null)
+    {
+        var query = _dbContext.Orders
+            .AsNoTracking()
+            .Where(o =>
+                o.Status == "Completed" &&
+                o.FinalPrice > 0 &&
+                o.MonetizationProcessedAtUtc == null);
+
+        if (merchantId.HasValue)
+        {
+            query = query.Where(o => o.OrderDetails.Any(od => od.Food.MerchantId == merchantId.Value));
+        }
+
+        if (reviewerId.HasValue)
+        {
+            query = query.Where(o => o.AffiliateLink != null && o.AffiliateLink.ReviewerId == reviewerId.Value);
+        }
+
+        var orderIds = await query
+            .Select(o => o.Id)
+            .ToListAsync();
+
+        foreach (var orderId in orderIds)
+        {
+            await HandlePaymentSuccess(orderId);
+        }
+    }
+
+    public async Task ReprocessCompletedOrder(Guid orderId)
+    {
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+
+        var order = await _dbContext.Orders
+            .FirstOrDefaultAsync(o => o.Id == orderId);
+
+        if (order == null)
+        {
+            throw new Exception($"Order {orderId} not found");
+        }
+
+        if (order.Status != "Completed")
+        {
+            throw new InvalidOperationException("Only completed orders can be reprocessed for monetization.");
+        }
+
+        var commissionTransactions = await _dbContext.ReviewerWalletTransactions
+            .Where(t => t.OrderId == orderId && t.Type == ReviewerWalletTransactionType.Commission)
+            .ToListAsync();
+
+        if (commissionTransactions.Count > 0)
+        {
+            var reviewerIds = commissionTransactions
+                .Select(t => t.ReviewerId)
+                .Distinct()
+                .ToList();
+
+            var reviewers = await _dbContext.Reviewers
+                .Where(r => reviewerIds.Contains(r.Id))
+                .ToListAsync();
+
+            foreach (var reviewer in reviewers)
+            {
+                var amount = commissionTransactions
+                    .Where(t => t.ReviewerId == reviewer.Id)
+                    .Sum(t => t.Amount);
+
+                reviewer.Balance -= amount;
+            }
+
+            _dbContext.ReviewerWalletTransactions.RemoveRange(commissionTransactions);
+        }
+
+        order.ReviewerFee = 0;
+        order.PlatformFee = 0;
+        order.MonetizationProcessedAtUtc = null;
+
+        await _dbContext.SaveChangesAsync();
+        await HandlePaymentSuccess(orderId);
+        await transaction.CommitAsync();
+    }
+
     public async Task HandleRefund(Guid orderId)
     {
         var order = await _dbContext.Orders
