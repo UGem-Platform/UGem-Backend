@@ -106,7 +106,8 @@ public class CampaignController : ControllerBase
     [HttpPost("apply")]
     [Authorize]
     public async Task<IActionResult> ApplyCampaign(
-        [FromBody] Request.ApplyCampaignRequest request)
+        [FromBody]
+        Request.ApplyCampaignRequest request)
     {
         var userIdClaim =
             User.FindFirst("UserId")?.Value;
@@ -117,36 +118,65 @@ public class CampaignController : ControllerBase
         }
 
         var result =
-            await _campaignService.ApplyCampaign(
-                request,
-                Guid.Parse(userIdClaim));
+            await _campaignService
+                .ApplyCampaign(
+                    request,
+                    Guid.Parse(userIdClaim));
 
-        return Ok(ApiResponseFactory.SuccessResponse(
-            result,
-            "Apply campaign successfully",
-            HttpContext.TraceIdentifier));
+        return Ok(
+            ApiResponseFactory.SuccessResponse(
+                result,
+                "Apply campaign successfully",
+                HttpContext.TraceIdentifier));
     }
-    [HttpGet("best")]
-    [Authorize(Policy =
-        JwtExtensions.MerchantAndCustomer)]
+
+    [HttpPost("confirm-usage")]
+    [Authorize]
     public async Task<IActionResult>
-        GetBestCampaign(
-            [FromQuery] Guid? merchantId)
+        ConfirmCampaignUsage(
+            [FromBody]
+            Request.ConfirmCampaignUsageRequest request)
     {
         var userIdClaim =
             User.FindFirst("UserId")?.Value;
 
         if (string.IsNullOrEmpty(userIdClaim))
         {
-            throw new Exception(
-                "UserId not found");
+            throw new Exception("UserId not found");
+        }
+
+        await _campaignService
+            .ConfirmCampaignUsage(
+                request,
+                Guid.Parse(userIdClaim));
+
+        return Ok(
+            ApiResponseFactory.SuccessResponse(
+                null,
+                "Confirm campaign usage successfully",
+                HttpContext.TraceIdentifier));
+    }
+    [HttpPost("best")]
+    [Authorize(Policy =
+        JwtExtensions.MerchantAndCustomer)]
+    public async Task<IActionResult>
+        GetBestCampaign(
+            [FromBody]
+            Request.GetBestCampaignRequest request)
+    {
+        var userIdClaim =
+            User.FindFirst("UserId")?.Value;
+
+        if (string.IsNullOrEmpty(userIdClaim))
+        {
+            throw new Exception("UserId not found");
         }
 
         var result =
             await _campaignService
                 .GetBestCampaign(
-                    Guid.Parse(userIdClaim),
-                    merchantId);
+                    request,
+                    Guid.Parse(userIdClaim));
 
         return Ok(
             ApiResponseFactory.SuccessResponse(

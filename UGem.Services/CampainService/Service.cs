@@ -308,126 +308,309 @@ public class Service : IService
         return "Delete campaign successfully";
     }
 
-    public async Task<Response.ApplyCampaignResponse>
-        ApplyCampaign(
-            Request.ApplyCampaignRequest request,
-            Guid userId)
+    public async Task<Response.ApplyCampaignResponse> ApplyCampaign(Request.ApplyCampaignRequest request, Guid userId)
+{
+    var campaign = await _dbContext.Campaigns.FirstOrDefaultAsync(x => x.Code == request.Code.ToUpper());
+
+    if (campaign == null)
     {
-        var campaign = await _dbContext.Campaigns
-            .FirstOrDefaultAsync(x =>
-                x.Code == request.Code.ToUpper());
+        throw new Exception("Campaign not found");
+    }
 
-        if (campaign == null)
+    if (!campaign.IsActive)
+    {
+        throw new Exception("Campaign inactive");
+    }
+
+    var now = DateTimeOffset.UtcNow;
+
+    if (now < campaign.StartDate ||
+        now > campaign.EndDate)
+    {
+        throw new Exception("Campaign expired");
+    }
+
+    if (campaign.UsedCount >= campaign.Quantity)
+    {
+        throw new Exception(
+            "Campaign out of quantity");
+    }
+
+    // voucher merchant
+    if (!campaign.IsGlobal &&
+        campaign.MerchantId != request.MerchantId)
+    {
+        throw new Exception(
+            "Campaign not valid for this merchant");
+    }
+
+    // min order
+    if (campaign.MinOrderAmount.HasValue &&
+        request.TotalAmount <
+        campaign.MinOrderAmount.Value)
+    {
+        throw new Exception(
+            $"Minimum order is {campaign.MinOrderAmount.Value}");
+    }
+
+    // check usage
+    var usage = await _dbContext.UserCampaignUsages
+        .FirstOrDefaultAsync(x =>
+            x.UserId == userId &&
+            x.CampaignId == campaign.Id);
+
+    if (usage != null &&
+        usage.UsedCount >=
+        campaign.MaxUsagePerUser)
+    {
+        throw new Exception(
+            "You already used this campaign");
+    }
+
+    decimal discountAmount;
+
+    if (campaign.IsPercentage)
+    {
+        discountAmount =
+            request.TotalAmount *
+            campaign.DiscountValue / 100;
+
+        if (campaign.MaxDiscountAmount.HasValue)
         {
-            throw new Exception("Campaign not found");
+            discountAmount = Math.Min(
+                discountAmount,
+                campaign.MaxDiscountAmount.Value);
+        }
+    }
+    else
+    {
+        discountAmount =
+            campaign.DiscountValue;
+    }
+
+    // chống âm bill
+    discountAmount = Math.Min(
+        discountAmount,
+        request.TotalAmount);
+
+    var finalAmount =
+        request.TotalAmount -
+        discountAmount;
+
+    return new Response.ApplyCampaignResponse
+    {
+        CampaignId = campaign.Id,
+
+        Code = campaign.Code,
+
+        Title = campaign.Title,
+
+        IsPercentage =
+            campaign.IsPercentage,
+
+        DiscountValue =
+            campaign.DiscountValue,
+
+        MaxDiscountAmount =
+            campaign.MaxDiscountAmount ?? 0,
+
+        MinOrderAmount =
+            campaign.MinOrderAmount ?? 0,
+
+        DiscountAmount =
+            discountAmount,
+
+        FinalAmount =
+            finalAmount,
+
+        Message =
+            "Apply campaign successfully"
+    };
+}
+    public async Task<Response.ApplyCampaignResponse?> GetBestCampaign(Request.GetBestCampaignRequest request, Guid userId)
+{
+    var now = DateTimeOffset.UtcNow;
+
+    var campaigns = await _dbContext.Campaigns
+        .Where(x =>
+            x.IsActive &&
+            x.StartDate <= now &&
+            x.EndDate >= now &&
+            x.UsedCount < x.Quantity &&
+            (
+                x.IsGlobal ||
+                x.MerchantId == request.MerchantId
+            ))
+        .ToListAsync();
+
+    Response.ApplyCampaignResponse? bestCampaign = null;
+
+    decimal bestDiscount = 0;
+
+    foreach (var campaign in campaigns)
+    {
+        // minimum order
+        if (campaign.MinOrderAmount.HasValue &&
+            request.TotalAmount < campaign.MinOrderAmount.Value)
+        {
+            continue;
         }
 
-        if (!campaign.IsActive)
-        {
-            throw new Exception("Campaign inactive");
-        }
-
-        var now = DateTimeOffset.UtcNow;
-
-        if (now < campaign.StartDate ||
-            now > campaign.EndDate)
-        {
-            throw new Exception("Campaign expired");
-        }
-
-        if (campaign.UsedCount >= campaign.Quantity)
-        {
-            throw new Exception(
-                "Campaign out of quantity");
-        }
-
-        // voucher merchant
-        if (!campaign.IsGlobal &&
-            campaign.MerchantId != request.MerchantId)
-        {
-            throw new Exception(
-                "Campaign not valid for this merchant");
-        }
-
-        // check usage
+        // check user usage
         var usage = await _dbContext.UserCampaignUsages
             .FirstOrDefaultAsync(x =>
                 x.UserId == userId &&
                 x.CampaignId == campaign.Id);
 
         if (usage != null &&
-            usage.UsedCount >=
-            campaign.MaxUsagePerUser)
+            usage.UsedCount >= campaign.MaxUsagePerUser)
+        {
+            continue;
+        }
+
+        decimal discount;
+
+        // percentage
+        if (campaign.IsPercentage)
+        {
+            discount =
+                request.TotalAmount *
+                campaign.DiscountValue / 100;
+
+            // max cap
+            if (campaign.MaxDiscountAmount.HasValue)
+            {
+                discount = Math.Min(
+                    discount,
+                    campaign.MaxDiscountAmount.Value);
+            }
+        }
+        else
+        {
+            discount = campaign.DiscountValue;
+        }
+
+        // KHÔNG CHO discount > total
+        discount = Math.Min(discount, request.TotalAmount);
+
+        var finalAmount = request.TotalAmount - discount;
+
+        if (discount > bestDiscount)
+        {
+            bestDiscount = discount;
+
+            bestCampaign =
+                new Response.ApplyCampaignResponse
+                {
+                    CampaignId = campaign.Id,
+
+                    Code = campaign.Code,
+
+                    Title = campaign.Title,
+
+                    IsPercentage =
+                        campaign.IsPercentage,
+
+                    DiscountValue =
+                        campaign.DiscountValue,
+
+                    DiscountAmount = discount,
+
+                    FinalAmount = finalAmount,
+
+                    MaxDiscountAmount =
+                        campaign.MaxDiscountAmount ?? 0,
+
+                    MinOrderAmount =
+                        campaign.MinOrderAmount ?? 0,
+
+                    Message = "Best campaign found"
+                };
+        }
+    }
+
+    return bestCampaign;
+}
+    public async Task ConfirmCampaignUsage(
+        Request.ConfirmCampaignUsageRequest request,
+        Guid userId)
+    {
+        var order = await _dbContext.Orders
+            .FirstOrDefaultAsync(x =>
+                x.Id == request.OrderId);
+
+        if (order == null)
+        {
+            throw new Exception("Order not found");
+        }
+
+        var campaign = await _dbContext.Campaigns
+            .FirstOrDefaultAsync(x =>
+                x.Id == request.CampaignId);
+
+        if (campaign == null)
+        {
+            throw new Exception("Campaign not found");
+        }
+
+        if (order.CampaignId != null)
         {
             throw new Exception(
-                "You already used this campaign");
+                "Campaign already applied");
         }
 
+        var usage =
+            await _dbContext.UserCampaignUsages
+                .FirstOrDefaultAsync(x =>
+                    x.UserId == userId &&
+                    x.CampaignId == campaign.Id);
 
-        return new Response.ApplyCampaignResponse
+        if (usage == null)
         {
-            CampaignId = campaign.Id,
+            usage = new UserCampaignUsage
+            {
+                Id = Guid.NewGuid(),
 
-            Code = campaign.Code,
+                UserId = userId,
 
-            Title = campaign.Title,
+                CampaignId = campaign.Id,
 
-            IsPercentage = campaign.IsPercentage,
+                UsedCount = 1,
 
-            DiscountValue = campaign.DiscountValue,
+                LastUsedAt =
+                    DateTimeOffset.UtcNow,
 
-            MaxDiscountAmount =
-                campaign.MaxDiscountAmount,
+                CreatedAt =
+                    DateTimeOffset.UtcNow
+            };
 
-            MinOrderAmount =
-                campaign.MinOrderAmount ?? 0,
-
-            Message =
-                "Apply campaign successfully"
-        };
-    }
-    public async Task<Response.ApplyCampaignResponse?>
-        GetBestCampaign(
-            Guid userId,
-            Guid? merchantId)
-    {
-        var campaigns = await _dbContext.Campaigns
-            .Where(x =>
-                x.IsActive &&
-                x.StartDate <= DateTimeOffset.UtcNow &&
-                x.EndDate >= DateTimeOffset.UtcNow)
-            .ToListAsync();
-
-        var bestCampaign = campaigns
-            .OrderByDescending(x => x.DiscountValue)
-            .FirstOrDefault();
-
-        if (bestCampaign == null)
+            _dbContext.UserCampaignUsages
+                .Add(usage);
+        }
+        else
         {
-            return null;
+            usage.UsedCount += 1;
+
+            usage.LastUsedAt =
+                DateTimeOffset.UtcNow;
+
+            usage.UpdatedAt =
+                DateTimeOffset.UtcNow;
         }
 
-        return new Response.ApplyCampaignResponse
-        {
-            CampaignId = bestCampaign.Id,
+        campaign.UsedCount += 1;
 
-            Code = bestCampaign.Code,
+        campaign.UpdatedAt =
+            DateTimeOffset.UtcNow;
 
-            Title = bestCampaign.Title,
+        order.CampaignId = campaign.Id;
 
-            IsPercentage =
-                bestCampaign.IsPercentage,
+        order.AppliedCampaignCode =
+            campaign.Code;
 
-            DiscountValue =
-                bestCampaign.DiscountValue,
+        order.UpdatedAt =
+            DateTimeOffset.UtcNow;
 
-            MaxDiscountAmount =
-                bestCampaign.MaxDiscountAmount,
-
-            MinOrderAmount =
-                bestCampaign.MinOrderAmount ?? 0,
-
-            Message = "Best campaign found"
-        };
+        await _dbContext.SaveChangesAsync();
     }
 }

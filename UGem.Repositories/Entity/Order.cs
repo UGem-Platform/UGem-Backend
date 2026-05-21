@@ -13,7 +13,13 @@ public class Order: BaseEntity<Guid>, IAuditableEntity
     public decimal PlatformFee { get; set; }
     public required string Status { get; set; }
     public required string PaymentMethod { get; set; }
-    
+    public Guid? CampaignId { get; set; }
+
+    public Campaign? Campaign { get; set; }
+
+    public decimal DiscountAmount { get; set; }
+
+    public string? AppliedCampaignCode { get; set; }
     public DateTimeOffset OrderedAt { get; set; }
     public required string Notes { get; set; }
     public string? RejectionReason { get; set; }
