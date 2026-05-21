@@ -10,10 +10,14 @@ public class Service : IService
     private const int MaxPageSize = 50;
 
     private readonly AppDbContext _dbContext;
+    private readonly UGem.Services.MonetizationService.IService _monetizationService;
 
-    public Service(AppDbContext dbContext)
+    public Service(
+        AppDbContext dbContext,
+        UGem.Services.MonetizationService.IService monetizationService)
     {
         _dbContext = dbContext;
+        _monetizationService = monetizationService;
     }
 
     public async Task<Base.Response.PageResult<Response.StaffResponse>> GetAllStaffForAdmin(string? searchTerm,
@@ -115,6 +119,8 @@ public class Service : IService
 
     public async Task<Response.DashboardResponse> GetDashboard()
     {
+        await _monetizationService.ProcessCompletedOrdersMissingMonetization();
+
         var todayStart = new DateTimeOffset(DateTime.UtcNow.Date, TimeSpan.Zero);
         var tomorrowStart = todayStart.AddDays(1);
 
@@ -163,6 +169,8 @@ public class Service : IService
 
     public async Task<List<Response.MerchantRevenueResponse>> GetMerchantRevenues(string? searchTerm, int pageIndex, int pageSize)
 {
+    await _monetizationService.ProcessCompletedOrdersMissingMonetization();
+
     var (normalizedPageIndex, normalizedPageSize) =
         NormalizePagination(pageIndex, pageSize);
 

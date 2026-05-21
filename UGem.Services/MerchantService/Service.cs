@@ -13,11 +13,16 @@ public class Service : IService
 
     private readonly AppDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContext;
+    private readonly UGem.Services.MonetizationService.IService _monetizationService;
 
-    public Service(AppDbContext dbContext, IHttpContextAccessor httpContext)
+    public Service(
+        AppDbContext dbContext,
+        IHttpContextAccessor httpContext,
+        UGem.Services.MonetizationService.IService monetizationService)
     {
         _dbContext = dbContext;
         _httpContext = httpContext;
+        _monetizationService = monetizationService;
     }
 
     public async Task<List<Response.MapResponse>> MapRequest(Request.MapRequest request)
@@ -292,6 +297,8 @@ public class Service : IService
         {
             throw new KeyNotFoundException("Merchant not found or not yours");
         }
+
+        await _monetizationService.ProcessCompletedOrdersMissingMonetization(merchant.Id);
 
         var stats = await _dbContext.Orders.Where(o =>
                 o.Status == "Completed" && o.OrderDetails.Any(x => x.Food.MerchantId == merchant.Id))

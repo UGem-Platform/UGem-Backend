@@ -136,6 +136,35 @@ public class Service : IService
         return 0;
     }
 
+    public async Task ProcessCompletedOrdersMissingMonetization(Guid? merchantId = null, Guid? reviewerId = null)
+    {
+        var query = _dbContext.Orders
+            .AsNoTracking()
+            .Where(o =>
+                o.Status == "Completed" &&
+                o.FinalPrice > 0 &&
+                o.MonetizationProcessedAtUtc == null);
+
+        if (merchantId.HasValue)
+        {
+            query = query.Where(o => o.OrderDetails.Any(od => od.Food.MerchantId == merchantId.Value));
+        }
+
+        if (reviewerId.HasValue)
+        {
+            query = query.Where(o => o.AffiliateLink != null && o.AffiliateLink.ReviewerId == reviewerId.Value);
+        }
+
+        var orderIds = await query
+            .Select(o => o.Id)
+            .ToListAsync();
+
+        foreach (var orderId in orderIds)
+        {
+            await HandlePaymentSuccess(orderId);
+        }
+    }
+
     public async Task ReprocessCompletedOrder(Guid orderId)
     {
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
