@@ -179,9 +179,7 @@ static void ConfigureValidatedOptions(IServiceCollection services, IConfiguratio
         .Validate(options =>
                 HasConfiguredValue(options.Mail)
                 && HasConfiguredValue(options.DisplayName)
-                && HasConfiguredValue(options.Password)
-                && HasConfiguredValue(options.Host)
-                && options.Port > 0,
+                && HasConfiguredValue(options.ApiKey),
             "MailOptions must be configured with secure non-placeholder values.")
         .ValidateOnStart();
 

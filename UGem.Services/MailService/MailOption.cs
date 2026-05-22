@@ -8,9 +8,9 @@ public class MailOption
     {
         [Required] public string Mail { get; set; } = string.Empty;
         [Required] public string DisplayName { get; set; } = string.Empty;
-        [Required] public string Password { get; set; } = string.Empty;
-        [Required] public string Host { get; set; } = string.Empty;
-        [Required] public int Port { get; set; }
-        public string? ApiKey { get; set; }
+        [Required] public string ApiKey { get; set; } = string.Empty;
+        public string? Password { get; set; }
+        public string? Host { get; set; }
+        public int Port { get; set; }
     }
 }
