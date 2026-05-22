@@ -426,13 +426,26 @@ request.TransferAmount);
                 throw new KeyNotFoundException("Merchant not found");
             }
 
-            order.PaymentStatus = "Paid";
-            order.Status = Request.OrderStatus.Completed.ToString();
-            order.UpdatedAt = DateTimeOffset.UtcNow;
+            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            try
+            {
+                order.PaymentStatus = "Paid";
+                order.Status = Request.OrderStatus.Completed.ToString();
+                order.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await _checkInService.CreateCheckIn(order.CustomerId.Value, merchantId);
-            await _dbContext.SaveChangesAsync();
-            return;
+                await _dbContext.SaveChangesAsync();
+                await _monetizationService.HandlePaymentSuccess(order.Id);
+                await _checkInService.CreateCheckIn(order.CustomerId.Value, merchantId);
+                await _dbContext.SaveChangesAsync();
+
+                await transaction.CommitAsync();
+                return;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         if (order.Status != Request.OrderStatus.Pending.ToString())
@@ -444,7 +457,7 @@ request.TransferAmount);
             throw new InvalidOperationException("Order already processed");
         }
 
-        using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        using var transaction2 = await _dbContext.Database.BeginTransactionAsync();
         try
         {
             order.PaymentStatus = "Paid";
@@ -452,11 +465,11 @@ request.TransferAmount);
             await _dbContext.SaveChangesAsync();
             await _monetizationService.HandlePaymentSuccess(order.Id);
             
-            await transaction.CommitAsync();
+            await transaction2.CommitAsync();
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction2.RollbackAsync();
             _logger.LogError(ex, "Error processing SePay payment success for order {OrderId}", order.Id);
             throw;
         }
